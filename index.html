@@ -129,6 +129,17 @@ body{font-family:'Noto Sans TC','Segoe UI',sans-serif;background:var(--bg);color
 /* ===== TIP ===== */
 .tip{padding:14px 24px;font-size:.8em;color:var(--blue);border-top:1px solid rgba(255,255,255,.04);background:rgba(125,211,252,.04)}
 
+/* ===== REVIEW BLOCK ===== */
+.review{margin-top:14px;padding:14px 16px;background:linear-gradient(135deg,rgba(252,211,77,.06),rgba(252,211,77,.02));border:1px solid rgba(252,211,77,.12);border-radius:12px;font-size:.8em;line-height:1.8}
+.review-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.review-stars{color:var(--gold);font-size:.9em;letter-spacing:1px}
+.review-rating{color:var(--gold);font-weight:700;font-size:.9em}
+.review-source{color:var(--text-dim);font-size:.85em}
+.review-source a{color:var(--text-dim);text-decoration:underline;text-decoration-color:rgba(148,163,184,.3);transition:color .3s}
+.review-source a:hover{color:var(--text)}
+.review-quote{color:var(--text);font-style:italic;padding:6px 0 6px 12px;border-left:2px solid rgba(252,211,77,.25);margin:6px 0}
+.review-quote .attr{font-style:normal;color:var(--text-dim);font-size:.9em;display:block;margin-top:4px}
+
 /* ===== INFO SECTION ===== */
 .info-section{max-width:800px;margin:40px auto;padding:0 24px}
 .info-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;padding:28px;margin-bottom:24px;backdrop-filter:blur(12px)}
@@ -198,7 +209,8 @@ body{font-family:'Noto Sans TC','Segoe UI',sans-serif;background:var(--bg);color
 <div class="card">
 <div class="img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Nakasu_at_night.jpg" target="_blank" rel="noopener"><img class="card-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Nakasu_at_night.jpg/960px-Nakasu_at_night.jpg" alt="中洲屋台" loading="lazy"></a><div class="img-cap">📷 中洲夜景 · Wikimedia Commons CC</div></div>
 <div class="card-body"><h3>🍜 晚餐：中洲屋台街</h3>
-<div class="detail">屋台是福岡最具代表性的飲食文化，中洲地區沿著那珂川河畔聚集了約 20 攤，是規模最大的屋台集中地。<br><br><span class="mi">🍜 博多拉麵</span> — 濃郁豚骨白湯配極細直麵，喊「替え玉」加麵（<span class="pr">¥100-150</span>）<br><span class="mi">🥟 博多一口煎餃</span> — 皮薄餡多汁，沾柚子胡椒更對味（<span class="pr">¥500-600</span>）<br><span class="mi">🍢 關東煮</span> — 搭配日本酒最對味<br><span class="mi">🍖 燒烤串</span> — 雞皮串是博多特色<br><br><b>屋台禮儀：</b>座位有限（8-10 席），坐下後每人至少點一份餐點和一杯飲料。營業到凌晨 2 點。</div></div>
+<div class="detail">屋台是福岡最具代表性的飲食文化，中洲地區沿著那珂川河畔聚集了約 20 攤，是規模最大的屋台集中地。<br><br><span class="mi">🍜 博多拉麵</span> — 濃郁豚骨白湯配極細直麵，喊「替え玉」加麵（<span class="pr">¥100-150</span>）<br><span class="mi">🥟 博多一口煎餃</span> — 皮薄餡多汁，沾柚子胡椒更對味（<span class="pr">¥500-600</span>）<br><span class="mi">🍢 關東煮</span> — 搭配日本酒最對味<br><span class="mi">🍖 燒烤串</span> — 雞皮串是博多特色<br><br><b>屋台禮儀：</b>座位有限（8-10 席），坐下後每人至少點一份餐點和一杯飲料。營業到凌晨 2 點。</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★★</span><span class="review-rating">98% 推薦</span><span class="review-source">— <a href="https://www.tripadvisor.com/Attraction_Review-g14135118-d1820205-Reviews-Nakasu_District-Nakasu_Hakata_Fukuoka_Fukuoka_Prefecture_Kyushu.html" target="_blank" rel="noopener">TripAdvisor</a></span></div><div class="review-quote">「屋台最大的魅力不只是食物，而是和旁邊的當地人、遊客擠在小攤位裡交朋友的體驗。來福岡一定要體驗！」<span class="attr">— TripAdvisor 旅客評價（內容經改寫）</span></div><div class="review-quote">「食物不算便宜（接近餐廳價位），但氛圍無可取代。建議先看菜單再坐下，很多攤位有多國語言菜單。」<span class="attr">— TripAdvisor 旅客評價（內容經改寫）</span></div></div></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">22:30</div>
@@ -233,16 +245,19 @@ body{font-family:'Noto Sans TC','Segoe UI',sans-serif;background:var(--bg);color
 <div class="card">
 <div class="img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Yufuin_Kinrin_Lake_2.jpg" target="_blank" rel="noopener"><img class="card-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Yufuin_Kinrin_Lake_2.jpg/960px-Yufuin_Kinrin_Lake_2.jpg" alt="金鱗湖" loading="lazy"></a><div class="img-cap">📷 金鱗湖 · Wikimedia Commons CC</div></div>
 <div class="card-body"><h3>🏞️ 金鱗湖</h3>
-<div class="detail">由布院的象徵性景點，湖底同時湧出溫泉水和清水，清晨時湖面會升起夢幻般的薄霧。<br><br><span class="hi">🔹 必看：</span>清晨霧氣（6:30-8:00 最美）、湖畔散步道、下ん湯共同浴場（<span class="pr">¥200</span>）<br><span class="hi">🔹 周邊：</span>Marc Chagall 美術館、Cafe La Ruche 湖畔咖啡</div></div>
+<div class="detail">由布院的象徵性景點，湖底同時湧出溫泉水和清水，清晨時湖面會升起夢幻般的薄霧。<br><br><span class="hi">🔹 必看：</span>清晨霧氣（6:30-8:00 最美）、湖畔散步道、下ん湯共同浴場（<span class="pr">¥200</span>）<br><span class="hi">🔹 周邊：</span>Marc Chagall 美術館、Cafe La Ruche 湖畔咖啡</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★★</span><span class="review-rating">100% 推薦</span><span class="review-source">— <a href="https://www.tripadvisor.com/Attraction_Review-g1023445-d1373262-Reviews-Lake_Kinrin-Yufu_Oita_Prefecture_Kyushu.html" target="_blank" rel="noopener">TripAdvisor</a> · <a href="https://triplyzer.com/asia/japan/things-to-do-in-yufuin/" target="_blank" rel="noopener">Triplyzer</a></span></div><div class="review-quote">「金鱗湖是由布院必訪景點。湖底同時有溫泉和冷泉湧出，早晨造訪時薄霧繚繞，氛圍非常夢幻寧靜。」<span class="attr">— TripAdvisor 旅客評價（內容經改寫）</span></div><div class="review-quote">「由布院擁有 800 多處溫泉源頭，每分鐘湧出 43,000 公升溫泉水，是日本第二受歡迎的溫泉地。金鱗湖周邊散步道非常療癒。」<span class="attr">— Triplyzer 旅遊部落格（內容經改寫）</span></div></div></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">11:30</div>
 <div class="card"><div class="card-body"><h3>🛍️ 湯之坪街道散策</h3>
-<div class="detail">從車站到金鱗湖約 1.5 公里的散步路線，兩旁林立雜貨店、甜點店和咖啡廳。<br><br><span class="mi">🍰 B-speak 瑞士捲</span> — 每日限量，建議早上先預約（<span class="pr">¥1,420/條</span>）<br><span class="mi">🧀 由布院 Milch</span> — 現烤半熟起司蛋糕（<span class="pr">¥200/個</span>）<br><span class="mi">🍡 花麴菊家</span> — 貓咪造型饅頭<br><span class="mi">🍩 由布院 Nicol</span> — 手工甜甜圈</div></div></div></div>
+<div class="detail">從車站到金鱗湖約 1.5 公里的散步路線，兩旁林立雜貨店、甜點店和咖啡廳。<br><br><span class="mi">🍰 B-speak 瑞士捲</span> — 每日限量，建議早上先預約（<span class="pr">¥1,420/條</span>）<br><span class="mi">🧀 由布院 Milch</span> — 現烤半熟起司蛋糕（<span class="pr">¥200/個</span>）<br><span class="mi">🍡 花麴菊家</span> — 貓咪造型饅頭<br><span class="mi">🍩 由布院 Nicol</span> — 手工甜甜圈</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★☆</span><span class="review-rating">Tabelog 3.46</span><span class="review-source">— <a href="https://tabelog.com/en/oita/A4402/A440201/44000122/" target="_blank" rel="noopener">Tabelog</a>（B-speak · 403 則評價）</span></div><div class="review-quote">「1999 年開業至今配方不變，只用麵粉、砂糖、雞蛋和鮮奶油。口感鬆軟綿密，每一口都是幸福。小條裝中午前就賣完，建議提前預約。」<span class="attr">— Tabelog / TripAdvisor 旅客評價（內容經改寫）</span></div></div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">12:30</div>
 <div class="card"><div class="card-body"><h3>🍽️ 午餐</h3>
-<div class="detail"><span class="mi">由布まぶし 心</span> — 名物「地雞まぶし」，先吃原味、再加蔥花山葵、最後加高湯做茶泡飯，三種吃法（<span class="pr">¥1,980</span>）。<br>或 <span class="mi">湯之岳庵</span> — 山莊無量塔旗下餐廳，蕎麥麵和豐後牛都是招牌。</div></div></div></div>
+<div class="detail"><span class="mi">由布まぶし 心</span> — 名物「地雞まぶし」，先吃原味、再加蔥花山葵、最後加高湯做茶泡飯，三種吃法（<span class="pr">¥1,980</span>）。<br>或 <span class="mi">湯之岳庵</span> — 山莊無量塔旗下餐廳，蕎麥麵和豐後牛都是招牌。</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★★</span><span class="review-rating">TripAdvisor #3 / 159 餐廳</span><span class="review-source">— <a href="https://www.tripadvisor.com/Restaurant_Review-g1023445-d6942112-Reviews-Yufumabushi_Shin_Yufuin_Ekimae-Yufu_Oita_Prefecture_Kyushu.html" target="_blank" rel="noopener">TripAdvisor</a> · <a href="https://www.mytravelbuzzg.com/yufumabushi-shin-yufuin-must-eat-food/" target="_blank" rel="noopener">MyTravelBuzzg</a></span></div><div class="review-quote">「由布院必吃！牛肉和地雞都非常出色。三種吃法讓每一口都有不同驚喜，強烈推薦。」<span class="attr">— TripAdvisor 旅客評價（內容經改寫）</span></div></div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">14:00</div>
 <div class="card"><div class="card-body"><h3>♨️ 由布院溫泉體驗</h3>
@@ -259,7 +274,8 @@ body{font-family:'Noto Sans TC','Segoe UI',sans-serif;background:var(--bg);color
 <div class="card">
 <div class="img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Motsunabe.jpg" target="_blank" rel="noopener"><img class="card-img" src="https://upload.wikimedia.org/wikipedia/commons/6/61/Motsunabe.jpg" alt="牛腸鍋" loading="lazy"></a><div class="img-cap">📷 博多牛腸鍋 · Wikimedia Commons CC</div></div>
 <div class="card-body"><h3>🍲 晚餐：博多牛腸鍋</h3>
-<div class="detail">博多三大美食之一，新鮮牛腸搭配大量韭菜和高麗菜，口感 Q 彈鮮甜。<br><br>• <b>もつ鍋 楽天地</b> — 老字號（<span class="pr">¥1,500/人</span>）<br>• <b>もつ鍋 おおやま</b> — 味噌湯底濃郁，博多站 KITTE 有分店<br>• <b>もつ鍋 やま中</b> — 清湯系代表<br><br>最後加麵（ちゃんぽん麺）收尾是正統吃法！</div></div>
+<div class="detail">博多三大美食之一，新鮮牛腸搭配大量韭菜和高麗菜，口感 Q 彈鮮甜。<br><br>• <b>もつ鍋 楽天地</b> — 老字號（<span class="pr">¥1,500/人</span>）<br>• <b>もつ鍋 おおやま</b> — 味噌湯底濃郁，博多站 KITTE 有分店<br>• <b>もつ鍋 やま中</b> — 清湯系代表<br><br>最後加麵（ちゃんぽん麺）收尾是正統吃法！</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★☆</span><span class="review-rating">Tabelog 3.57</span><span class="review-source">— <a href="https://tabelog.com/en/fukuoka/A4001/A400103/40034704/" target="_blank" rel="noopener">Tabelog</a>（もつ鍋一藤 · 375 則評價）</span></div><div class="review-quote">「博多牛腸鍋的精髓在於最後加入 champon 麵收尾。據說這個傳統就是從博多的老店開始的。濃郁味噌湯底配上 Q 彈牛腸，讓人欲罷不能。」<span class="attr">— Tabelog 食評（內容經改寫）</span></div></div></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">21:00</div>
@@ -290,13 +306,15 @@ body{font-family:'Noto Sans TC','Segoe UI',sans-serif;background:var(--bg);color
 <div class="card">
 <div class="img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Dazaifu_Tenmangu_-_panoramio.jpg" target="_blank" rel="noopener"><img class="card-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Dazaifu_Tenmangu_-_panoramio.jpg/960px-Dazaifu_Tenmangu_-_panoramio.jpg" alt="太宰府天滿宮" loading="lazy"></a><div class="img-cap">📷 太宰府天滿宮 · Wikimedia Commons CC</div></div>
 <div class="card-body"><h3>⛩️ 太宰府天滿宮</h3>
-<div class="detail">供奉「學問之神」菅原道真，全日本 12,000 座天滿宮的總本社，每年超過 1,000 萬人參拜。<br><br><span class="hi">🔹 必看：</span>御本殿（國家重要文化財）、飛梅傳說、御神牛（摸牛頭變聰明）、心字池太鼓橋<br><br><span class="mi">🍡 梅枝餅</span> — 紅豆餡烤餅，太宰府名物（<span class="pr">¥130/個</span>）。推薦「かさの家」。</div></div>
+<div class="detail">供奉「學問之神」菅原道真，全日本 12,000 座天滿宮的總本社，每年超過 1,000 萬人參拜。<br><br><span class="hi">🔹 必看：</span>御本殿（國家重要文化財）、飛梅傳說、御神牛（摸牛頭變聰明）、心字池太鼓橋<br><br><span class="mi">🍡 梅枝餅</span> — 紅豆餡烤餅，太宰府名物（<span class="pr">¥130/個</span>）。推薦「かさの家」。</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★★</span><span class="review-rating">100% 推薦 · #1 太宰府景點</span><span class="review-source">— <a href="https://www.tripadvisor.com/Attraction_Review-g325587-d522577-Reviews-Dazaifu_Temmangu-Dazaifu_Fukuoka_Prefecture_Kyushu.html" target="_blank" rel="noopener">TripAdvisor</a>（2,090 則評價）</span></div><div class="review-quote">「神社境內有超過 6,000 棵梅樹，梅花季時美到讓人停下腳步。除了本殿，周邊還有光明禪寺和九州國立博物館，值得安排半天。」<span class="attr">— TripAdvisor / realjourneytravels.com（內容經改寫）</span></div><div class="review-quote">「建議先到天神或博多的觀光案內所購買太宰府一日套票，含車票和梅枝餅兌換券，非常划算。」<span class="attr">— TripAdvisor 旅客評價（內容經改寫）</span></div></div></div>
 <div class="tip">💡 參拜免費。寶物殿 ¥500。學業成就御守 ¥1,000。</div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">10:00</div>
 <div class="card"><div class="card-body"><h3>☕ 星巴克太宰府表參道店</h3>
-<div class="detail"><b>隈研吾</b>設計，2,000 根杉木條交織的木編結構，全球最美星巴克之一。限定商品：太宰府馬克杯和隨行杯。</div></div></div></div>
+<div class="detail"><b>隈研吾</b>設計，2,000 根杉木條交織的木編結構，全球最美星巴克之一。限定商品：太宰府馬克杯和隨行杯。</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★★</span><span class="review-rating">建築迷必訪</span><span class="review-source">— <a href="https://www.kanpai-japan.com/fukuoka/kushida-jinja" target="_blank" rel="noopener">Kanpai Japan</a></span></div><div class="review-quote">「就算不喝咖啡也值得來看建築。隈研吾用 2,000 根杉木條打造的木編結構，從外面看像是流動的木浪，走進去又是另一番風景。太宰府限定杯是必買伴手禮。」<span class="attr">— 旅遊部落格綜合評價（內容經改寫）</span></div></div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">10:30</div>
 <div class="card"><div class="card-body"><h3>🏛️ 九州國立博物館</h3>
@@ -306,11 +324,13 @@ body{font-family:'Noto Sans TC','Segoe UI',sans-serif;background:var(--bg);color
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">12:30</div>
 <div class="card"><div class="card-body"><h3>🍽️ 午餐：柳川鰻魚飯</h3>
-<div class="detail"><span class="mi">蒸籠鰻魚飯（せいろ蒸し）</span>是柳川獨有吃法 — 蒲燒鰻魚鋪在飯上蒸到醬汁完全滲透。<br><br>推薦 <b>元祖本吉屋</b>（創業 1681 年）或 <b>若松屋</b>（<span class="pr">¥2,500-4,000</span>）。</div></div></div></div>
+<div class="detail"><span class="mi">蒸籠鰻魚飯（せいろ蒸し）</span>是柳川獨有吃法 — 蒲燒鰻魚鋪在飯上蒸到醬汁完全滲透。<br><br>推薦 <b>元祖本吉屋</b>（創業 1681 年）或 <b>若松屋</b>（<span class="pr">¥2,500-4,000</span>）。</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★☆</span><span class="review-rating">柳川名物</span><span class="review-source">— <a href="https://www.jansfoodsteps.com/unagi-no-seiromushi-steamed-eel-rice-yanagawa-fukuoka-japan-travel/" target="_blank" rel="noopener">Jan's Food Steps</a> · <a href="https://www.lavietaste.com/en/restaurant/13733" target="_blank" rel="noopener">Lavie Taste</a></span></div><div class="review-quote">「柳川有兩大必做：遊船和蒸籠鰻魚飯。鰻魚鬆軟入味，醬汁完全滲透到米飯裡，和一般蒲燒鰻魚飯是完全不同的體驗。」<span class="attr">— Jan's Food Steps 旅遊部落格（內容經改寫）</span></div></div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">14:00</div>
 <div class="card"><div class="card-body"><h3>🛶 柳川遊船（川下り）</h3>
-<div class="detail">沿護城河悠遊，全程約 70 分鐘、4.5 公里。船夫一邊撐篙一邊唱民謠。<br><br><span class="hi">🔹 必看：</span>水上商店、紅磚並倉、柳樹隧道<br>費用 <span class="pr">¥1,650-1,800/人</span>，建議提前預約。</div></div>
+<div class="detail">沿護城河悠遊，全程約 70 分鐘、4.5 公里。船夫一邊撐篙一邊唱民謠。<br><br><span class="hi">🔹 必看：</span>水上商店、紅磚並倉、柳樹隧道<br>費用 <span class="pr">¥1,650-1,800/人</span>，建議提前預約。</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★★</span><span class="review-rating">4.5/5</span><span class="review-source">— <a href="https://www.kkday.com/en-my/product/11934" target="_blank" rel="noopener">KKday</a>（529 則評價）· <a href="https://pagesoftravel.org/yanagawa-river-cruise/" target="_blank" rel="noopener">Pages of Travel</a></span></div><div class="review-quote">「船夫不時唱起民謠，帶你穿越柳川古城的護城河。70 分鐘的旅程中會經過柳樹隧道和紅磚倉庫，非常有水鄉風情。冬天還有暖爐和毛毯。」<span class="attr">— TripAdvisor / KKday 旅客評價（內容經改寫）</span></div></div></div>
 <div class="tip">💡 遊船終點「沖端」可搭接駁巴士回車站（¥100）。</div>
 </div></div>
 
@@ -321,7 +341,8 @@ body{font-family:'Noto Sans TC','Segoe UI',sans-serif;background:var(--bg);color
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">18:30</div>
 <div class="card"><div class="card-body"><h3>🍗 晚餐：博多水炊雞鍋</h3>
-<div class="detail">博多三大鍋物之一，雞骨熬煮 8 小時以上的白濁湯底，先喝湯、再吃雞肉蔬菜，最後煮雜炊收尾。<br><br>• <b>水炊き 長野</b> — 老字號，需預約（<span class="pr">¥4,000-5,000/人</span>）<br>• <b>博多華味鳥</b> — 品質穩定，博多站有分店（<span class="pr">¥3,500/人</span>）<br>• <b>とり田</b> — 年輕人氣店</div></div></div></div>
+<div class="detail">博多三大鍋物之一，雞骨熬煮 8 小時以上的白濁湯底，先喝湯、再吃雞肉蔬菜，最後煮雜炊收尾。<br><br>• <b>水炊き 長野</b> — 老字號，需預約（<span class="pr">¥4,000-5,000/人</span>）<br>• <b>博多華味鳥</b> — 品質穩定，博多站有分店（<span class="pr">¥3,500/人</span>）<br>• <b>とり田</b> — 年輕人氣店</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★★</span><span class="review-rating">必吃名物</span><span class="review-source">— <a href="https://kuokoaday.com/mizutaki-japanese-chicken-hot-pot/" target="_blank" rel="noopener">Kuokoa Day</a> · <a href="https://zendine.co/mizutaki-nagano-fukuoka/" target="_blank" rel="noopener">Zendine</a></span></div><div class="review-quote">「水炊き長野的精髓在於簡單與品質。先上一碗清澈卻風味濃郁的雞湯，接著是嫩雞肉和時令蔬菜，最後用雜炊收尾。湯頭入口的瞬間，全身都暖了起來。」<span class="attr">— Kuokoa Day / Maris Around the World（內容經改寫）</span></div></div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">21:00</div>
 <div class="card"><div class="card-body"><h3>🌙 回飯店休息</h3></div></div></div>
@@ -347,7 +368,8 @@ body{font-family:'Noto Sans TC','Segoe UI',sans-serif;background:var(--bg);color
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">09:00</div>
 <div class="card"><div class="card-body"><h3>⛩️ 櫛田神社</h3>
-<div class="detail">博多總鎮守，757 年歷史，博多祇園山笠祭典的起終點。<br><br><span class="hi">🔹 必看：</span>飾り山笠（13 公尺巨大山車）、博多歷史館、靈泉鶴之井、千年大銀杏<br>參拜免費，歷史館 <span class="pr">¥300</span>。</div></div>
+<div class="detail">博多總鎮守，757 年歷史，博多祇園山笠祭典的起終點。<br><br><span class="hi">🔹 必看：</span>飾り山笠（13 公尺巨大山車）、博多歷史館、靈泉鶴之井、千年大銀杏<br>參拜免費，歷史館 <span class="pr">¥300</span>。</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★★</span><span class="review-rating">4.9/5 · 6K+ 評價</span><span class="review-source">— <a href="https://www.klook.com/en-SG/destination/p50001264-kushida-shrine/" target="_blank" rel="noopener">Klook</a> · <a href="https://www.tripadvisor.com/Attraction_Review-g14127501-d320702-Reviews-Kushida_Shrine-Hakata_Fukuoka_Fukuoka_Prefecture_Kyushu.html" target="_blank" rel="noopener">TripAdvisor</a></span></div><div class="review-quote">「入口氣勢宏偉，左側有一棵超過千年的大銀杏樹。境內的飾り山笠巨大且細節驚人，讓人很想回來看祭典本番。這裡是鬧區中的寧靜世界。」<span class="attr">— TripAdvisor 旅客評價（內容經改寫）</span></div></div></div>
 <div class="transport"><span class="ic">🚶</span>櫛田神社 → Canal City<span class="cost">步行 5 分鐘</span></div>
 </div></div>
 
@@ -355,26 +377,31 @@ body{font-family:'Noto Sans TC','Segoe UI',sans-serif;background:var(--bg);color
 <div class="card">
 <div class="img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Canal_City_Hakata_2011.jpg" target="_blank" rel="noopener"><img class="card-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Canal_City_Hakata_2011.jpg/960px-Canal_City_Hakata_2011.jpg" alt="Canal City Hakata" loading="lazy"></a><div class="img-cap">📷 Canal City Hakata · Wikimedia Commons CC</div></div>
 <div class="card-body"><h3>🏙️ Canal City Hakata</h3>
-<div class="detail">福岡最大複合商業設施，Jon Jerde 設計，運河為中心的半月形建築群。<br><br><span class="hi">🔹 人氣店鋪：</span>Jump Shop、Disney Store、GASHAPON 扭蛋專賣店（300+ 台）、Moomin Bakery &amp; Café、UNIQLO、無印良品、ABC-Mart<br><br><span class="mi">🍜 拉麵競技場（5F）</span> — 全日本 8 家人氣拉麵店。</div></div>
+<div class="detail">福岡最大複合商業設施，Jon Jerde 設計，運河為中心的半月形建築群。<br><br><span class="hi">🔹 人氣店鋪：</span>Jump Shop、Disney Store、GASHAPON 扭蛋專賣店（300+ 台）、Moomin Bakery &amp; Café、UNIQLO、無印良品、ABC-Mart<br><br><span class="mi">🍜 拉麵競技場（5F）</span> — 全日本 8 家人氣拉麵店。</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★☆</span><span class="review-rating">4.0/5</span><span class="review-source">— <a href="https://www.tripadvisor.com/Attraction_Review-g14127501-d320334-Reviews-Canal_City_Hakata-Hakata_Fukuoka_Fukuoka_Prefecture_Kyushu.html" target="_blank" rel="noopener">TripAdvisor</a></span></div><div class="review-quote">「就算不愛逛街也會喜歡這裡！各種日本特色商店（鋼彈、寶可夢、Hello Kitty），加上每 30 分鐘一次的音樂噴泉秀，光看就很開心。」<span class="attr">— TripAdvisor 旅客評價（內容經改寫）</span></div></div></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">12:00</div>
 <div class="card"><div class="card-body"><h3>🍜 午餐：博多拉麵</h3>
-<div class="detail">• <b>一蘭拉麵 本社總本店</b> — Canal City 旁，味集中カウンター（<span class="pr">¥980</span>）<br>• <b>一風堂 本店</b> — 大名地區，白丸元味和赤丸新味（<span class="pr">¥890</span>）<br>• <b>ShinShin</b> — 在地人最愛，湯頭清爽（<span class="pr">¥750</span>）</div></div></div></div>
+<div class="detail">• <b>一蘭拉麵 本社總本店</b> — Canal City 旁，味集中カウンター（<span class="pr">¥980</span>）<br>• <b>一風堂 本店</b> — 大名地區，白丸元味和赤丸新味（<span class="pr">¥890</span>）<br>• <b>ShinShin</b> — 在地人最愛，湯頭清爽（<span class="pr">¥750</span>）</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★☆</span><span class="review-rating">Tabelog 3.46 · 1,244 則評價</span><span class="review-source">— <a href="https://s.tabelog.com/en/fukuoka/A4001/A400102/40000130/" target="_blank" rel="noopener">Tabelog</a>（一蘭本社總本店）</span></div><div class="review-quote">「一蘭專注豚骨拉麵超過 40 年，每一碗都有 40 位以上的專家參與研發。味集中隔板讓你完全沉浸在拉麵的世界裡。來福岡一定要朝聖發源地！」<span class="attr">— Tabelog / TripAdvisor 食評（內容經改寫）</span></div></div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">13:30</div>
 <div class="card"><div class="card-body"><h3>🛍️ 天神地下街</h3>
-<div class="detail">九州最大地下商店街，590 公尺，歐風磚造拱頂，150+ 間店鋪。直通天神 PARCO、大丸、三越百貨。藥妝店比台灣便宜很多。</div></div></div></div>
+<div class="detail">九州最大地下商店街，590 公尺，歐風磚造拱頂，150+ 間店鋪。直通天神 PARCO、大丸、三越百貨。藥妝店比台灣便宜很多。</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★★</span><span class="review-rating">100% 推薦</span><span class="review-source">— <a href="https://www.tripadvisor.com/Attraction_Review-g14135106-d1423812-Reviews-Tenjin_Underground_Shopping_Center-Tenjin_Chuo_Fukuoka_Fukuoka_Prefecture_Kyush.html" target="_blank" rel="noopener">TripAdvisor</a></span></div><div class="review-quote">「日本除了東京和大阪梅田之外最大的地下商店街之一。歐風磚造拱頂很有特色，直通各大百貨公司，下雨天逛街的最佳選擇。」<span class="attr">— TripAdvisor 旅客評價（內容經改寫）</span></div></div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">15:00</div>
 <div class="card"><div class="card-body"><h3>🌳 大濠公園 &amp; 福岡城跡</h3>
-<div class="detail">福岡市民的綠洲，環湖步道一圈約 2 公里。天鵝船（<span class="pr">¥1,000/30分</span>）、日本庭園（<span class="pr">¥250</span>）、Starbucks 大濠公園店。</div></div>
+<div class="detail">福岡市民的綠洲，環湖步道一圈約 2 公里。天鵝船（<span class="pr">¥1,000/30分</span>）、日本庭園（<span class="pr">¥250</span>）、Starbucks 大濠公園店。</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★★</span><span class="review-rating">98% 推薦</span><span class="review-source">— <a href="https://www.tripadvisor.com/Attraction_Review-g14127491-d1423813-Reviews-Ohori_Park-Chuo_Fukuoka_Fukuoka_Prefecture_Kyushu.html" target="_blank" rel="noopener">TripAdvisor</a></span></div><div class="review-quote">「大濠公園就像紐約的中央公園或巴黎的盧森堡公園，是福岡市中心的綠洲。週末很多人來慢跑、散步或只是坐在湖邊喝杯咖啡，非常療癒。」<span class="attr">— TripAdvisor 旅客評價（內容經改寫）</span></div></div></div>
 <div class="transport"><span class="ic">🚇</span>大濠公園站 → 西新站<span class="cost">地鐵 1 站 · ¥210</span></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">17:00</div>
 <div class="card"><div class="card-body"><h3>🏖️ 百道海濱公園 &amp; 福岡塔</h3>
-<div class="detail">福岡塔高 234 公尺，日本最高海濱塔，展望台 123 公尺處 360 度全景。夜景時段最推薦。門票 <span class="pr">¥800</span>。</div></div></div></div>
+<div class="detail">福岡塔高 234 公尺，日本最高海濱塔，展望台 123 公尺處 360 度全景。夜景時段最推薦。門票 <span class="pr">¥800</span>。</div>
+<div class="review"><div class="review-header"><span class="review-stars">★★★★☆</span><span class="review-rating">日本百大夜景</span><span class="review-source">— <a href="https://www.tripadvisor.com/ShowUserReviews-g298207-d1229304-r895648529-Fukuoka_Tower-Fukuoka_Fukuoka_Prefecture_Kyushu.html" target="_blank" rel="noopener">TripAdvisor</a> · <a href="https://www.klook.com/en-SG/destination/p50057301-fukuoka-tower/" target="_blank" rel="noopener">Klook</a></span></div><div class="review-quote">「建築本身就很美，金屬支架和玻璃帷幕在塔內形成反射效果，拍照很好看。夕陽時段上去最推薦，可以同時看到博多灣和背後的山脈。每季還有不同的燈光秀。」<span class="attr">— TripAdvisor 旅客評價（內容經改寫）</span></div></div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">19:00</div>
 <div class="card"><div class="card-body"><h3>🍣 晚餐：海鮮</h3>
@@ -384,7 +411,7 @@ body{font-family:'Noto Sans TC','Segoe UI',sans-serif;background:var(--bg);color
 <div class="card"><div class="card-body"><h3>🌙 回飯店休息</h3>
 <div class="detail">明天最後一天，記得整理行李，退稅商品和一般商品分開打包。</div></div></div></div>
 
-</div></section>div>
+</div></section>
 
 <!-- ==================== DAY 5 ==================== -->
 <section class="day-section" id="day5">
