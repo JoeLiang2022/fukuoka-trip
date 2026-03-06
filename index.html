@@ -3,143 +3,165 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🇯🇵 福岡 5 日行程 — 沈浸式旅遊指南</title>
+<title>🇯🇵 福岡 5 日 — 沈浸式旅遊指南</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--blue:#60a5fa;--green:#34d399;--purple:#c084fc;--orange:#fb923c;--red:#f87171;--gold:#fbbf24;--bg:#0a0a14;--card:#12121f;--border:#1e1e35}
-html{scroll-behavior:smooth}
-body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:#d4d4d8;line-height:1.7;overflow-x:hidden}
-
-/* Hero Landing */
-.hero{position:relative;height:100vh;min-height:600px;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(.35);transform:scale(1.1);transition:transform 8s ease}
-.hero:hover .hero-bg{transform:scale(1)}
-.hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,20,.3) 0%,rgba(10,10,20,.8) 80%,var(--bg) 100%)}
-.hero-content{position:relative;z-index:2;text-align:center;padding:0 24px;animation:fadeUp 1.2s ease}
-.hero-content h1{font-size:clamp(2.2em,6vw,4em);font-weight:800;color:#fff;letter-spacing:-.02em;text-shadow:0 4px 30px rgba(0,0,0,.5)}
-.hero-content .sub{font-size:clamp(1em,2.5vw,1.4em);color:rgba(255,255,255,.7);margin-top:12px;font-weight:300}
-.hero-content .meta{display:flex;gap:20px;justify-content:center;margin-top:24px;flex-wrap:wrap}
-.hero-content .meta span{background:rgba(255,255,255,.1);backdrop-filter:blur(10px);padding:8px 18px;border-radius:50px;font-size:.85em;color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.15)}
-.scroll-hint{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:2;animation:bounce 2s infinite;color:rgba(255,255,255,.5);font-size:.8em;text-align:center}
-.scroll-hint .arrow{display:block;font-size:1.5em;margin-top:4px}
-
-/* Day Navigation */
-.day-nav{position:sticky;top:0;z-index:100;background:rgba(10,10,20,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.day-nav::-webkit-scrollbar{display:none}
-.day-nav-inner{display:flex;min-width:max-content;padding:0 16px}
-.day-nav a{padding:14px 20px;color:#888;text-decoration:none;font-size:.85em;font-weight:600;white-space:nowrap;border-bottom:2px solid transparent;transition:all .3s}
-.day-nav a:hover,.day-nav a.active{color:#fff;border-bottom-color:var(--blue)}
-.day-nav a[data-day="1"]:hover,.day-nav a[data-day="1"].active{border-bottom-color:var(--blue)}
-.day-nav a[data-day="2"]:hover,.day-nav a[data-day="2"].active{border-bottom-color:var(--green)}
-.day-nav a[data-day="3"]:hover,.day-nav a[data-day="3"].active{border-bottom-color:var(--purple)}
-.day-nav a[data-day="4"]:hover,.day-nav a[data-day="4"].active{border-bottom-color:var(--orange)}
-.day-nav a[data-day="5"]:hover,.day-nav a[data-day="5"].active{border-bottom-color:var(--red)}
-
-/* Warning Banner */
-.warn-banner{background:linear-gradient(90deg,rgba(245,158,11,.1),rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.3);margin:32px auto;max-width:800px;padding:16px 24px;border-radius:12px;font-size:.9em;color:var(--gold);text-align:center}
-
-/* Day Section */
-.day-section{padding:0 0 40px;position:relative}
-.day-hero{position:relative;height:60vh;min-height:350px;display:flex;align-items:flex-end;overflow:hidden}
-.day-hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform .5s}
-.day-hero-overlay{position:absolute;inset:0;background:linear-gradient(0deg,var(--bg) 0%,rgba(10,10,20,.4) 40%,rgba(10,10,20,.2) 100%)}
-.day-hero-text{position:relative;z-index:2;padding:40px 24px;width:100%;max-width:900px;margin:0 auto}
-.day-hero-text .day-label{font-size:.8em;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px}
-.day-hero-text h2{font-size:clamp(1.8em,4vw,2.8em);font-weight:800;color:#fff;line-height:1.2}
-.day-hero-text .day-desc{color:rgba(255,255,255,.6);margin-top:8px;font-size:.95em}
-.d1-color{color:var(--blue)}.d2-color{color:var(--green)}.d3-color{color:var(--purple)}.d4-color{color:var(--orange)}.d5-color{color:var(--red)}
-
-/* Timeline */
-.timeline{max-width:800px;margin:0 auto;padding:0 24px;position:relative}
-.timeline::before{content:'';position:absolute;left:35px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--border),transparent)}
-@media(min-width:768px){.timeline::before{left:50%;transform:translateX(-1px)}}
-
-/* Timeline Item */
-.tl-item{position:relative;padding:24px 0 24px 60px;opacity:0;transform:translateY(30px);transition:all .6s cubic-bezier(.16,1,.3,1)}
-.tl-item.visible{opacity:1;transform:translateY(0)}
-.tl-dot{position:absolute;left:28px;top:32px;width:16px;height:16px;border-radius:50%;border:3px solid var(--border);background:var(--bg);z-index:2;transition:all .3s}
-.tl-item.visible .tl-dot{border-color:var(--blue);box-shadow:0 0 12px rgba(96,165,250,.3)}
-.tl-time{font-size:.75em;font-weight:700;color:#666;margin-bottom:6px;letter-spacing:.05em}
-.tl-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:transform .3s,box-shadow .3s}
-.tl-card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3)}
-.tl-card-body{padding:20px}
-.tl-card h3{font-size:1.1em;color:#fff;margin-bottom:6px}
-.tl-card .desc{font-size:.85em;color:#999;margin-bottom:12px}
-.tl-card .detail{font-size:.83em;color:#bbb;background:rgba(255,255,255,.03);padding:14px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.05);line-height:1.8}
-.tl-card .detail b{color:#e0e0e0}
-.hi{color:var(--blue)}.mi{color:var(--orange)}.pr{color:var(--gold)}.c{color:var(--gold);font-weight:600}
-
-/* Image in card */
-.tl-img{width:100%;height:220px;object-fit:cover;display:block}
-.tl-img-wrap{position:relative;overflow:hidden}
-.tl-img-wrap .img-cap{position:absolute;bottom:0;left:0;right:0;padding:8px 16px;background:linear-gradient(transparent,rgba(0,0,0,.8));font-size:.72em;color:#aaa}
-
-/* Transport */
-.transport{display:flex;align-items:center;gap:10px;padding:12px 20px;background:rgba(110,231,183,.05);border-top:1px solid var(--border);font-size:.82em;color:#6ee7b7;flex-wrap:wrap}
-.transport .ic{font-size:1.2em;min-width:24px;text-align:center}
-.transport .dt{color:#666;margin-left:auto}
-
-/* Tip */
-.tip-box{background:rgba(59,130,246,.08);border-left:3px solid var(--blue);padding:12px 20px;font-size:.83em;color:#93c5fd;border-top:1px solid var(--border)}
-
-/* Budget & Hotel */
-.info-section{max-width:800px;margin:40px auto;padding:0 24px}
-.info-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px}
-.info-card h3{font-size:1.1em;margin-bottom:16px}
-.budget-row{display:flex;justify-content:space-between;padding:8px 0;font-size:.88em;border-bottom:1px solid var(--border)}
-.budget-row:last-child{border:none;font-weight:700;color:var(--gold);padding-top:12px;font-size:.95em}
-.hotel-list{list-style:none}
-.hotel-list li{padding:8px 0;font-size:.88em;border-bottom:1px solid var(--border)}
-.hotel-list li:last-child{border:none}
-.hotel-list li::before{content:'🏨 '}
-
-/* Footer */
-.footer{text-align:center;padding:60px 24px;color:#444;font-size:.8em}
-.footer .brand{font-size:1.2em;margin-bottom:8px;color:#666}
-
-/* Animations */
-@keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
-@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-10px)}}
-
-/* Responsive */
-@media(min-width:768px){
-  .tl-item{padding:24px 0 24px 60px}
-  .day-hero{height:70vh}
-  .tl-img{height:280px}
+:root{
+  --blue:#7dd3fc;--green:#6ee7b7;--purple:#c4b5fd;--orange:#fdba74;--red:#fca5a5;
+  --gold:#fcd34d;--bg:#050510;--card:rgba(255,255,255,.04);
+  --glass:rgba(255,255,255,.06);--glass-border:rgba(255,255,255,.1);
+  --text:#e2e8f0;--text-dim:#94a3b8;--text-bright:#f8fafc;
 }
-</style>
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{font-family:'Noto Sans TC','Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.8;overflow-x:hidden}
+::selection{background:rgba(125,211,252,.3);color:#fff}
+
+/* ===== HERO ===== */
+.hero{position:relative;height:100vh;min-height:700px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Nakasu_at_night.jpg/1280px-Nakasu_at_night.jpg') center/cover;filter:brightness(.3) saturate(1.2);transform:scale(1.15);animation:heroZoom 20s ease-in-out infinite alternate}
+@keyframes heroZoom{0%{transform:scale(1.15)}100%{transform:scale(1.05)}}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,5,16,.2) 0%,rgba(5,5,16,.6) 60%,var(--bg) 100%)}
+.hero-content{position:relative;z-index:2;text-align:center;padding:0 24px;max-width:800px}
+.hero-content h1{font-family:'Playfair Display',serif;font-size:clamp(3em,8vw,6em);font-weight:900;color:#fff;letter-spacing:-.03em;line-height:1;text-shadow:0 4px 60px rgba(0,0,0,.5)}
+.hero-content .sub{font-size:clamp(1em,2.5vw,1.3em);color:rgba(255,255,255,.5);margin-top:16px;font-weight:300;letter-spacing:.1em}
+.hero-content .meta{display:flex;gap:12px;justify-content:center;margin-top:32px;flex-wrap:wrap}
+.hero-content .tag{background:var(--glass);backdrop-filter:blur(20px);padding:10px 22px;border-radius:100px;font-size:.8em;color:rgba(255,255,255,.7);border:1px solid var(--glass-border);transition:all .3s}
+.hero-content .tag:hover{background:rgba(255,255,255,.12);color:#fff}
+.scroll-cue{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;color:rgba(255,255,255,.3);font-size:.75em;letter-spacing:.15em;text-transform:uppercase}
+.scroll-cue .line{width:1px;height:40px;background:linear-gradient(transparent,rgba(255,255,255,.4));animation:scrollPulse 2s ease-in-out infinite}
+@keyframes scrollPulse{0%,100%{opacity:.3;height:40px}50%{opacity:1;height:55px}}
+
+/* ===== NAV ===== */
+.day-nav{position:sticky;top:0;z-index:100;background:rgba(5,5,16,.7);backdrop-filter:blur(30px) saturate(1.5);border-bottom:1px solid rgba(255,255,255,.06);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.day-nav::-webkit-scrollbar{display:none}
+.nav-inner{display:flex;max-width:900px;margin:0 auto;min-width:max-content}
+.day-nav a{position:relative;padding:16px 20px;color:var(--text-dim);text-decoration:none;font-size:.8em;font-weight:500;white-space:nowrap;letter-spacing:.05em;transition:color .3s}
+.day-nav a::after{content:'';position:absolute;bottom:0;left:20px;right:20px;height:2px;background:var(--blue);transform:scaleX(0);transition:transform .3s}
+.day-nav a:hover{color:var(--text-bright)}
+.day-nav a.active{color:#fff}
+.day-nav a.active::after{transform:scaleX(1)}
+.day-nav a[data-day="2"].active::after{background:var(--green)}
+.day-nav a[data-day="3"].active::after{background:var(--purple)}
+.day-nav a[data-day="4"].active::after{background:var(--orange)}
+.day-nav a[data-day="5"].active::after{background:var(--red)}</style>
 </head>
 <body>
 
-<!-- Hero Landing -->
+<!-- Hero -->
 <section class="hero">
-<div class="hero-bg" style="background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Nakasu_at_night.jpg/1280px-Nakasu_at_night.jpg')"></div>
+<div class="hero-bg"></div>
 <div class="hero-overlay"></div>
 <div class="hero-content">
 <h1>福岡 5 日</h1>
-<div class="sub">博多・由布院・太宰府・柳川</div>
+<div class="sub">博多 · 由布院 · 太宰府 · 柳川</div>
 <div class="meta">
-<span>📅 2026/5/1 — 5/5</span>
-<span>👥 2 人</span>
-<span>✈️ CI116 / CI117</span>
+<span class="tag">📅 2026 / 5 / 1 — 5 / 5</span>
+<span class="tag">👥 2 人</span>
+<span class="tag">✈️ CI116 / CI117</span>
 </div>
 </div>
-<div class="scroll-hint">往下滑動<span class="arrow">↓</span></div>
+<div class="scroll-cue">SCROLL<div class="line"></div></div>
 </section>
 
-<!-- Day Navigation -->
+<!-- Nav -->
 <nav class="day-nav" id="dayNav">
-<div class="day-nav-inner">
-<a href="#day1" data-day="1">Day 1 ✈️ 抵達</a>
-<a href="#day2" data-day="2">Day 2 🏔️ 由布院</a>
-<a href="#day3" data-day="3">Day 3 ⛩️ 太宰府+柳川</a>
-<a href="#day4" data-day="4">Day 4 🏙️ 市區深度</a>
-<a href="#day5" data-day="5">Day 5 🛫 回程</a>
+<div class="nav-inner">
+<a href="#day1" data-day="1">DAY 1 · 抵達</a>
+<a href="#day2" data-day="2">DAY 2 · 由布院</a>
+<a href="#day3" data-day="3">DAY 3 · 太宰府</a>
+<a href="#day4" data-day="4">DAY 4 · 市區</a>
+<a href="#day5" data-day="5">DAY 5 · 回程</a>
 <a href="#budget" data-day="0">💰 預算</a>
 </div>
 </nav>
 
-<div class="warn-banner">⚠️ 5/1-5/5 正好是日本黃金週（4/29-5/6），景點擁擠，住宿和 JR 指定席建議盡早預訂！</div>
+<style>
+/* ===== ALERT ===== */
+.alert{max-width:800px;margin:32px auto;padding:16px 28px;background:linear-gradient(135deg,rgba(252,211,77,.08),rgba(252,211,77,.03));border:1px solid rgba(252,211,77,.15);border-radius:16px;font-size:.85em;color:var(--gold);text-align:center;backdrop-filter:blur(10px)}
+
+/* ===== DAY SECTION ===== */
+.day-section{padding-bottom:60px}
+.day-hero{position:relative;height:55vh;min-height:320px;display:flex;align-items:flex-end;overflow:hidden}
+.day-hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:brightness(.35) saturate(1.3);transition:transform 8s ease}
+.day-section:hover .day-hero-bg{transform:scale(1.03)}
+.day-hero-overlay{position:absolute;inset:0;background:linear-gradient(0deg,var(--bg) 0%,rgba(5,5,16,.3) 50%,rgba(5,5,16,.15) 100%)}
+.day-hero-text{position:relative;z-index:2;padding:0 24px 48px;width:100%;max-width:800px;margin:0 auto}
+.day-label{font-size:.7em;font-weight:700;letter-spacing:.2em;text-transform:uppercase;margin-bottom:8px;opacity:.8}
+.day-hero-text h2{font-family:'Playfair Display',serif;font-size:clamp(2em,5vw,3.2em);font-weight:900;color:#fff;line-height:1.15;letter-spacing:-.02em}
+.day-hero-text .day-desc{color:rgba(255,255,255,.45);margin-top:8px;font-size:.9em;font-weight:300}
+.d1{color:var(--blue)}.d2{color:var(--green)}.d3{color:var(--purple)}.d4{color:var(--orange)}.d5{color:var(--red)}
+
+/* ===== TIMELINE ===== */
+.timeline{max-width:800px;margin:0 auto;padding:0 24px;position:relative}
+.timeline::before{content:'';position:absolute;left:23px;top:0;bottom:0;width:1px;background:linear-gradient(180deg,var(--glass-border),transparent 95%)}
+
+/* ===== TIMELINE ITEM ===== */
+.tl-item{position:relative;padding:20px 0 20px 56px;opacity:0;transform:translateY(40px);transition:all .8s cubic-bezier(.22,1,.36,1)}
+.tl-item.visible{opacity:1;transform:translateY(0)}
+.tl-dot{position:absolute;left:16px;top:28px;width:15px;height:15px;border-radius:50%;background:var(--bg);border:2px solid rgba(255,255,255,.15);z-index:2;transition:all .5s}
+.tl-item.visible .tl-dot{border-color:var(--blue);box-shadow:0 0 20px rgba(125,211,252,.25)}
+.tl-time{font-size:.7em;font-weight:700;color:var(--text-dim);letter-spacing:.1em;margin-bottom:8px}
+
+/* ===== GLASS CARD ===== */
+.card{background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;overflow:hidden;backdrop-filter:blur(12px);transition:transform .4s cubic-bezier(.22,1,.36,1),box-shadow .4s,border-color .4s}
+.card:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.4);border-color:rgba(255,255,255,.15)}
+.card-body{padding:24px}
+.card h3{font-size:1.05em;color:var(--text-bright);margin-bottom:8px;font-weight:700}
+.card .desc{font-size:.82em;color:var(--text-dim);margin-bottom:12px}
+.card .detail{font-size:.82em;color:var(--text);background:rgba(0,0,0,.2);padding:16px 18px;border-radius:14px;line-height:1.9;border:1px solid rgba(255,255,255,.04)}
+.card .detail b{color:var(--text-bright)}
+.hi{color:var(--blue)}.mi{color:var(--orange)}.pr{color:var(--gold);font-weight:600}
+
+/* ===== IMAGE ===== */
+.card-img{width:100%;height:240px;object-fit:cover;display:block;transition:transform .6s}
+.card:hover .card-img{transform:scale(1.03)}
+.img-wrap{position:relative;overflow:hidden}
+.img-cap{position:absolute;bottom:0;left:0;right:0;padding:10px 18px;background:linear-gradient(transparent,rgba(0,0,0,.85));font-size:.7em;color:rgba(255,255,255,.5)}
+
+/* ===== TRANSPORT ===== */
+.transport{display:flex;align-items:center;gap:10px;padding:12px 24px;font-size:.8em;color:var(--green);border-top:1px solid rgba(255,255,255,.04);flex-wrap:wrap}
+.transport .ic{font-size:1.1em;min-width:22px;text-align:center}
+.transport .cost{color:var(--gold);margin-left:auto;font-weight:600}
+
+/* ===== TIP ===== */
+.tip{padding:14px 24px;font-size:.8em;color:var(--blue);border-top:1px solid rgba(255,255,255,.04);background:rgba(125,211,252,.04)}
+
+/* ===== INFO SECTION ===== */
+.info-section{max-width:800px;margin:40px auto;padding:0 24px}
+.info-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;padding:28px;margin-bottom:24px;backdrop-filter:blur(12px)}
+.info-card h3{font-size:1.05em;margin-bottom:20px;color:var(--text-bright)}
+.budget-row{display:flex;justify-content:space-between;padding:10px 0;font-size:.85em;border-bottom:1px solid rgba(255,255,255,.06)}
+.budget-row:last-child{border:none;font-weight:700;color:var(--gold);padding-top:14px;font-size:.95em}
+.hotel-list{list-style:none}
+.hotel-list li{padding:10px 0;font-size:.85em;border-bottom:1px solid rgba(255,255,255,.06)}
+.hotel-list li:last-child{border:none}
+.hotel-list li::before{content:'🏨 '}
+
+/* ===== FOOTER ===== */
+.footer{text-align:center;padding:80px 24px 40px;color:rgba(255,255,255,.2);font-size:.75em}
+.footer .brand{font-family:'Playfair Display',serif;font-size:1.4em;margin-bottom:8px;color:rgba(255,255,255,.3)}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeUp{from{opacity:0;transform:translateY(50px)}to{opacity:1;transform:translateY(0)}}
+.hero-content{animation:fadeUp 1.5s cubic-bezier(.22,1,.36,1)}
+
+/* ===== RESPONSIVE ===== */
+@media(min-width:768px){
+  .day-hero{height:65vh}
+  .card-img{height:300px}
+  .timeline::before{left:23px}
+}
+@media(max-width:480px){
+  .hero-content h1{font-size:2.8em}
+  .card-body{padding:18px}
+  .tag{font-size:.72em;padding:8px 14px}
+}
+</style>
+
+<div class="alert">⚠️ 5/1 — 5/5 正好是日本黃金週，景點擁擠，住宿和 JR 指定席建議盡早預訂</div>
 
 <!-- ==================== DAY 1 ==================== -->
 <section class="day-section" id="day1">
@@ -147,43 +169,42 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 <div class="day-hero-bg" style="background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Fukuoka_Airport_Domestic_Terminal.jpg/1280px-Fukuoka_Airport_Domestic_Terminal.jpg')"></div>
 <div class="day-hero-overlay"></div>
 <div class="day-hero-text">
-<div class="day-label d1-color">Day 1 — 5/1（五）</div>
+<div class="day-label d1">DAY 1 — 5/1（五）</div>
 <h2>抵達福岡</h2>
 <div class="day-desc">從桃園出發，傍晚抵達九州門戶，夜訪中洲屋台街</div>
 </div>
 </div>
-
 <div class="timeline">
+
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">16:25</div>
-<div class="tl-card"><div class="tl-card-body"><h3>桃園機場出發</h3><div class="desc">CI116 華航・飛行約 2.5 小時</div></div></div></div>
+<div class="card"><div class="card-body"><h3>✈️ 桃園機場出發</h3><div class="desc">CI116 華航 · 飛行約 2.5 小時</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">19:35</div>
-<div class="tl-card">
-<div class="tl-img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Fukuoka_Airport_Domestic_Terminal.jpg" target="_blank" rel="noopener"><img class="tl-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Fukuoka_Airport_Domestic_Terminal.jpg/960px-Fukuoka_Airport_Domestic_Terminal.jpg" alt="福岡機場" loading="lazy"></a><div class="img-cap">📷 福岡空港（Wikimedia Commons CC）</div></div>
-<div class="tl-card-body"><h3>抵達福岡機場</h3>
-<div class="detail">福岡機場是全日本離市中心最近的主要機場，從國內線航廈搭地鐵到博多站僅需 <b>5 分鐘、2 站</b>，堪稱日本最方便的空中門戶。國際線與國內線之間有免費接駁巴士，車程約 10 分鐘。<br><br><b>入境提醒：</b>黃金週入境人潮多，建議事先填好 Visit Japan Web（入境審查＋海關申報），可大幅縮短通關時間。</div></div>
-<div class="transport"><span class="ic">🚌</span><span>國際線 → 國內線航廈</span><span class="dt">免費接駁巴士・10 分鐘</span></div>
-<div class="transport"><span class="ic">🚇</span><span>福岡機場站 → 博多站</span><span class="dt">地鐵空港線 2 站・5 分鐘・<span class="c">¥260</span></span></div>
+<div class="card">
+<div class="img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Fukuoka_Airport_Domestic_Terminal.jpg" target="_blank" rel="noopener"><img class="card-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Fukuoka_Airport_Domestic_Terminal.jpg/960px-Fukuoka_Airport_Domestic_Terminal.jpg" alt="福岡機場" loading="lazy"></a><div class="img-cap">📷 福岡空港 · Wikimedia Commons CC</div></div>
+<div class="card-body"><h3>抵達福岡機場</h3>
+<div class="detail">福岡機場是全日本離市中心最近的主要機場，從國內線航廈搭地鐵到博多站僅需 <b>5 分鐘、2 站</b>，堪稱日本最方便的空中門戶。<br><br><b>入境提醒：</b>黃金週入境人潮多，建議事先填好 Visit Japan Web，可大幅縮短通關時間。</div></div>
+<div class="transport"><span class="ic">🚌</span>國際線 → 國內線航廈<span class="cost">免費接駁 · 10 分鐘</span></div>
+<div class="transport"><span class="ic">🚇</span>福岡機場站 → 博多站<span class="cost">地鐵 2 站 · ¥260</span></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">20:15</div>
-<div class="tl-card"><div class="tl-card-body"><h3>Check-in 飯店（博多站周邊）</h3>
-<div class="detail">建議選擇博多站筑紫口或博多口步行 5 分鐘內的飯店。放好行李後輕裝出發，步行前往中洲屋台街享用第一頓福岡美食。</div></div>
-<div class="transport"><span class="ic">🚶</span><span>博多站 → 中洲屋台</span><span class="dt">步行 15 分鐘 / 地鐵 1 站到中洲川端</span></div>
+<div class="card"><div class="card-body"><h3>🏨 Check-in 飯店</h3>
+<div class="detail">建議選擇博多站筑紫口或博多口步行 5 分鐘內的飯店。放好行李後輕裝出發。</div></div>
+<div class="transport"><span class="ic">🚶</span>博多站 → 中洲屋台<span class="cost">步行 15 分鐘</span></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">20:45</div>
-<div class="tl-card">
-<div class="tl-img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Nakasu_at_night.jpg" target="_blank" rel="noopener"><img class="tl-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Nakasu_at_night.jpg/960px-Nakasu_at_night.jpg" alt="中洲屋台" loading="lazy"></a><div class="img-cap">📷 中洲夜景 — 屋台街（Wikimedia Commons CC）</div></div>
-<div class="tl-card-body"><h3>🍜 晚餐：中洲屋台街</h3>
-<div class="detail">屋台（やたい）是福岡最具代表性的飲食文化，全市約有 100 多攤，其中<b>中洲地區沿著那珂川河畔</b>就聚集了約 20 攤，是規模最大、最熱鬧的屋台集中地。<br><br><b>必吃推薦：</b><br>🍜 <span class="mi">博多拉麵</span> — 濃郁豚骨白湯配極細直麵，記得喊「替え玉」加麵（<span class="pr">¥100-150</span>）。推薦：<b>長浜屋台 やまちゃん</b><br>🥟 <span class="mi">博多一口煎餃</span> — 皮薄餡多汁，沾柚子胡椒更對味（<span class="pr">¥500-600/份</span>）<br>🍢 <span class="mi">關東煮（おでん）</span> — 搭配日本酒最對味<br>🍖 <span class="mi">燒烤串（焼き鳥）</span> — 雞皮串是博多特色<br><br><b>屋台禮儀：</b>座位有限（通常 8-10 席），坐下後每人至少點一份餐點和一杯飲料。營業到凌晨 2 點左右。</div></div>
+<div class="card">
+<div class="img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Nakasu_at_night.jpg" target="_blank" rel="noopener"><img class="card-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Nakasu_at_night.jpg/960px-Nakasu_at_night.jpg" alt="中洲屋台" loading="lazy"></a><div class="img-cap">📷 中洲夜景 · Wikimedia Commons CC</div></div>
+<div class="card-body"><h3>🍜 晚餐：中洲屋台街</h3>
+<div class="detail">屋台是福岡最具代表性的飲食文化，中洲地區沿著那珂川河畔聚集了約 20 攤，是規模最大的屋台集中地。<br><br><span class="mi">🍜 博多拉麵</span> — 濃郁豚骨白湯配極細直麵，喊「替え玉」加麵（<span class="pr">¥100-150</span>）<br><span class="mi">🥟 博多一口煎餃</span> — 皮薄餡多汁，沾柚子胡椒更對味（<span class="pr">¥500-600</span>）<br><span class="mi">🍢 關東煮</span> — 搭配日本酒最對味<br><span class="mi">🍖 燒烤串</span> — 雞皮串是博多特色<br><br><b>屋台禮儀：</b>座位有限（8-10 席），坐下後每人至少點一份餐點和一杯飲料。營業到凌晨 2 點。</div></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">22:30</div>
-<div class="tl-card"><div class="tl-card-body"><h3>回飯店休息</h3></div></div></div>
-</div>
-</section>
+<div class="card"><div class="card-body"><h3>🌙 回飯店休息</h3></div></div></div>
 
+</div></section>
 
 <!-- ==================== DAY 2 ==================== -->
 <section class="day-section" id="day2">
@@ -191,61 +212,60 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 <div class="day-hero-bg" style="background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Yufuin_Kinrin_Lake_2.jpg/1280px-Yufuin_Kinrin_Lake_2.jpg')"></div>
 <div class="day-hero-overlay"></div>
 <div class="day-hero-text">
-<div class="day-label d2-color">Day 2 — 5/2（六）</div>
+<div class="day-label d2">DAY 2 — 5/2（六）</div>
 <h2>由布院溫泉散策</h2>
 <div class="day-desc">搭乘 JR 特急列車前往由布院，漫步湯之坪街道與金鱗湖</div>
 </div>
 </div>
-
 <div class="timeline">
+
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">07:30</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🍞 早餐：博多站周邊</h3>
-<div class="detail">推薦 <span class="mi">博多站 Deitos 地下街</span> 的早餐選擇豐富，從日式定食到西式咖啡都有。或到 <span class="mi">Ivorish 法式吐司專賣店</span>（天神）— 天神的人氣早午餐店，招牌法式吐司外酥內軟，搭配季節水果和鮮奶油（<span class="pr">¥1,300-1,800</span>）。從博多站搭地鐵到天神 5 分鐘。</div></div></div></div>
+<div class="card"><div class="card-body"><h3>🍞 早餐</h3>
+<div class="detail">推薦 <span class="mi">博多站 Deitos 地下街</span> 的早餐選擇豐富。或到 <span class="mi">Ivorish 法式吐司專賣店</span>（天神）— 招牌法式吐司外酥內軟，搭配季節水果和鮮奶油（<span class="pr">¥1,300-1,800</span>）。</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">08:24</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🚂 JR 特急「由布院之森」</h3>
-<div class="detail">「由布院之森」是 JR 九州最具人氣的觀光列車之一，全車為歐風木質內裝，大面觀景窗讓沿途田園風光一覽無遺。車上設有販賣部，可購買限定便當和甜點。<br><br><b>⚠️ 黃金週注意：</b>全車指定席，建議出發前 1 個月在 JR 九州官網預訂。若搶不到，可搭一般特急「由布」號，車程相同。<br><br>博多 → 由布院：約 <b>2 小時 15 分</b>，車資 <span class="pr">¥4,560</span>（指定席）</div></div>
-<div class="transport"><span class="ic">🚂</span><span>博多站 → 由布院站</span><span class="dt">JR 特急由布院之森・2h15m・<span class="c">¥4,560</span></span></div>
+<div class="card"><div class="card-body"><h3>🚂 JR 特急「由布院之森」</h3>
+<div class="detail">JR 九州最具人氣的觀光列車，全車歐風木質內裝，大面觀景窗。車上設有販賣部，可購買限定便當和甜點。<br><br><b>⚠️ 黃金週注意：</b>全車指定席，建議出發前 1 個月在 JR 九州官網預訂。若搶不到，可搭一般特急「由布」號。</div></div>
+<div class="transport"><span class="ic">🚂</span>博多站 → 由布院站<span class="cost">2h15m · ¥4,560</span></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">10:40</div>
-<div class="tl-card">
-<div class="tl-img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Yufuin_Kinrin_Lake_2.jpg" target="_blank" rel="noopener"><img class="tl-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Yufuin_Kinrin_Lake_2.jpg/960px-Yufuin_Kinrin_Lake_2.jpg" alt="金鱗湖" loading="lazy"></a><div class="img-cap">📷 金鱗湖（Wikimedia Commons CC）</div></div>
-<div class="tl-card-body"><h3>🏞️ 金鱗湖</h3>
-<div class="detail">金鱗湖是由布院的象徵性景點，湖底同時湧出溫泉水和清水，因此清晨時湖面會升起夢幻般的薄霧。湖名源自明治時代儒學者毛利空桑，他在夕陽下看到魚鱗閃耀金光而命名。<br><br><span class="hi">🔹 必看重點：</span>清晨霧氣（6:30-8:00 最美）、湖畔散步道、下ん湯共同浴場（<span class="pr">¥200</span>）<br><span class="hi">🔹 周邊推薦：</span>Marc Chagall 由布院金鱗湖美術館、Cafe La Ruche 湖畔咖啡</div></div>
+<div class="card">
+<div class="img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Yufuin_Kinrin_Lake_2.jpg" target="_blank" rel="noopener"><img class="card-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Yufuin_Kinrin_Lake_2.jpg/960px-Yufuin_Kinrin_Lake_2.jpg" alt="金鱗湖" loading="lazy"></a><div class="img-cap">📷 金鱗湖 · Wikimedia Commons CC</div></div>
+<div class="card-body"><h3>🏞️ 金鱗湖</h3>
+<div class="detail">由布院的象徵性景點，湖底同時湧出溫泉水和清水，清晨時湖面會升起夢幻般的薄霧。<br><br><span class="hi">🔹 必看：</span>清晨霧氣（6:30-8:00 最美）、湖畔散步道、下ん湯共同浴場（<span class="pr">¥200</span>）<br><span class="hi">🔹 周邊：</span>Marc Chagall 美術館、Cafe La Ruche 湖畔咖啡</div></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">11:30</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🛍️ 湯之坪街道散策</h3>
-<div class="detail">從由布院車站到金鱗湖之間約 1.5 公里的「湯之坪街道」，是由布院最熱鬧的散步路線。兩旁林立著雜貨店、甜點店、美術館和咖啡廳。<br><br><span class="mi">🍦 B-speak 瑞士捲</span> — 由布院最有名的甜點，每日限量，建議早上先預約（<span class="pr">¥1,420/條</span>）<br><span class="mi">🧀 由布院 Milch</span> — 現烤半熟起司蛋糕，外酥內軟超濃郁（<span class="pr">¥200/個</span>）<br><span class="mi">🍡 由布院花麴菊家</span> — 貓咪造型饅頭，可愛到捨不得吃<br><span class="mi">🍩 由布院 Nicol</span> — 手工甜甜圈，口味多樣</div></div></div></div>
+<div class="card"><div class="card-body"><h3>🛍️ 湯之坪街道散策</h3>
+<div class="detail">從車站到金鱗湖約 1.5 公里的散步路線，兩旁林立雜貨店、甜點店和咖啡廳。<br><br><span class="mi">🍰 B-speak 瑞士捲</span> — 每日限量，建議早上先預約（<span class="pr">¥1,420/條</span>）<br><span class="mi">🧀 由布院 Milch</span> — 現烤半熟起司蛋糕（<span class="pr">¥200/個</span>）<br><span class="mi">🍡 花麴菊家</span> — 貓咪造型饅頭<br><span class="mi">🍩 由布院 Nicol</span> — 手工甜甜圈</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">12:30</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🍽️ 午餐：由布院美食</h3>
-<div class="detail">推薦 <span class="mi">由布まぶし 心</span> — 由布院名物「地雞まぶし」，先吃原味、再加蔥花山葵、最後加高湯做茶泡飯，三種吃法一次滿足（<span class="pr">¥1,980</span>）。<br><br>或選擇 <span class="mi">湯之岳庵</span> — 由布院御三家之一「山莊無量塔」旗下餐廳，蕎麥麵和豐後牛都是招牌。</div></div></div></div>
+<div class="card"><div class="card-body"><h3>🍽️ 午餐</h3>
+<div class="detail"><span class="mi">由布まぶし 心</span> — 名物「地雞まぶし」，先吃原味、再加蔥花山葵、最後加高湯做茶泡飯，三種吃法（<span class="pr">¥1,980</span>）。<br>或 <span class="mi">湯之岳庵</span> — 山莊無量塔旗下餐廳，蕎麥麵和豐後牛都是招牌。</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">14:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>♨️ 由布院溫泉體驗</h3>
-<div class="detail">由布院是九州數一數二的溫泉鄉，泉質以單純溫泉為主，對皮膚溫和。許多旅館提供日歸溫泉（不住宿也能泡湯）。<br><br><span class="hi">🔹 推薦日歸溫泉：</span><br>• <b>由布院 山水館</b> — 露天風呂可眺望由布岳（<span class="pr">¥800</span>）<br>• <b>庄屋の館</b> — 罕見的藍色溫泉，含硫磺成分（<span class="pr">¥700</span>）<br>• <b>下ん湯</b> — 金鱗湖畔的茅草屋共同浴場，混浴（<span class="pr">¥200</span>）</div></div>
-<div class="tip-box">💡 日歸溫泉通常到 15:00-16:00 截止入場，建議提早前往。自備毛巾或現場購買（¥200-300）。</div>
+<div class="card"><div class="card-body"><h3>♨️ 由布院溫泉體驗</h3>
+<div class="detail">泉質以單純溫泉為主，對皮膚溫和。<br><br><span class="hi">🔹 推薦日歸溫泉：</span><br>• <b>由布院 山水館</b> — 露天風呂可眺望由布岳（<span class="pr">¥800</span>）<br>• <b>庄屋の館</b> — 罕見藍色溫泉（<span class="pr">¥700</span>）<br>• <b>下ん湯</b> — 金鱗湖畔茅草屋共同浴場（<span class="pr">¥200</span>）</div></div>
+<div class="tip">💡 日歸溫泉通常到 15:00-16:00 截止入場，建議提早前往。</div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">16:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🚂 返回博多</h3>
-<div class="detail">搭乘 JR 特急返回博多，車程約 2 小時 15 分。建議在車站買些由布院限定伴手禮。</div></div>
-<div class="transport"><span class="ic">🚂</span><span>由布院站 → 博多站</span><span class="dt">JR 特急・2h15m・<span class="c">¥4,560</span></span></div>
+<div class="card"><div class="card-body"><h3>🚂 返回博多</h3></div>
+<div class="transport"><span class="ic">🚂</span>由布院站 → 博多站<span class="cost">JR 特急 · 2h15m · ¥4,560</span></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">18:30</div>
-<div class="tl-card">
-<div class="tl-img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Motsunabe.jpg" target="_blank" rel="noopener"><img class="tl-img" src="https://upload.wikimedia.org/wikipedia/commons/6/61/Motsunabe.jpg" alt="牛腸鍋" loading="lazy"></a><div class="img-cap">📷 博多牛腸鍋（Wikimedia Commons CC）</div></div>
-<div class="tl-card-body"><h3>🍲 晚餐：博多牛腸鍋</h3>
-<div class="detail">牛腸鍋（もつ鍋）是博多三大美食之一，以新鮮牛腸搭配大量韭菜和高麗菜，用醬油或味噌湯底燉煮。口感Q彈鮮甜，膠原蛋白滿滿。<br><br><span class="mi">🍲 推薦名店：</span><br>• <b>もつ鍋 楽天地</b> — 博多老字號，醬油味噌都好吃（<span class="pr">¥1,500/人</span>）<br>• <b>もつ鍋 おおやま</b> — 味噌湯底濃郁，博多站 KITTE 有分店<br>• <b>博多もつ鍋 やま中</b> — 清湯系代表，湯頭清爽<br><br>最後加麵（ちゃんぽん麺）收尾是正統吃法！</div></div>
+<div class="card">
+<div class="img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Motsunabe.jpg" target="_blank" rel="noopener"><img class="card-img" src="https://upload.wikimedia.org/wikipedia/commons/6/61/Motsunabe.jpg" alt="牛腸鍋" loading="lazy"></a><div class="img-cap">📷 博多牛腸鍋 · Wikimedia Commons CC</div></div>
+<div class="card-body"><h3>🍲 晚餐：博多牛腸鍋</h3>
+<div class="detail">博多三大美食之一，新鮮牛腸搭配大量韭菜和高麗菜，口感 Q 彈鮮甜。<br><br>• <b>もつ鍋 楽天地</b> — 老字號（<span class="pr">¥1,500/人</span>）<br>• <b>もつ鍋 おおやま</b> — 味噌湯底濃郁，博多站 KITTE 有分店<br>• <b>もつ鍋 やま中</b> — 清湯系代表<br><br>最後加麵（ちゃんぽん麺）收尾是正統吃法！</div></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">21:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>回飯店休息</h3></div></div></div>
-</div>
-</section>
+<div class="card"><div class="card-body"><h3>🌙 回飯店休息</h3></div></div></div>
+
+</div></section>
 
 <!-- ==================== DAY 3 ==================== -->
 <section class="day-section" id="day3">
@@ -253,61 +273,60 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 <div class="day-hero-bg" style="background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Dazaifu_Tenmangu_-_panoramio.jpg/1280px-Dazaifu_Tenmangu_-_panoramio.jpg')"></div>
 <div class="day-hero-overlay"></div>
 <div class="day-hero-text">
-<div class="day-label d3-color">Day 3 — 5/3（日）</div>
-<h2>太宰府 & 柳川</h2>
-<div class="day-desc">學問之神天滿宮、星巴克隈研吾設計、柳川遊船賞水鄉</div>
+<div class="day-label d3">DAY 3 — 5/3（日）</div>
+<h2>太宰府 &amp; 柳川</h2>
+<div class="day-desc">學問之神天滿宮、隈研吾星巴克、柳川遊船賞水鄉</div>
 </div>
 </div>
-
 <div class="timeline">
+
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">08:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🍳 早餐後出發</h3>
-<div class="detail">從博多站搭西鐵電車前往太宰府。建議購買 <b>太宰府散策套票</b>（含西鐵來回車票＋梅枝餅兌換券），比單買划算。</div></div>
-<div class="transport"><span class="ic">🚃</span><span>西鐵福岡（天神）→ 西鐵二日市 → 太宰府</span><span class="dt">約 40 分鐘・<span class="c">¥410</span></span></div>
+<div class="card"><div class="card-body"><h3>🍳 早餐後出發</h3>
+<div class="detail">建議購買 <b>太宰府散策套票</b>（含西鐵來回車票＋梅枝餅兌換券）。</div></div>
+<div class="transport"><span class="ic">🚃</span>西鐵福岡（天神）→ 太宰府<span class="cost">約 40 分鐘 · ¥410</span></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">09:00</div>
-<div class="tl-card">
-<div class="tl-img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Dazaifu_Tenmangu_-_panoramio.jpg" target="_blank" rel="noopener"><img class="tl-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Dazaifu_Tenmangu_-_panoramio.jpg/960px-Dazaifu_Tenmangu_-_panoramio.jpg" alt="太宰府天滿宮" loading="lazy"></a><div class="img-cap">📷 太宰府天滿宮（Wikimedia Commons CC）</div></div>
-<div class="tl-card-body"><h3>⛩️ 太宰府天滿宮</h3>
-<div class="detail">太宰府天滿宮供奉「學問之神」菅原道真，是全日本 12,000 座天滿宮的總本社。每年有超過 1,000 萬人參拜，是九州最多參拜者的神社。<br><br><span class="hi">🔹 必看重點：</span><br>• <b>御本殿</b> — 國家重要文化財，桃山時代建築<br>• <b>飛梅傳說</b> — 道真被流放時，梅樹追隨主人從京都飛到太宰府<br>• <b>御神牛</b> — 摸牛頭可以變聰明，考試前必摸<br>• <b>心字池＆太鼓橋</b> — 三座橋代表過去、現在、未來<br><br><span class="mi">🍡 參道必吃：梅枝餅（梅ヶ枝餅）</span> — 紅豆餡烤餅，外酥內軟，太宰府名物（<span class="pr">¥130/個</span>）。推薦「かさの家」，排隊也值得。</div></div>
-<div class="tip-box">💡 參拜免費。寶物殿 ¥500。御守（學業成就）¥1,000 是最受歡迎的伴手禮。</div>
+<div class="card">
+<div class="img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Dazaifu_Tenmangu_-_panoramio.jpg" target="_blank" rel="noopener"><img class="card-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Dazaifu_Tenmangu_-_panoramio.jpg/960px-Dazaifu_Tenmangu_-_panoramio.jpg" alt="太宰府天滿宮" loading="lazy"></a><div class="img-cap">📷 太宰府天滿宮 · Wikimedia Commons CC</div></div>
+<div class="card-body"><h3>⛩️ 太宰府天滿宮</h3>
+<div class="detail">供奉「學問之神」菅原道真，全日本 12,000 座天滿宮的總本社，每年超過 1,000 萬人參拜。<br><br><span class="hi">🔹 必看：</span>御本殿（國家重要文化財）、飛梅傳說、御神牛（摸牛頭變聰明）、心字池太鼓橋<br><br><span class="mi">🍡 梅枝餅</span> — 紅豆餡烤餅，太宰府名物（<span class="pr">¥130/個</span>）。推薦「かさの家」。</div></div>
+<div class="tip">💡 參拜免費。寶物殿 ¥500。學業成就御守 ¥1,000。</div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">10:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>☕ 星巴克太宰府天滿宮表參道店</h3>
-<div class="detail">由建築大師<b>隈研吾</b>設計，以 2,000 根杉木條交織出獨特的木編結構，是全球最美星巴克之一。店內延續木質溫暖感，與太宰府的歷史氛圍完美融合。<br><br>即使不喝咖啡也值得進去拍照。限定商品：太宰府限定馬克杯和隨行杯。</div></div></div></div>
+<div class="card"><div class="card-body"><h3>☕ 星巴克太宰府表參道店</h3>
+<div class="detail"><b>隈研吾</b>設計，2,000 根杉木條交織的木編結構，全球最美星巴克之一。限定商品：太宰府馬克杯和隨行杯。</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">10:30</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🏛️ 九州國立博物館</h3>
-<div class="detail">日本四大國立博物館之一，從太宰府天滿宮後方的彩虹隧道步行 5 分鐘即達。建築由菊竹清訓設計，曲面玻璃帷幕映照周圍山林，本身就是藝術品。<br><br>常設展以「日本文化的形成」為主題，展示亞洲交流史。門票 <span class="pr">¥700</span>，高中生以下免費。</div></div>
-<div class="transport"><span class="ic">🚃</span><span>太宰府 → 西鐵柳川</span><span class="dt">西鐵特急・約 50 分鐘・<span class="c">¥850</span></span></div>
+<div class="card"><div class="card-body"><h3>🏛️ 九州國立博物館</h3>
+<div class="detail">日本四大國立博物館之一，菊竹清訓設計的曲面玻璃帷幕建築。常設展以「日本文化的形成」為主題。門票 <span class="pr">¥700</span>。</div></div>
+<div class="transport"><span class="ic">🚃</span>太宰府 → 西鐵柳川<span class="cost">西鐵特急 · 50 分鐘 · ¥850</span></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">12:30</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🍽️ 午餐：柳川鰻魚飯</h3>
-<div class="detail">柳川是鰻魚的故鄉，<span class="mi">蒸籠鰻魚飯（せいろ蒸し）</span>是柳川獨有的吃法 — 將蒲燒鰻魚鋪在飯上，再放入蒸籠蒸到醬汁完全滲透，每一口飯都是鰻魚香。<br><br>推薦 <b>元祖本吉屋</b>（創業 1681 年）或 <b>若松屋</b>，價格約 <span class="pr">¥2,500-4,000</span>。黃金週排隊 30-60 分鐘是正常的。</div></div></div></div>
+<div class="card"><div class="card-body"><h3>🍽️ 午餐：柳川鰻魚飯</h3>
+<div class="detail"><span class="mi">蒸籠鰻魚飯（せいろ蒸し）</span>是柳川獨有吃法 — 蒲燒鰻魚鋪在飯上蒸到醬汁完全滲透。<br><br>推薦 <b>元祖本吉屋</b>（創業 1681 年）或 <b>若松屋</b>（<span class="pr">¥2,500-4,000</span>）。</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">14:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🛶 柳川遊船（川下り）</h3>
-<div class="detail">柳川是日本少數保留完整水路的城下町，搭乘小船沿著護城河悠遊，全程約 70 分鐘、4.5 公里。船夫一邊撐篙一邊唱民謠，穿越柳樹垂蔭的水道和紅磚倉庫群。<br><br><span class="hi">🔹 必看重點：</span><br>• 水上商店 — 船上就能買冰淇淋和飲料<br>• 紅磚並倉 — 明治時代的倉庫群<br>• 柳樹隧道 — 最佳拍照點<br><br>費用 <span class="pr">¥1,650-1,800/人</span>，松月乘船場出發。建議提前預約。</div></div>
-<div class="tip-box">💡 遊船終點「沖端」離柳川站較遠，可搭接駁巴士回車站（¥100），或步行 15 分鐘到御花（柳川藩主別邸）參觀。</div>
+<div class="card"><div class="card-body"><h3>🛶 柳川遊船（川下り）</h3>
+<div class="detail">沿護城河悠遊，全程約 70 分鐘、4.5 公里。船夫一邊撐篙一邊唱民謠。<br><br><span class="hi">🔹 必看：</span>水上商店、紅磚並倉、柳樹隧道<br>費用 <span class="pr">¥1,650-1,800/人</span>，建議提前預約。</div></div>
+<div class="tip">💡 遊船終點「沖端」可搭接駁巴士回車站（¥100）。</div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">16:30</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🚃 返回博多</h3>
-<div class="detail">從西鐵柳川站搭特急回天神，再轉地鐵回博多。</div></div>
-<div class="transport"><span class="ic">🚃</span><span>西鐵柳川 → 西鐵福岡（天神）</span><span class="dt">西鐵特急・約 50 分鐘・<span class="c">¥850</span></span></div>
+<div class="card"><div class="card-body"><h3>🚃 返回博多</h3></div>
+<div class="transport"><span class="ic">🚃</span>西鐵柳川 → 天神<span class="cost">西鐵特急 · 50 分鐘 · ¥850</span></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">18:30</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🍗 晚餐：博多水炊雞鍋</h3>
-<div class="detail">水炊き是博多三大鍋物之一（另兩個是牛腸鍋和明太子鍋），用雞骨熬煮 8 小時以上的白濁湯底，先喝湯、再吃雞肉蔬菜，最後煮雜炊收尾。<br><br><span class="mi">🍲 推薦名店：</span><br>• <b>水炊き 長野</b> — 博多水炊き老字號，需預約（<span class="pr">¥4,000-5,000/人</span>）<br>• <b>博多華味鳥</b> — 連鎖但品質穩定，博多站有分店（<span class="pr">¥3,500/人</span>）<br>• <b>とり田</b> — 年輕人氣店，湯頭濃郁</div></div></div></div>
+<div class="card"><div class="card-body"><h3>🍗 晚餐：博多水炊雞鍋</h3>
+<div class="detail">博多三大鍋物之一，雞骨熬煮 8 小時以上的白濁湯底，先喝湯、再吃雞肉蔬菜，最後煮雜炊收尾。<br><br>• <b>水炊き 長野</b> — 老字號，需預約（<span class="pr">¥4,000-5,000/人</span>）<br>• <b>博多華味鳥</b> — 品質穩定，博多站有分店（<span class="pr">¥3,500/人</span>）<br>• <b>とり田</b> — 年輕人氣店</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">21:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>回飯店休息</h3></div></div></div>
-</div>
-</section>
+<div class="card"><div class="card-body"><h3>🌙 回飯店休息</h3></div></div></div>
+
+</div></section>
 
 <!-- ==================== DAY 4 ==================== -->
 <section class="day-section" id="day4">
@@ -315,57 +334,57 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 <div class="day-hero-bg" style="background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Canal_City_Hakata_2011.jpg/1280px-Canal_City_Hakata_2011.jpg')"></div>
 <div class="day-hero-overlay"></div>
 <div class="day-hero-text">
-<div class="day-label d4-color">Day 4 — 5/4（一）</div>
+<div class="day-label d4">DAY 4 — 5/4（一）</div>
 <h2>福岡市區深度遊</h2>
 <div class="day-desc">櫛田神社、Canal City、天神地下街、福岡塔夜景</div>
 </div>
 </div>
-
 <div class="timeline">
+
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">08:30</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🍳 早餐後出發</h3>
-<div class="detail">今天是市區深度遊，景點都在地鐵沿線，輕鬆步行即可。建議購買福岡市地鐵一日券（<span class="pr">¥640</span>），無限次搭乘。</div></div></div></div>
+<div class="card"><div class="card-body"><h3>🍳 早餐後出發</h3>
+<div class="detail">今天市區深度遊，建議購買福岡市地鐵一日券（<span class="pr">¥640</span>）。</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">09:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>⛩️ 櫛田神社</h3>
-<div class="detail">櫛田神社是博多的總鎮守，有超過 757 年歷史，是每年 7 月「博多祇園山笠」祭典的起終點。境內常年展示一座高達 13 公尺的「飾り山笠」，氣勢磅礴。<br><br><span class="hi">🔹 必看重點：</span><br>• <b>飾り山笠</b> — 常設展示的巨大山車<br>• <b>博多歷史館</b> — 展示博多織和山笠文化<br>• <b>靈泉鶴之井</b> — 傳說喝了可以延年益壽<br>• <b>大銀杏</b> — 樹齡千年的神木<br><br>參拜免費，博多歷史館 <span class="pr">¥300</span>。</div></div>
-<div class="transport"><span class="ic">🚶</span><span>櫛田神社 → Canal City Hakata</span><span class="dt">步行 5 分鐘</span></div>
+<div class="card"><div class="card-body"><h3>⛩️ 櫛田神社</h3>
+<div class="detail">博多總鎮守，757 年歷史，博多祇園山笠祭典的起終點。<br><br><span class="hi">🔹 必看：</span>飾り山笠（13 公尺巨大山車）、博多歷史館、靈泉鶴之井、千年大銀杏<br>參拜免費，歷史館 <span class="pr">¥300</span>。</div></div>
+<div class="transport"><span class="ic">🚶</span>櫛田神社 → Canal City<span class="cost">步行 5 分鐘</span></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">10:00</div>
-<div class="tl-card">
-<div class="tl-img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Canal_City_Hakata_2011.jpg" target="_blank" rel="noopener"><img class="tl-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Canal_City_Hakata_2011.jpg/960px-Canal_City_Hakata_2011.jpg" alt="Canal City Hakata" loading="lazy"></a><div class="img-cap">📷 Canal City Hakata（Wikimedia Commons CC）</div></div>
-<div class="tl-card-body"><h3>🏙️ Canal City Hakata</h3>
-<div class="detail">Canal City 是福岡最大的複合式商業設施，由美國建築師 Jon Jerde 設計，以運河為中心的半月形建築群非常壯觀。每天有多場噴水秀。<br><br><span class="hi">🔹 人氣店鋪：</span><br>• <b>Jump Shop</b> — 集英社官方商店，海賊王、鬼滅之刃周邊<br>• <b>Disney Store</b> — 迪士尼官方商店<br>• <b>GASHAPON 扭蛋專賣店</b> — 超過 300 台扭蛋機<br>• <b>Moomin Bakery &amp; Café</b> — 嚕嚕米主題咖啡廳<br>• <b>UNIQLO / 無印良品</b> — 日本價格比台灣便宜 2-3 成<br>• <b>ABC-Mart</b> — 球鞋控必逛<br><br><span class="mi">🍜 拉麵競技場（5F）</span> — 集合全日本 8 家人氣拉麵店，可以一次吃比較。</div></div>
+<div class="card">
+<div class="img-wrap"><a href="https://commons.wikimedia.org/wiki/File:Canal_City_Hakata_2011.jpg" target="_blank" rel="noopener"><img class="card-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Canal_City_Hakata_2011.jpg/960px-Canal_City_Hakata_2011.jpg" alt="Canal City Hakata" loading="lazy"></a><div class="img-cap">📷 Canal City Hakata · Wikimedia Commons CC</div></div>
+<div class="card-body"><h3>🏙️ Canal City Hakata</h3>
+<div class="detail">福岡最大複合商業設施，Jon Jerde 設計，運河為中心的半月形建築群。<br><br><span class="hi">🔹 人氣店鋪：</span>Jump Shop、Disney Store、GASHAPON 扭蛋專賣店（300+ 台）、Moomin Bakery &amp; Café、UNIQLO、無印良品、ABC-Mart<br><br><span class="mi">🍜 拉麵競技場（5F）</span> — 全日本 8 家人氣拉麵店。</div></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">12:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🍜 午餐：拉麵競技場 or 博多拉麵</h3>
-<div class="detail">Canal City 5F 的拉麵競技場有 8 家名店，或者到外面吃正宗博多拉麵。<br><br><span class="mi">推薦：</span><br>• <b>一蘭拉麵 本社總本店</b> — 就在 Canal City 旁，有「味集中カウンター」獨立座位（<span class="pr">¥980</span>）<br>• <b>一風堂 本店</b> — 大名地區，白丸元味和赤丸新味都是經典（<span class="pr">¥890</span>）<br>• <b>ShinShin</b> — 在地人最愛，湯頭比一蘭清爽（<span class="pr">¥750</span>）</div></div></div></div>
+<div class="card"><div class="card-body"><h3>🍜 午餐：博多拉麵</h3>
+<div class="detail">• <b>一蘭拉麵 本社總本店</b> — Canal City 旁，味集中カウンター（<span class="pr">¥980</span>）<br>• <b>一風堂 本店</b> — 大名地區，白丸元味和赤丸新味（<span class="pr">¥890</span>）<br>• <b>ShinShin</b> — 在地人最愛，湯頭清爽（<span class="pr">¥750</span>）</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">13:30</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🛍️ 天神地下街</h3>
-<div class="detail">天神地下街全長 590 公尺，是九州最大的地下商店街，歐風磚造拱頂設計讓人彷彿置身歐洲。超過 150 間店鋪，從服飾、雜貨到美食應有盡有。<br><br><span class="hi">🔹 推薦逛：</span><br>• 藥妝店（大國藥妝、松本清）— 比台灣便宜很多<br>• 福岡限定伴手禮店<br>• 地下街直通天神 PARCO、大丸百貨、三越百貨<br><br>下雨天的最佳行程，冷氣開放很舒適。</div></div></div></div>
+<div class="card"><div class="card-body"><h3>🛍️ 天神地下街</h3>
+<div class="detail">九州最大地下商店街，590 公尺，歐風磚造拱頂，150+ 間店鋪。直通天神 PARCO、大丸、三越百貨。藥妝店比台灣便宜很多。</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">15:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🌳 大濠公園 & 福岡城跡</h3>
-<div class="detail">大濠公園是福岡市民的綠洲，環湖步道一圈約 2 公里，可以租天鵝船遊湖（<span class="pr">¥1,000/30分</span>）。旁邊的舞鶴公園是福岡城遺址，天守台可以眺望市區全景。<br><br>園內的日本庭園（<span class="pr">¥250</span>）值得一看，枯山水和茶室很有禪意。Starbucks 大濠公園店也是人氣打卡點。</div></div>
-<div class="transport"><span class="ic">🚇</span><span>大濠公園站 → 西新站</span><span class="dt">地鐵 1 站・<span class="c">¥210</span></span></div>
+<div class="card"><div class="card-body"><h3>🌳 大濠公園 &amp; 福岡城跡</h3>
+<div class="detail">福岡市民的綠洲，環湖步道一圈約 2 公里。天鵝船（<span class="pr">¥1,000/30分</span>）、日本庭園（<span class="pr">¥250</span>）、Starbucks 大濠公園店。</div></div>
+<div class="transport"><span class="ic">🚇</span>大濠公園站 → 西新站<span class="cost">地鐵 1 站 · ¥210</span></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">17:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🏖️ 百道海濱公園 & 福岡塔</h3>
-<div class="detail">百道海濱公園有人工沙灘和海濱步道，傍晚散步看夕陽很浪漫。福岡塔高 234 公尺，是日本最高的海濱塔，展望台在 123 公尺處，360 度全景。<br><br>門票 <span class="pr">¥800</span>。夜景時段（日落後）最推薦，可以看到博多灣和市區燈火。</div></div></div></div>
+<div class="card"><div class="card-body"><h3>🏖️ 百道海濱公園 &amp; 福岡塔</h3>
+<div class="detail">福岡塔高 234 公尺，日本最高海濱塔，展望台 123 公尺處 360 度全景。夜景時段最推薦。門票 <span class="pr">¥800</span>。</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">19:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🍣 晚餐：長浜鮮魚市場 or 居酒屋</h3>
-<div class="detail">福岡靠近玄界灘，海鮮新鮮度一流。<br><br><span class="mi">🐟 推薦：</span><br>• <b>博多魚がし 市場会館店</b> — 長浜鮮魚市場內，壽司和海鮮丼超新鮮（<span class="pr">¥1,500-2,500</span>）<br>• <b>河太郎 中洲店</b> — 活烏賊料理，透明的呼子烏賊刺身（<span class="pr">¥3,000-4,000</span>）<br>• <b>博多炉端 魚男</b> — 爐端燒居酒屋，氣氛好食材新鮮</div></div></div></div>
+<div class="card"><div class="card-body"><h3>🍣 晚餐：海鮮</h3>
+<div class="detail">• <b>博多魚がし</b> — 長浜鮮魚市場內，壽司和海鮮丼（<span class="pr">¥1,500-2,500</span>）<br>• <b>河太郎 中洲店</b> — 活烏賊料理，透明呼子烏賊刺身（<span class="pr">¥3,000-4,000</span>）<br>• <b>博多炉端 魚男</b> — 爐端燒居酒屋</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">21:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>回飯店休息</h3>
-<div class="detail">明天是最後一天，記得整理行李，把要退稅的商品和一般商品分開打包。</div></div></div></div>
-</div>
-</section>
+<div class="card"><div class="card-body"><h3>🌙 回飯店休息</h3>
+<div class="detail">明天最後一天，記得整理行李，退稅商品和一般商品分開打包。</div></div></div></div>
+
+</div></section>div>
 
 <!-- ==================== DAY 5 ==================== -->
 <section class="day-section" id="day5">
@@ -373,37 +392,37 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 <div class="day-hero-bg" style="background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Fukuoka_Airport_Domestic_Terminal.jpg/1280px-Fukuoka_Airport_Domestic_Terminal.jpg')"></div>
 <div class="day-hero-overlay"></div>
 <div class="day-hero-text">
-<div class="day-label d5-color">Day 5 — 5/5（二）</div>
-<h2>最後巡禮 & 回程</h2>
+<div class="day-label d5">DAY 5 — 5/5（二）</div>
+<h2>最後巡禮 &amp; 回程</h2>
 <div class="day-desc">博多站伴手禮採購、最後一碗拉麵，搭機返台</div>
 </div>
 </div>
-
 <div class="timeline">
+
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">08:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🍳 早餐 & Check-out</h3>
-<div class="detail">退房後將行李寄放在飯店或博多站的置物櫃（大型 <span class="pr">¥700/次</span>），輕裝出發做最後巡禮。</div></div></div></div>
+<div class="card"><div class="card-body"><h3>🍳 早餐 &amp; Check-out</h3>
+<div class="detail">退房後行李寄放飯店或博多站置物櫃（大型 <span class="pr">¥700/次</span>）。</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">09:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🛍️ 博多站伴手禮大採購</h3>
-<div class="detail">博多站是九州最大的交通樞紐，站內的商業設施非常豐富，是買伴手禮的最佳地點。<br><br><span class="mi">🎁 必買伴手禮：</span><br>• <b>博多通りもん</b> — 博多最有名的伴手禮，白豆沙饅頭（<span class="pr">¥600/6入</span>）<br>• <b>めんべい</b> — 明太子仙貝，口味多樣（<span class="pr">¥500-1,000</span>）<br>• <b>筑紫もち</b> — 如水庵的黃豆粉麻糬（<span class="pr">¥700/6入</span>）<br>• <b>博多の女（ひと）</b> — 年輪蛋糕包紅豆羊羹<br>• <b>二○加煎餅</b> — 博多傳統面具造型煎餅<br><br><span class="hi">🔹 推薦購物地點：</span>博多站 Deitos、Mings、AMU Plaza、博多阪急 B1</div></div></div></div>
+<div class="card"><div class="card-body"><h3>🛍️ 博多站伴手禮大採購</h3>
+<div class="detail"><span class="mi">🎁 必買：</span><br>• <b>博多通りもん</b> — 白豆沙饅頭（<span class="pr">¥600/6入</span>）<br>• <b>めんべい</b> — 明太子仙貝（<span class="pr">¥500-1,000</span>）<br>• <b>筑紫もち</b> — 黃豆粉麻糬（<span class="pr">¥700/6入</span>）<br>• <b>博多の女</b> — 年輪蛋糕包紅豆羊羹<br>• <b>二○加煎餅</b> — 博多面具造型煎餅<br><br><span class="hi">🔹 購物地點：</span>博多站 Deitos、Mings、AMU Plaza、博多阪急 B1</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">11:00</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🍜 最後一碗博多拉麵</h3>
-<div class="detail">離開前再吃一碗正宗博多拉麵。博多站周邊選擇很多：<br><br>• <b>博多一双</b> — 博多站東口步行 3 分鐘，濃厚豚骨泡系拉麵（<span class="pr">¥800</span>）<br>• <b>ShinShin 博多 Deitos 店</b> — 站內就有，方便快速<br>• <b>博多だるま</b> — 超濃厚豚骨，蒜味十足</div></div></div></div>
+<div class="card"><div class="card-body"><h3>🍜 最後一碗博多拉麵</h3>
+<div class="detail">• <b>博多一双</b> — 博多站東口步行 3 分鐘，濃厚泡系拉麵（<span class="pr">¥800</span>）<br>• <b>ShinShin 博多 Deitos 店</b> — 站內方便快速<br>• <b>博多だるま</b> — 超濃厚豚骨，蒜味十足</div></div></div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">12:30</div>
-<div class="tl-card"><div class="tl-card-body"><h3>🚇 前往福岡機場</h3>
-<div class="detail">從博多站搭地鐵到福岡機場只要 5 分鐘。國際線航廈需在國內線搭免費接駁巴士（10 分鐘）。<br><br><b>⚠️ 建議提前 2.5 小時到機場</b>，黃金週最後一天出境人潮多。機場免稅店還可以做最後採購。</div></div>
-<div class="transport"><span class="ic">🚇</span><span>博多站 → 福岡機場站</span><span class="dt">地鐵空港線・5 分鐘・<span class="c">¥260</span></span></div>
-<div class="transport"><span class="ic">🚌</span><span>國內線 → 國際線航廈</span><span class="dt">免費接駁巴士・10 分鐘</span></div>
+<div class="card"><div class="card-body"><h3>🚇 前往福岡機場</h3>
+<div class="detail"><b>⚠️ 建議提前 2.5 小時到機場</b>，黃金週最後一天出境人潮多。</div></div>
+<div class="transport"><span class="ic">🚇</span>博多站 → 福岡機場站<span class="cost">地鐵 · 5 分鐘 · ¥260</span></div>
+<div class="transport"><span class="ic">🚌</span>國內線 → 國際線航廈<span class="cost">免費接駁 · 10 分鐘</span></div>
 </div></div>
 
 <div class="tl-item"><div class="tl-dot"></div><div class="tl-time">15:20</div>
-<div class="tl-card"><div class="tl-card-body"><h3>✈️ CI117 福岡 → 桃園</h3>
-<div class="detail">華航 CI117，飛行約 2.5 小時。預計 16:55 抵達桃園機場。<br><br>辛苦了五天，帶著滿滿的回憶和伴手禮回家！🇯🇵✨</div></div></div></div>
-</div>
-</section>
+<div class="card"><div class="card-body"><h3>✈️ CI117 福岡 → 桃園</h3>
+<div class="detail">華航 CI117，飛行約 2.5 小時。預計 16:55 抵達桃園機場。<br>帶著滿滿的回憶和伴手禮回家 🇯🇵✨</div></div></div></div>
+
+</div></section>
 
 <!-- ==================== BUDGET & HOTEL ==================== -->
 <div class="info-section" id="budget">
@@ -416,8 +435,8 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 <div class="budget-row"><span>🛶 柳川遊船</span><span>¥1,700</span></div>
 <div class="budget-row"><span>🏨 住宿（4 晚 × ¥8,000）</span><span>¥32,000</span></div>
 <div class="budget-row"><span>🍜 餐費（5 天）</span><span>~¥25,000</span></div>
-<div class="budget-row"><span>🎫 門票 & 體驗</span><span>~¥3,000</span></div>
-<div class="budget-row"><span>🎁 伴手禮 & 購物</span><span>~¥10,000</span></div>
+<div class="budget-row"><span>🎫 門票 &amp; 體驗</span><span>~¥3,000</span></div>
+<div class="budget-row"><span>🎁 伴手禮 &amp; 購物</span><span>~¥10,000</span></div>
 <div class="budget-row"><span>合計（每人）</span><span>~¥130,000（約 NT$28,000）</span></div>
 </div>
 
@@ -425,95 +444,79 @@ body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;backgrou
 <h3>🏨 住宿建議（博多站周邊）</h3>
 <ul class="hotel-list">
 <li><b>博多 Green Hotel 2 號館</b> — 筑紫口步行 2 分鐘，CP 值高（¥6,000-8,000/晚）</li>
-<li><b>Dormy Inn 博多祇園</b> — 有天然溫泉大浴場，免費宵夜拉麵（¥8,000-12,000/晚）</li>
-<li><b>JR 九州 Hotel Blossom 博多中央</b> — 2019 年開幕，設計感十足（¥10,000-15,000/晚）</li>
-<li><b>THE BLOSSOM HAKATA Premier</b> — 高級商務旅館，頂樓露天風呂（¥12,000-18,000/晚）</li>
-<li><b>博多 Excel Hotel 東急</b> — 博多站直結，下雨也不怕（¥9,000-13,000/晚）</li>
+<li><b>Dormy Inn 博多祇園</b> — 天然溫泉大浴場，免費宵夜拉麵（¥8,000-12,000/晚）</li>
+<li><b>JR 九州 Hotel Blossom 博多中央</b> — 2019 開幕，設計感十足（¥10,000-15,000/晚）</li>
+<li><b>THE BLOSSOM HAKATA Premier</b> — 頂樓露天風呂（¥12,000-18,000/晚）</li>
+<li><b>博多 Excel Hotel 東急</b> — 博多站直結（¥9,000-13,000/晚）</li>
 </ul>
 </div>
 </div>
 
-<!-- Footer -->
 <footer class="footer">
-<div class="brand">🇯🇵 福岡 5 日沈浸式旅遊指南</div>
-<p>2026/5/1 — 5/5 ・ 2 人 ・ CI116/CI117</p>
-<p style="margin-top:12px;color:#555">由波堤 😸 精心製作 ・ 圖片來源：Wikimedia Commons（CC 授權）</p>
+<div class="brand">福岡 5 日</div>
+<p>2026 / 5 / 1 — 5 / 5 · 2 人 · CI116 / CI117</p>
+<p style="margin-top:12px">由波堤 😸 精心製作 · 圖片來源 Wikimedia Commons CC</p>
 </footer>
 
 <script>
-// Intersection Observer for scroll animations
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('visible');
-    }
-  });
-}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-
-document.querySelectorAll('.tl-item').forEach(item => observer.observe(item));
+// Scroll animations
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.tl-item').forEach(el => io.observe(el));
 
 // Day-specific dot colors
-const dayColors = {
-  day1: '--blue', day2: '--green', day3: '--purple', day4: '--orange', day5: '--red'
-};
-
-const dotObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      const section = entry.target.closest('.day-section');
-      if (section) {
-        const colorVar = dayColors[section.id] || '--blue';
-        const color = getComputedStyle(document.documentElement).getPropertyValue(colorVar).trim();
-        entry.target.querySelector('.tl-dot').style.borderColor = color;
-        entry.target.querySelector('.tl-dot').style.boxShadow = `0 0 12px ${color}40`;
-      }
-    }
+const colors = { day1:'125,211,252', day2:'110,231,183', day3:'196,181,253', day4:'253,186,116', day5:'252,165,165' };
+const dotIO = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const s = e.target.closest('.day-section');
+    if (!s) return;
+    const c = colors[s.id] || '125,211,252';
+    const dot = e.target.querySelector('.tl-dot');
+    dot.style.borderColor = `rgb(${c})`;
+    dot.style.boxShadow = `0 0 20px rgba(${c},.3)`;
   });
 }, { threshold: 0.1 });
+document.querySelectorAll('.tl-item').forEach(el => dotIO.observe(el));
 
-document.querySelectorAll('.tl-item').forEach(item => dotObserver.observe(item));
-
-// Active nav highlighting on scroll
-const sections = document.querySelectorAll('.day-section, .info-section');
-const navLinks = document.querySelectorAll('.day-nav a');
-
-const navObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      const id = entry.target.id;
-      navLinks.forEach(link => {
-        link.classList.toggle('active', link.getAttribute('href') === '#' + id);
-      });
+// Active nav
+const secs = document.querySelectorAll('.day-section,.info-section');
+const links = document.querySelectorAll('.day-nav a');
+const navIO = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id));
     }
   });
-}, { threshold: 0.2, rootMargin: '-80px 0px -60% 0px' });
+}, { threshold: 0.15, rootMargin: '-80px 0px -55% 0px' });
+secs.forEach(s => navIO.observe(s));
 
-sections.forEach(section => navObserver.observe(section));
-
-// Parallax effect on day hero backgrounds
-window.addEventListener('scroll', () => {
-  const scrolled = window.pageYOffset;
-  document.querySelectorAll('.day-hero-bg, .hero-bg').forEach(bg => {
-    const rect = bg.parentElement.getBoundingClientRect();
-    const speed = 0.3;
-    if (rect.bottom > 0 && rect.top < window.innerHeight) {
-      bg.style.transform = `translateY(${(rect.top * speed)}px) scale(1.1)`;
-    }
-  });
-}, { passive: true });
-
-// Smooth scroll for nav links
-document.querySelectorAll('.day-nav a').forEach(link => {
-  link.addEventListener('click', (e) => {
+// Smooth scroll
+document.querySelectorAll('.day-nav a').forEach(a => {
+  a.addEventListener('click', e => {
     e.preventDefault();
-    const target = document.querySelector(link.getAttribute('href'));
-    if (target) {
-      const navHeight = document.querySelector('.day-nav').offsetHeight;
-      const top = target.offsetTop - navHeight;
-      window.scrollTo({ top, behavior: 'smooth' });
-    }
+    const t = document.querySelector(a.getAttribute('href'));
+    if (t) window.scrollTo({ top: t.offsetTop - 60, behavior: 'smooth' });
   });
 });
+
+// Parallax
+let ticking = false;
+window.addEventListener('scroll', () => {
+  if (!ticking) {
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.day-hero-bg,.hero-bg').forEach(bg => {
+        const r = bg.parentElement.getBoundingClientRect();
+        if (r.bottom > 0 && r.top < innerHeight) {
+          bg.style.transform = `translateY(${r.top * .25}px) scale(1.1)`;
+        }
+      });
+      ticking = false;
+    });
+    ticking = true;
+  }
+}, { passive: true });
 </script>
 </body>
 </html>
