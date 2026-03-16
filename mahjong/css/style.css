@@ -562,8 +562,8 @@ html, body { background: #1a5c2a; color: #fff; font-family: "Noto Sans TC", "Mic
 /* ===== v37: 明星三缺一 Style Start Screen ===== */
 #start-screen {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  display: flex; align-items: center; justify-content: center;
-  z-index: 100; overflow-y: auto;
+  display: flex; align-items: center; justify-content: flex-start;
+  z-index: 100; overflow-y: auto; padding: 12px 0;
 }
 #start-screen .start-bg {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -581,6 +581,7 @@ html, body { background: #1a5c2a; color: #fff; font-family: "Noto Sans TC", "Mic
   padding: 16px 14px; max-width: 340px; width: calc(100% - 24px);
   max-height: calc(100vh - 24px); max-height: calc(var(--vh,1vh) * 100 - 24px);
   overflow-y: auto; overflow-x: hidden;
+  margin: auto 0;
   background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.4) 100%);
   border: 2px solid rgba(255,215,0,0.25);
   border-radius: 20px;
