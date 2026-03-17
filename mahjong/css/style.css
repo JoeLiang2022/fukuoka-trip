@@ -562,8 +562,10 @@ html, body { background: #1a5c2a; color: #fff; font-family: "Noto Sans TC", "Mic
 /* ===== v37: 明星三缺一 Style Start Screen ===== */
 #start-screen {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  display: flex; align-items: center; justify-content: flex-start;
-  z-index: 100; overflow-y: auto; padding: 12px 0;
+  display: flex; align-items: flex-start; justify-content: center;
+  z-index: 100; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 0;
 }
 #start-screen .start-bg {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -579,14 +581,12 @@ html, body { background: #1a5c2a; color: #fff; font-family: "Noto Sans TC", "Mic
   position: relative; z-index: 1;
   display: flex; flex-direction: column; align-items: center;
   padding: 12px 14px; max-width: 340px; width: calc(100% - 24px);
-  max-height: calc(100vh - 24px); max-height: calc(var(--vh,1vh) * 100 - 24px);
-  overflow-y: auto; overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
   margin: auto;
   background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.4) 100%);
   border: 2px solid rgba(255,215,0,0.25);
   border-radius: 20px;
   box-shadow: 0 0 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,215,0,0.1);
+  flex-shrink: 0;
 }
 #start-screen .start-logo {
   font-size: 40px; margin-bottom: 0;
@@ -809,4 +809,28 @@ html, body { background: #1a5c2a; color: #fff; font-family: "Noto Sans TC", "Mic
   border-radius: 50%; width: 36px; height: 36px; font-size: 18px;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== v46: Mobile start screen — compact for small screens ===== */
+@media (max-height: 440px) {
+  #start-screen { padding: 4px 0; }
+  #start-screen .start-content { padding: 8px 12px; border-radius: 14px; }
+  #start-screen .start-logo { font-size: 28px; }
+  #start-screen h1 { font-size: 18px; letter-spacing: 4px; margin: 0; }
+  #start-screen .subtitle { font-size: 10px; margin-bottom: 4px; }
+  #start-screen .name-input-row { margin-bottom: 6px; }
+  #start-screen .name-input-row input { padding: 6px 10px; font-size: 14px; }
+  #start-screen .btn-primary { padding: 7px 16px; font-size: 15px; margin: 2px 0; }
+  #start-screen .btn-ai { padding: 6px 16px; font-size: 14px; margin: 2px 0; }
+  #start-screen .btn-row { margin-top: 2px; gap: 6px; }
+  #start-screen .btn-secondary { padding: 6px 8px; font-size: 12px; margin: 1px 0; }
+}
+@media (max-height: 340px) {
+  #start-screen .start-logo { font-size: 22px; }
+  #start-screen h1 { font-size: 16px; letter-spacing: 3px; }
+  #start-screen .subtitle { display: none; }
+  #start-screen .start-content { padding: 6px 10px; }
+  #start-screen .btn-primary { padding: 5px 12px; font-size: 14px; }
+  #start-screen .btn-ai { padding: 5px 12px; font-size: 13px; }
+  #start-screen .btn-secondary { padding: 5px 6px; font-size: 11px; }
 }
