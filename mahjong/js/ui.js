@@ -233,6 +233,7 @@ function detectSounds(g) {
 // ===== 主渲染 =====
 
 function renderGame(g) {
+  console.log('[DEBUG] renderGame called, phase:', g.phase, 'hand[0]:', g.players[0].hand.length, 'remaining:', g.getRemainingTiles());
   var humanSeat = g._mySeat || 0;
   detectSounds(g);
 
@@ -1247,6 +1248,7 @@ function onTileClick(tile) {
 }
 
 function startGame() {
+  console.log('[DEBUG] startGame called, game:', !!game);
   document.getElementById('start-screen').style.display = 'none';
   if (typeof checkOrientation === 'function') checkOrientation();
   document.getElementById('result-overlay').classList.remove('show');
@@ -1259,8 +1261,10 @@ function startGame() {
   lastHandCount = 0;
   if (typeof BGM !== 'undefined' && SFX.isEnabled()) BGM.start();
   showDiceAnimation(game, function() {
+    console.log('[DEBUG] dice done, calling startRound');
     SFX.play('start');
     game.startRound();
+    console.log('[DEBUG] startRound done, phase:', game.phase, 'hand:', game.players[0].hand.length);
   });
 }
 

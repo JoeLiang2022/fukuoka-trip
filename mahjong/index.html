@@ -19,7 +19,7 @@
         <div class="wind-circle">東風圈</div>
         <div class="remaining">剩餘 -- 張</div>
       </div>
-      <div id="version-tag">v45</div>
+      <div id="version-tag">v47</div>
       <div id="wall-north" class="wall-side wall-h"></div>
       <div id="wall-south" class="wall-side wall-h"></div>
       <div id="wall-west" class="wall-side wall-v"></div>
@@ -117,7 +117,7 @@
   <script src="js/vfx.js?v=36"></script>
   <script src="js/touch.js?v=36"></script>
   <script src="js/bgm.js?v=44"></script>
-  <script src="js/ui.js?v=46"></script>
+  <script src="js/ui.js?v=47"></script>
   <script>
     const mahjongGame = new MahjongGame();
     initUI(mahjongGame);
@@ -372,6 +372,7 @@
 
     // === 單人遊戲 (保留) ===
     function goFullscreenAndStart() {
+      console.log('[DEBUG] goFullscreenAndStart called');
       var name = getPlayerName();
       mahjongGame.players[0].name = name;
       if (typeof BGM !== 'undefined') BGM.prewarm();
