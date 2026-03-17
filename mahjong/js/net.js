@@ -174,6 +174,7 @@ var MahjongNet = (function() {
   }
 
   function toggleReady() {
+    console.log('[Net] toggleReady called, ws=' + (ws ? 'connected' : 'null') + ', readyState=' + (ws ? ws.readyState : 'N/A'));
     send({ type: 'ready' });
   }
 

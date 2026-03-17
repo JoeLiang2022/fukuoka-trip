@@ -323,7 +323,7 @@
 
     function doToggleReady() {
       _isReady = !_isReady;
-      console.log('[DEBUG] doToggleReady, _isReady:', _isReady, 'ws connected:', !!MahjongNet.mySeat >= 0);
+      console.log('[DEBUG] doToggleReady, _isReady:', _isReady, 'mySeat:', MahjongNet.mySeat, 'roomCode:', MahjongNet.roomCode);
       MahjongNet.toggleReady();
       updateReadyBtn();
     }
