@@ -1,6 +1,6 @@
 /**
  * net.js — 麻將多人連線客戶端
- * Handles WebSocket connection, room management, and game sync
+ * Handles WebSocket connection, room/chatroom management, chat, and game sync
  */
 var MahjongNet = (function() {
   var ws = null;
@@ -15,21 +15,30 @@ var MahjongNet = (function() {
   var onAction = null;
   var onError = null;
   var onDisconnect = null;
+  var onChat = null;
+  var onGameEnd = null;
+  var onPlayerReplaced = null;
+  var onRoomList = null;
   var reconnectTimer = null;
   var serverUrl = '';
-  var _joinCallback = null; // deferred callback for joinRoom
-  var onRoomList = null; // callback for room list
+  var _joinCallback = null;
+  var _connectCallback = null;
 
   function getWsUrl() {
     var loc = window.location;
     var proto = loc.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Always use /mahjong-ws path — gateway routes it to the mahjong WSS
     return proto + '//' + loc.host + '/mahjong-ws';
   }
 
   function connect(name, callback) {
     playerName = name || '玩家';
+    // 已連線就直接回傳
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      if (callback) callback(null);
+      return;
+    }
     serverUrl = getWsUrl();
+    _connectCallback = callback;
 
     try {
       ws = new WebSocket(serverUrl);
@@ -40,7 +49,7 @@ var MahjongNet = (function() {
 
     ws.onopen = function() {
       console.log('[Net] Connected to', serverUrl);
-      if (callback) callback(null);
+      if (_connectCallback) { var cb = _connectCallback; _connectCallback = null; cb(null); }
     };
 
     ws.onmessage = function(evt) {
@@ -54,12 +63,13 @@ var MahjongNet = (function() {
 
     ws.onclose = function() {
       console.log('[Net] Disconnected');
+      ws = null;
       if (onDisconnect) onDisconnect();
     };
 
     ws.onerror = function(err) {
       console.error('[Net] WebSocket error:', err);
-      if (callback) { callback('連線錯誤'); callback = null; }
+      if (_connectCallback) { var cb = _connectCallback; _connectCallback = null; cb('連線錯誤'); }
     };
   }
 
@@ -77,7 +87,6 @@ var MahjongNet = (function() {
       case 'joined':
         mySeat = msg.seat;
         roomCode = msg.code;
-        isHost = false;
         isMultiplayer = true;
         lobbyState = msg.lobby;
         if (_joinCallback) { var jcb = _joinCallback; _joinCallback = null; jcb(null); }
@@ -101,6 +110,22 @@ var MahjongNet = (function() {
         if (onRoomList) onRoomList(msg.rooms || []);
         break;
 
+      case 'chat':
+        if (onChat) onChat(msg.data);
+        break;
+
+      case 'gameEnd':
+        if (onGameEnd) onGameEnd(msg);
+        break;
+
+      case 'playerReplaced':
+        if (onPlayerReplaced) onPlayerReplaced(msg);
+        break;
+
+      case 'gameAborted':
+        if (onGameEnd) onGameEnd({ aborted: true, reason: msg.reason });
+        break;
+
       case 'error':
         console.warn('[Net] Server error:', msg.message);
         if (_joinCallback) { var jcb = _joinCallback; _joinCallback = null; jcb(msg.message); return; }
@@ -115,6 +140,29 @@ var MahjongNet = (function() {
     }
   }
 
+  function requestRoomList() {
+    send({ type: 'listRooms' });
+  }
+
+  function listRooms(name, cb) {
+    connect(name || '玩家', function(err) {
+      if (err) { if (cb) cb(err); return; }
+      send({ type: 'listRooms' });
+      if (cb) cb(null);
+    });
+  }
+
+  function joinRoom(code, name, cb) {
+    _joinCallback = cb;
+    connect(name, function(err) {
+      if (err) { _joinCallback = null; if (cb) cb(err); return; }
+      send({ type: 'join', code: code, name: name });
+      setTimeout(function() {
+        if (_joinCallback) { var jcb = _joinCallback; _joinCallback = null; jcb('連線逾時，請重試'); }
+      }, 5000);
+    });
+  }
+
   function createRoom(name, cb) {
     connect(name, function(err) {
       if (err) { if (cb) cb(err); return; }
@@ -123,38 +171,16 @@ var MahjongNet = (function() {
     });
   }
 
-  function listRooms(name, cb) {
-    // Connect first (if not already), then request room list
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      send({ type: 'listRooms' });
-      if (cb) cb(null);
-    } else {
-      connect(name || '玩家', function(err) {
-        if (err) { if (cb) cb(err); return; }
-        send({ type: 'listRooms' });
-        if (cb) cb(null);
-      });
-    }
-  }
-
-  function joinRoom(code, name, cb) {
-    _joinCallback = cb;
-    connect(name, function(err) {
-      if (err) { _joinCallback = null; if (cb) cb(err); return; }
-      send({ type: 'join', code: code, name: name });
-      // Timeout: if server doesn't respond in 5 seconds, fail
-      setTimeout(function() {
-        if (_joinCallback) { var jcb = _joinCallback; _joinCallback = null; jcb('連線逾時，請重試'); }
-      }, 5000);
-    });
-  }
-
   function toggleReady() {
     send({ type: 'ready' });
   }
 
-  function startGame() {
-    send({ type: 'start' });
+  function sendChat(message) {
+    send({ type: 'chat', message: message });
+  }
+
+  function sendGameEnd() {
+    send({ type: 'gameEnd' });
   }
 
   function sendAction(data) {
@@ -166,7 +192,6 @@ var MahjongNet = (function() {
     isMultiplayer = false;
     roomCode = '';
     mySeat = -1;
-    if (ws) { ws.close(); ws = null; }
   }
 
   function disconnect() {
@@ -177,9 +202,11 @@ var MahjongNet = (function() {
     connect: connect,
     createRoom: createRoom,
     listRooms: listRooms,
+    requestRoomList: requestRoomList,
     joinRoom: joinRoom,
     toggleReady: toggleReady,
-    startGame: startGame,
+    sendChat: sendChat,
+    sendGameEnd: sendGameEnd,
     sendAction: sendAction,
     leaveRoom: leaveRoom,
     disconnect: disconnect,
@@ -196,6 +223,9 @@ var MahjongNet = (function() {
     set onAction(fn) { onAction = fn; },
     set onError(fn) { onError = fn; },
     set onRoomList(fn) { onRoomList = fn; },
+    set onChat(fn) { onChat = fn; },
+    set onGameEnd(fn) { onGameEnd = fn; },
+    set onPlayerReplaced(fn) { onPlayerReplaced = fn; },
     set onDisconnect(fn) { onDisconnect = fn; }
   };
 })();

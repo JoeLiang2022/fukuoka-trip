@@ -300,25 +300,49 @@ html, body { background: #1a5c2a; color: #fff; font-family: "Noto Sans TC", "Mic
 #start-screen .name-input-row input::placeholder { color: #777; }
 #start-screen .btn-secondary { background: #555 !important; }
 #start-screen .btn-secondary:active { background: #444 !important; }
-.lobby-code { font-size: 28px; font-weight: bold; color: #ffd700; margin-bottom: 16px; letter-spacing: 4px; }
-.lobby-code span { background: rgba(255,215,0,0.15); padding: 4px 12px; border-radius: 6px; }
-.lobby-seat { display: flex; align-items: center; gap: 8px; padding: 8px 16px; margin: 4px 0; border-radius: 6px; font-size: 16px; min-width: 200px; }
-.lobby-seat.occupied { background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.4); }
-.lobby-seat.empty { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #777; }
-.seat-wind { font-weight: bold; color: #ffd700; min-width: 20px; }
-.lobby-waiting { font-size: 14px; color: #aaa; margin: 8px 0; }
+/* === Lobby & Chatroom styles === */
 .lobby-error { color: #ef4444; font-size: 13px; margin-top: 8px; min-height: 18px; }
-.room-list-title { font-size: 16px; color: #ffd700; margin-bottom: 8px; font-weight: bold; }
-.room-list { width: 100%; max-width: 300px; max-height: 180px; overflow-y: auto; margin-bottom: 8px; }
+.seat-wind { font-weight: bold; color: #ffd700; min-width: 20px; }
+#menu-login, #menu-lobby-list, #menu-chatroom { display: flex; flex-direction: column; align-items: center; width: 100%; }
+
+/* 遊戲大廳 */
+.lobby-list-title { font-size: 18px; color: #ffd700; margin-bottom: 8px; font-weight: bold; }
+.room-list { width: 100%; max-width: 320px; max-height: 200px; overflow-y: auto; margin-bottom: 8px; -webkit-overflow-scrolling: touch; }
 .room-list-empty { color: #777; font-size: 14px; text-align: center; padding: 16px 0; }
-.room-list-divider { color: #555; font-size: 12px; margin: 8px 0; text-align: center; }
-.room-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; margin: 4px 0; border-radius: 6px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); cursor: pointer; transition: background 0.2s; }
+.room-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; margin: 4px 0; border-radius: 8px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); cursor: pointer; transition: background 0.2s; }
 .room-item:hover, .room-item:active { background: rgba(34,197,94,0.25); }
+.room-item-disabled { opacity: 0.5; cursor: default; }
+.room-item-disabled:hover { background: rgba(34,197,94,0.1); }
 .room-code-tag { font-weight: bold; color: #ffd700; font-size: 14px; min-width: 50px; letter-spacing: 2px; }
-.room-host { flex: 1; font-size: 14px; color: #ccc; }
 .room-players { font-size: 13px; color: #22c55e; font-weight: bold; }
-#lobby-actions { margin-top: 12px; }
-#menu-main, #menu-join, #menu-lobby { display: flex; flex-direction: column; align-items: center; }
+.room-status-waiting { color: #4ade80; font-size: 12px; }
+.room-status-playing { color: #fbbf24; font-size: 12px; }
+.room-join-row { display: flex; gap: 6px; width: 100%; max-width: 320px; margin: 6px 0; }
+.room-join-row input { flex: 1; }
+.btn-small-text { font-size: 13px; padding: 6px 12px; }
+
+/* 聊天室 */
+.chatroom-header { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 320px; margin-bottom: 6px; }
+.chatroom-code { font-size: 16px; color: #ffd700; font-weight: bold; }
+.btn-small { font-size: 12px; padding: 4px 10px; background: #555; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+.btn-small:active { background: #444; }
+.chatroom-seats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%; max-width: 320px; margin-bottom: 6px; }
+.chatroom-seat { padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); font-size: 13px; color: #ccc; display: flex; align-items: center; gap: 4px; }
+.chatroom-seat.occupied { border-color: rgba(34,197,94,0.5); color: #fff; }
+.chatroom-seat.ready { background: rgba(74,222,128,0.15); border-color: #4ade80; }
+.chatroom-seat.ai { border-color: rgba(251,191,36,0.4); color: #fbbf24; }
+.chatroom-seat.empty { color: #555; border-color: rgba(255,255,255,0.08); }
+.chatroom-messages { width: 100%; max-width: 320px; height: 120px; overflow-y: auto; background: rgba(0,0,0,0.35); border-radius: 8px; padding: 8px; margin-bottom: 6px; font-size: 13px; -webkit-overflow-scrolling: touch; }
+.chat-msg { margin: 2px 0; line-height: 1.4; word-break: break-word; }
+.chat-msg .chat-name { color: #4ade80; font-weight: bold; }
+.chat-msg.system { color: #94a3b8; font-style: italic; font-size: 12px; }
+.chatroom-input-row { display: flex; gap: 6px; width: 100%; max-width: 320px; margin-bottom: 6px; }
+.chatroom-input-row input { flex: 1; font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff; }
+.chatroom-input-row button { padding: 6px 14px; font-size: 14px; border-radius: 8px; background: #22c55e; color: #fff; border: none; cursor: pointer; }
+.chatroom-input-row button:active { background: #16a34a; }
+#ready-btn { width: 100%; max-width: 320px; font-size: 16px; padding: 10px; }
+#ready-btn.is-ready { background: #ef4444 !important; }
+#ready-btn.is-ready:active { background: #dc2626 !important; }
 
 /* PWA standalone: hide fullscreen btn, no safe-area padding needed */
 @media all and (display-mode: standalone), all and (display-mode: fullscreen) {
@@ -647,7 +671,7 @@ html, body { background: #1a5c2a; color: #fff; font-family: "Noto Sans TC", "Mic
 }
 #start-screen .btn-secondary:active { transform: scale(0.96); background: rgba(255,255,255,0.15); }
 #start-screen button { border-radius: 10px; font-family: inherit; }
-#menu-main, #menu-join, #menu-lobby { display: flex; flex-direction: column; align-items: center; width: 100%; }
+#menu-login, #menu-lobby-list, #menu-chatroom { display: flex; flex-direction: column; align-items: center; width: 100%; }
 
 /* ===== v37: Fullscreen button — show PWA hint on mobile ===== */
 #fullscreen-btn.pwa-mode {

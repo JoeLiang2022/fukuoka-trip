@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%231a5c2a' width='180' height='180' rx='24'/><text x='90' y='125' font-size='110' text-anchor='middle'>🀄</text></svg>">
   <title>台灣麻將</title>
-  <link rel="stylesheet" href="css/style.css?v=46">
+  <link rel="stylesheet" href="css/style.css?v=47">
 </head>
 <body>
   <div id="game-table" ontouchstart="">
@@ -19,7 +19,7 @@
         <div class="wind-circle">東風圈</div>
         <div class="remaining">剩餘 -- 張</div>
       </div>
-      <div id="version-tag">v44</div>
+      <div id="version-tag">v45</div>
       <div id="wall-north" class="wall-side wall-h"></div>
       <div id="wall-south" class="wall-side wall-h"></div>
       <div id="wall-west" class="wall-side wall-v"></div>
@@ -60,34 +60,47 @@
         <div class="start-logo">🀄</div>
         <h1>台灣麻將</h1>
         <div class="subtitle">16 張台灣麻將</div>
-        <div id="menu-main">
+
+        <!-- 登入畫面 -->
+        <div id="menu-login">
           <div class="name-input-row">
             <input type="text" id="player-name" placeholder="輸入暱稱" maxlength="8" value="">
           </div>
-          <button class="btn-primary" onclick="goFullscreenAndStart()">🎮 單人遊戲</button>
-          <button class="btn-ai" onclick="startAIWatch()">🤖 AI 觀戰</button>
+          <button class="btn-primary" onclick="enterLobby()">🏠 進入大廳</button>
           <div class="btn-row">
-            <button class="btn-secondary" onclick="showCreateRoom()">🏠 建立房間</button>
-            <button class="btn-secondary" onclick="showJoinRoom()">🚪 加入房間</button>
+            <button class="btn-secondary" onclick="goFullscreenAndStart()">🎮 單人</button>
+            <button class="btn-secondary" onclick="startAIWatch()">🤖 觀戰</button>
           </div>
         </div>
-        <div id="menu-join" style="display:none">
-          <div class="room-list-title">🏠 可加入的房間</div>
+
+        <!-- 遊戲大廳 -->
+        <div id="menu-lobby-list" style="display:none">
+          <div class="lobby-list-title">🏠 遊戲大廳</div>
           <div id="room-list" class="room-list"><div class="room-list-empty">搜尋中...</div></div>
-          <button class="btn-secondary" onclick="refreshRoomList()" style="margin-bottom:8px">🔄 重新整理</button>
-          <div class="room-list-divider">── 或輸入代碼加入 ──</div>
-          <div class="name-input-row">
-            <input type="text" id="room-code-input" placeholder="輸入4位代碼" maxlength="4" style="text-transform:uppercase">
+          <button class="btn-secondary btn-small-text" onclick="refreshRoomList()">🔄 重新整理</button>
+          <div class="room-join-row">
+            <input type="text" id="room-code-input" placeholder="輸入編號加入" maxlength="4" style="text-transform:uppercase">
+            <button class="btn-primary" onclick="doJoinRoom()">加入</button>
           </div>
-          <button class="btn-primary" onclick="doJoinRoom()">加入</button>
-          <button class="btn-secondary" onclick="backToMenu()">返回</button>
-          <div id="join-error" class="lobby-error"></div>
-        </div>
-        <div id="menu-lobby" style="display:none">
-          <div class="lobby-code">房間代碼: <span id="lobby-code-display"></span></div>
-          <div id="lobby-seats"></div>
-          <div id="lobby-actions"></div>
+          <button class="btn-secondary" onclick="backToLogin()">返回</button>
           <div id="lobby-error" class="lobby-error"></div>
+        </div>
+
+        <!-- 聊天室 -->
+        <div id="menu-chatroom" style="display:none">
+          <div class="chatroom-header">
+            <span class="chatroom-code">🀄 聊天室 <span id="chatroom-code-display"></span></span>
+            <button class="btn-small" onclick="leaveChatroom()">退出</button>
+          </div>
+          <div id="chatroom-seats" class="chatroom-seats"></div>
+          <div id="chatroom-messages" class="chatroom-messages"></div>
+          <div class="chatroom-input-row">
+            <input type="text" id="chat-input" placeholder="輸入訊息..." maxlength="200"
+                   onkeydown="if(event.key==='Enter')sendChatMessage()">
+            <button onclick="sendChatMessage()">送出</button>
+          </div>
+          <button id="ready-btn" class="btn-primary" onclick="doToggleReady()">✋ 準備開始</button>
+          <div id="chatroom-error" class="lobby-error"></div>
         </div>
       </div>
     </div>
@@ -98,154 +111,220 @@
   <script src="js/game.js?v=36"></script>
   <script src="js/scoring.js?v=36"></script>
   <script src="js/sound.js?v=36"></script>
-    <script src="js/voice.js?v=44"></script>
+  <script src="js/voice.js?v=44"></script>
   <script src="js/analysis.js?v=43"></script>
-  <script src="js/net.js?v=36"></script>
-    <script src="js/vfx.js?v=36"></script>
+  <script src="js/net.js?v=46"></script>
+  <script src="js/vfx.js?v=36"></script>
   <script src="js/touch.js?v=36"></script>
   <script src="js/bgm.js?v=44"></script>
-  <script src="js/ui.js?v=45"></script>
+  <script src="js/ui.js?v=46"></script>
   <script>
     const mahjongGame = new MahjongGame();
     initUI(mahjongGame);
+    var _isReady = false;
+    var _roomListInterval = null;
+
     function getPlayerName() {
       var el = document.getElementById('player-name');
       return (el && el.value.trim()) || '玩家';
     }
-    function goFullscreenAndStart() {
-      var name = getPlayerName();
-      mahjongGame.players[0].name = name;
-      // Pre-warm AudioContext during user gesture (before async fullscreen breaks gesture chain)
-      if (typeof BGM !== 'undefined') BGM.prewarm();
-      if (typeof SFX !== 'undefined') SFX.preload();
-      const el = document.documentElement;
-      const rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-      if (rfs) rfs.call(el).then(function(){startGame()}).catch(function(){startGame()});
-      else startGame();
-    }
 
-    function startAIWatch() {
-      // 設定所有玩家為 AI
-      for (var i = 0; i < 4; i++) {
-        mahjongGame.players[i].isHuman = false;
-        mahjongGame.players[i].isRemote = false;
-      }
-      mahjongGame.players[0].name = 'AI-東';
-      mahjongGame.players[1].name = 'AI-南';
-      mahjongGame.players[2].name = 'AI-西';
-      mahjongGame.players[3].name = 'AI-北';
-      mahjongGame._isAIWatch = true;
-      mahjongGame._watchRoundsLeft = 8; // 觀戰限制 8 局
-      // Pre-warm AudioContext during user gesture
-      if (typeof BGM !== 'undefined') BGM.prewarm();
-      if (typeof SFX !== 'undefined') SFX.preload();
-      const el = document.documentElement;
-      const rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-      if (rfs) rfs.call(el).then(function(){startGame()}).catch(function(){startGame()});
-      else startGame();
-    }
-    function showCreateRoom() {
+    // === 登入 → 大廳 ===
+    function enterLobby() {
       var name = getPlayerName();
       if (!name) { alert('請輸入暱稱'); return; }
-      MahjongNet.onLobbyUpdate = renderLobby;
-      MahjongNet.onGameStart = onMultiplayerStart;
+      document.getElementById('menu-login').style.display = 'none';
+      document.getElementById('menu-lobby-list').style.display = 'block';
+      document.getElementById('lobby-error').textContent = '';
+
+      MahjongNet.onRoomList = renderRoomList;
       MahjongNet.onError = function(msg) {
         document.getElementById('lobby-error').textContent = msg;
       };
-      MahjongNet.createRoom(name, function(err) {
-        if (err) { alert('連線失敗: ' + err); return; }
-        document.getElementById('menu-main').style.display = 'none';
-        document.getElementById('menu-lobby').style.display = 'block';
-      });
-    }
-    function showJoinRoom() {
-      document.getElementById('menu-main').style.display = 'none';
-      document.getElementById('menu-join').style.display = 'block';
-      document.getElementById('join-error').textContent = '';
-      refreshRoomList();
-    }
-    function refreshRoomList() {
-      var name = getPlayerName();
-      document.getElementById('room-list').innerHTML = '<div class="room-list-empty">搜尋中...</div>';
-      MahjongNet.onRoomList = renderRoomList;
-      MahjongNet.onError = function(msg) {
-        document.getElementById('join-error').textContent = msg;
-      };
       MahjongNet.listRooms(name, function(err) {
-        if (err) document.getElementById('room-list').innerHTML = '<div class="room-list-empty">連線失敗</div>';
+        if (err) {
+          document.getElementById('room-list').innerHTML = '<div class="room-list-empty">連線失敗: ' + err + '</div>';
+        }
       });
+      // 每 5 秒自動刷新
+      clearInterval(_roomListInterval);
+      _roomListInterval = setInterval(function() {
+        MahjongNet.requestRoomList();
+      }, 5000);
     }
+
+    function backToLogin() {
+      clearInterval(_roomListInterval);
+      document.getElementById('menu-login').style.display = 'block';
+      document.getElementById('menu-lobby-list').style.display = 'none';
+      document.getElementById('menu-chatroom').style.display = 'none';
+      MahjongNet.leaveRoom();
+    }
+
+    function refreshRoomList() {
+      document.getElementById('room-list').innerHTML = '<div class="room-list-empty">搜尋中...</div>';
+      MahjongNet.requestRoomList();
+    }
+
     function renderRoomList(rooms) {
       var el = document.getElementById('room-list');
       if (!rooms || rooms.length === 0) {
-        el.innerHTML = '<div class="room-list-empty">目前沒有可加入的房間</div>';
+        el.innerHTML = '<div class="room-list-empty">目前沒有聊天室</div>';
         return;
       }
       var html = '';
       for (var i = 0; i < rooms.length; i++) {
         var r = rooms[i];
-        html += '<div class="room-item" onclick="doJoinByCode(\'' + r.code + '\')">';
+        var stateClass = r.state === 'playing' ? 'room-status-playing' : 'room-status-waiting';
+        var stateText = r.state === 'playing' ? '遊戲中' : '等待中';
+        var clickable = r.state === 'lobby' && r.players < 4;
+        html += '<div class="room-item' + (clickable ? '' : ' room-item-disabled') + '"'
+              + (clickable ? ' onclick="doJoinByCode(\'' + r.code + '\')"' : '') + '>';
         html += '<span class="room-code-tag">' + r.code + '</span>';
-        html += '<span class="room-host">' + r.hostName + ' 的房間</span>';
         html += '<span class="room-players">' + r.players + '/4</span>';
+        html += '<span class="' + stateClass + '">' + stateText + '</span>';
         html += '</div>';
       }
       el.innerHTML = html;
     }
+
     function doJoinByCode(code) {
       document.getElementById('room-code-input').value = code;
       doJoinRoom();
     }
+
     function doJoinRoom() {
       var name = getPlayerName();
       var code = document.getElementById('room-code-input').value.trim().toUpperCase();
-      if (!code || code.length < 4) {
-        document.getElementById('join-error').textContent = '請輸入4位房間代碼';
+      if (!code) {
+        document.getElementById('lobby-error').textContent = '請輸入聊天室編號';
         return;
       }
-      MahjongNet.onLobbyUpdate = renderLobby;
+      document.getElementById('lobby-error').textContent = '加入中...';
+
+      MahjongNet.onLobbyUpdate = renderChatroom;
       MahjongNet.onGameStart = onMultiplayerStart;
+      MahjongNet.onChat = onChatMessage;
+      MahjongNet.onGameEnd = onGameEndReturn;
+      MahjongNet.onPlayerReplaced = onPlayerReplacedInGame;
       MahjongNet.onError = function(msg) {
-        document.getElementById('join-error').textContent = msg;
         document.getElementById('lobby-error').textContent = msg;
+        document.getElementById('chatroom-error').textContent = msg;
       };
+
       MahjongNet.joinRoom(code, name, function(err) {
-        if (err) { document.getElementById('join-error').textContent = err; return; }
-        document.getElementById('menu-join').style.display = 'none';
-        document.getElementById('menu-lobby').style.display = 'block';
+        if (err) {
+          document.getElementById('lobby-error').textContent = err;
+          return;
+        }
+        clearInterval(_roomListInterval);
+        _isReady = false;
+        document.getElementById('menu-lobby-list').style.display = 'none';
+        document.getElementById('menu-chatroom').style.display = 'block';
+        document.getElementById('chatroom-error').textContent = '';
+        updateReadyBtn();
       });
     }
-    function backToMenu() {
-      document.getElementById('menu-main').style.display = 'block';
-      document.getElementById('menu-join').style.display = 'none';
-      document.getElementById('menu-lobby').style.display = 'none';
-      MahjongNet.leaveRoom();
-    }
-    function renderLobby(lobby) {
-      document.getElementById('lobby-code-display').textContent = lobby.code;
+
+    // === 聊天室 ===
+    function renderChatroom(lobby) {
+      document.getElementById('chatroom-code-display').textContent = lobby.code;
       var seatsHtml = '';
       var winds = ['東','南','西','北'];
       for (var i = 0; i < 4; i++) {
         var s = lobby.seats[i];
-        var cls = s.isHuman ? 'lobby-seat occupied' : 'lobby-seat empty';
-        var label = s.isHuman ? s.name : '🤖 等待中...';
-        seatsHtml += '<div class="' + cls + '"><span class="seat-wind">' + winds[i] + '</span> ' + label + '</div>';
+        var cls = 'chatroom-seat';
+        if (s.isHuman) {
+          cls += ' occupied';
+          if (s.ready) cls += ' ready';
+        } else if (s.isAI) {
+          cls += ' ai';
+        } else {
+          cls += ' empty';
+        }
+        var label = s.isHuman ? s.name : (s.isAI ? '🤖 ' + s.name : '空位');
+        var readyIcon = s.ready ? ' ✅' : '';
+        seatsHtml += '<div class="' + cls + '"><span class="seat-wind">' + winds[i] + '</span> ' + label + readyIcon + '</div>';
       }
-      document.getElementById('lobby-seats').innerHTML = seatsHtml;
-      var actHtml = '';
-      if (MahjongNet.isHost) {
-        actHtml += '<button onclick="doStartMultiplayer()">🎮 開始遊戲</button>';
+      document.getElementById('chatroom-seats').innerHTML = seatsHtml;
+
+      // 載入歷史聊天 (首次)
+      if (lobby.chatHistory && lobby.chatHistory.length > 0) {
+        var msgEl = document.getElementById('chatroom-messages');
+        if (msgEl.children.length === 0) {
+          for (var j = 0; j < lobby.chatHistory.length; j++) {
+            appendChatMessage(lobby.chatHistory[j]);
+          }
+        }
+      }
+    }
+
+    function onChatMessage(data) {
+      appendChatMessage(data);
+    }
+
+    function appendChatMessage(data) {
+      var msgEl = document.getElementById('chatroom-messages');
+      var div = document.createElement('div');
+      div.className = 'chat-msg' + (data.system ? ' system' : '');
+      if (data.system) {
+        div.textContent = '📢 ' + data.message;
       } else {
-        actHtml += '<div class="lobby-waiting">等待房主開始...</div>';
+        var nameSpan = document.createElement('span');
+        nameSpan.className = 'chat-name';
+        nameSpan.textContent = data.name + ':';
+        div.appendChild(nameSpan);
+        div.appendChild(document.createTextNode(' ' + data.message));
       }
-      actHtml += '<button class="btn-secondary" onclick="backToMenu()">離開房間</button>';
-      document.getElementById('lobby-actions').innerHTML = actHtml;
+      msgEl.appendChild(div);
+      msgEl.scrollTop = msgEl.scrollHeight;
     }
-    function doStartMultiplayer() {
-      MahjongNet.startGame();
+
+    function sendChatMessage() {
+      var input = document.getElementById('chat-input');
+      var text = input.value.trim();
+      if (!text) return;
+      MahjongNet.sendChat(text);
+      input.value = '';
     }
+
+    function doToggleReady() {
+      _isReady = !_isReady;
+      MahjongNet.toggleReady();
+      updateReadyBtn();
+    }
+
+    function updateReadyBtn() {
+      var btn = document.getElementById('ready-btn');
+      if (_isReady) {
+        btn.textContent = '❌ 取消準備';
+        btn.classList.add('is-ready');
+      } else {
+        btn.textContent = '✋ 準備開始';
+        btn.classList.remove('is-ready');
+      }
+    }
+
+    function leaveChatroom() {
+      clearInterval(_roomListInterval);
+      _isReady = false;
+      document.getElementById('chatroom-messages').innerHTML = '';
+      document.getElementById('menu-chatroom').style.display = 'none';
+      document.getElementById('menu-lobby-list').style.display = 'block';
+      MahjongNet.leaveRoom();
+      // 重新連線並刷新列表
+      MahjongNet.onRoomList = renderRoomList;
+      MahjongNet.listRooms(getPlayerName(), function(err) {
+        if (err) document.getElementById('room-list').innerHTML = '<div class="room-list-empty">連線失敗</div>';
+      });
+      _roomListInterval = setInterval(function() {
+        MahjongNet.requestRoomList();
+      }, 5000);
+    }
+
+    // === 多人遊戲開始 ===
     function onMultiplayerStart(msg) {
-      // Set up game with seat assignments
+      clearInterval(_roomListInterval);
       var mySeat = MahjongNet.mySeat;
       for (var i = 0; i < 4; i++) {
         var si = msg.seats[i];
@@ -256,27 +335,81 @@
       mahjongGame._mySeat = mySeat;
       mahjongGame._isMultiplayer = true;
       mahjongGame._isHost = MahjongNet.isHost;
-      // Set up action relay
       MahjongNet.onAction = function(msg) {
         handleRemoteAction(msg);
       };
-      // Enter fullscreen and start
       document.getElementById('start-screen').style.display = 'none';
       var el = document.documentElement;
       var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
       if (rfs) rfs.call(el).catch(function(){});
+      checkOrientation();
       startMultiplayerGame();
     }
+
+    // === 遊戲結束回聊天室 ===
+    function onGameEndReturn(msg) {
+      if (msg && msg.aborted) {
+        alert('所有玩家已離開，遊戲結束');
+      }
+      // 回到聊天室
+      _isReady = false;
+      updateReadyBtn();
+      document.getElementById('start-screen').style.display = '';
+      document.getElementById('menu-login').style.display = 'none';
+      document.getElementById('menu-lobby-list').style.display = 'none';
+      document.getElementById('menu-chatroom').style.display = 'block';
+      document.getElementById('result-overlay').innerHTML = '';
+      document.getElementById('result-overlay').style.display = 'none';
+    }
+
+    function onPlayerReplacedInGame(msg) {
+      if (mahjongGame && mahjongGame.players[msg.seat]) {
+        mahjongGame.players[msg.seat].name = msg.name;
+        mahjongGame.players[msg.seat].isRemote = false;
+        mahjongGame.players[msg.seat].isHuman = false;
+      }
+    }
+
+    // === 單人遊戲 (保留) ===
+    function goFullscreenAndStart() {
+      var name = getPlayerName();
+      mahjongGame.players[0].name = name;
+      if (typeof BGM !== 'undefined') BGM.prewarm();
+      if (typeof SFX !== 'undefined') SFX.preload();
+      var el = document.documentElement;
+      var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+      if (rfs) rfs.call(el).then(function(){startGame()}).catch(function(){startGame()});
+      else startGame();
+    }
+
+    function startAIWatch() {
+      for (var i = 0; i < 4; i++) {
+        mahjongGame.players[i].isHuman = false;
+        mahjongGame.players[i].isRemote = false;
+      }
+      mahjongGame.players[0].name = 'AI-東';
+      mahjongGame.players[1].name = 'AI-南';
+      mahjongGame.players[2].name = 'AI-西';
+      mahjongGame.players[3].name = 'AI-北';
+      mahjongGame._isAIWatch = true;
+      mahjongGame._watchRoundsLeft = 8;
+      if (typeof BGM !== 'undefined') BGM.prewarm();
+      if (typeof SFX !== 'undefined') SFX.preload();
+      var el = document.documentElement;
+      var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+      if (rfs) rfs.call(el).then(function(){startGame()}).catch(function(){startGame()});
+      else startGame();
+    }
+
+    // === 工具函式 ===
     function toggleMusic() {
       if (typeof BGM === 'undefined') return;
       var on = BGM.toggle();
       var btn = document.getElementById('music-btn');
-      if (btn) btn.textContent = on ? '🎵' : '🎵';
       if (btn) btn.style.opacity = on ? '1' : '0.4';
     }
     function toggleFullscreen() {
       var btn = document.getElementById('fullscreen-btn');
-      // Already in fullscreen — exit
       if (document.fullscreenElement || document.webkitFullscreenElement) {
         (document.exitFullscreen || document.webkitExitFullscreen).call(document);
         btn.textContent = '⛶';
@@ -285,22 +418,16 @@
       var el = document.documentElement;
       var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
       if (rfs) {
-        rfs.call(el).then(function(){ btn.textContent = '✕'; }).catch(function(){
-          // Fullscreen API rejected (mobile browsers) — show PWA hint
-          _showPWAHint();
-        });
+        rfs.call(el).then(function(){ btn.textContent = '✕'; }).catch(function(){ _showPWAHint(); });
       } else {
-        // No Fullscreen API at all (iOS Safari) — show PWA hint
         _showPWAHint();
       }
     }
     function _showPWAHint() {
-      // Check if already standalone PWA
       var isStandalone = window.matchMedia('(display-mode: standalone)').matches
         || window.matchMedia('(display-mode: fullscreen)').matches
         || window.navigator.standalone === true;
-      if (isStandalone) return; // Already fullscreen via PWA
-      // Remove existing hint if any
+      if (isStandalone) return;
       var old = document.getElementById('fs-pwa-hint');
       if (old) old.remove();
       var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -343,27 +470,21 @@
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', function(){setTimeout(checkOrientation,300)});
 
-    // PWA: Register service worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(function(){});
     }
-
-    // === Anti-zoom: prevent pinch-zoom on mobile ===
     document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
     document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
     document.addEventListener('gestureend', function(e) { e.preventDefault(); }, { passive: false });
-    // Prevent double-tap zoom
     var lastTouchEnd = 0;
     document.addEventListener('touchend', function(e) {
       var now = Date.now();
       if (now - lastTouchEnd <= 300) { e.preventDefault(); }
       lastTouchEnd = now;
     }, { passive: false });
-    // Prevent multi-touch zoom
     document.addEventListener('touchmove', function(e) {
       if (e.touches.length > 1) { e.preventDefault(); }
     }, { passive: false });
-    // PWA: Show install hint on mobile if not standalone
     (function() {
       var isStandalone = window.matchMedia('(display-mode: standalone)').matches
         || window.matchMedia('(display-mode: fullscreen)').matches

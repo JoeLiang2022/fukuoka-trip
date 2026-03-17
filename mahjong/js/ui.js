@@ -855,7 +855,12 @@ function renderEndScreen(g) {
     if (typeof MahjongAnalysis !== 'undefined' && g.gameLog && g.gameLog.length > 0) {
       goButtons += '<button onclick="showAnalysis()">📊 牌局分析</button>';
     }
-    goButtons += '<button onclick="location.reload()">重新開始</button></div>';
+    if (game._isMultiplayer) {
+      goButtons += '<button onclick="backToChatroom()">🏠 回到聊天室</button>';
+    } else {
+      goButtons += '<button onclick="location.reload()">重新開始</button>';
+    }
+    goButtons += '</div>';
     overlay.innerHTML = '<h2>🀄 一將結束</h2>' + rankHtml + goButtons;
     return;
   }
@@ -909,7 +914,7 @@ function renderEndScreen(g) {
       '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center">' +
       '<button onclick="showAnalysis()">📊 牌局分析</button>' +
       '<button onclick="nextRound()">下一局</button>' +
-      '<button class="btn-quit" onclick="quitGame()">退出</button></div>';
+      (game._isMultiplayer ? '<button class="btn-quit" onclick="backToChatroom()">🏠 回到聊天室</button>' : '<button class="btn-quit" onclick="quitGame()">退出</button>') + '</div>';
     // AI 觀戰自動下一局（有限次數）
     if (game._isAIWatch) {
       if (typeof game._watchRoundsLeft === 'number') game._watchRoundsLeft--;
@@ -928,7 +933,7 @@ function renderEndScreen(g) {
       '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center">' +
       '<button onclick="showAnalysis()">📊 牌局分析</button>' +
       '<button onclick="nextRound()">下一局</button>' +
-      '<button class="btn-quit" onclick="quitGame()">退出</button></div>';
+      (game._isMultiplayer ? '<button class="btn-quit" onclick="backToChatroom()">🏠 回到聊天室</button>' : '<button class="btn-quit" onclick="quitGame()">退出</button>') + '</div>';
     // AI 觀戰自動下一局（有限次數）
     if (game._isAIWatch) {
       if (typeof game._watchRoundsLeft === 'number') game._watchRoundsLeft--;
@@ -1202,7 +1207,19 @@ function backToResult() {
 
 function quitGame() {
   if (confirm('確定要退出這將嗎？')) {
-    game.quitGame();
+    if (game._isMultiplayer) {
+      // 多人遊戲：通知伺服器遊戲結束，回到聊天室
+      MahjongNet.sendGameEnd();
+    } else {
+      game.quitGame();
+    }
+  }
+}
+
+function backToChatroom() {
+  // 從結算畫面回到聊天室
+  if (game._isMultiplayer) {
+    MahjongNet.sendGameEnd();
   }
 }
 
