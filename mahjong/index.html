@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%231a5c2a' width='180' height='180' rx='24'/><text x='90' y='125' font-size='110' text-anchor='middle'>🀄</text></svg>">
   <title>台灣麻將</title>
-  <link rel="stylesheet" href="css/style.css?v=48">
+  <link rel="stylesheet" href="css/style.css?v=49">
 </head>
 <body>
   <div id="game-table" ontouchstart="">
@@ -19,7 +19,7 @@
         <div class="wind-circle">東風圈</div>
         <div class="remaining">剩餘 -- 張</div>
       </div>
-      <div id="version-tag">v48</div>
+      <div id="version-tag">v49</div>
       <div id="wall-north" class="wall-side wall-h"></div>
       <div id="wall-south" class="wall-side wall-h"></div>
       <div id="wall-west" class="wall-side wall-v"></div>
@@ -84,7 +84,7 @@
           </div>
           <div class="btn-row" style="margin-top:4px">
             <button class="btn-secondary" onclick="backToLogin()">返回</button>
-            <button class="btn-secondary" onclick="backToLogin();setTimeout(goFullscreenAndStart,100)">🎮 單人</button>
+            <button class="btn-secondary" onclick="clearInterval(_roomListInterval);document.getElementById('menu-lobby-list').style.display='none';document.getElementById('menu-login').style.display='none';goFullscreenAndStart()">🎮 單人</button>
           </div>
           <div id="lobby-error" class="lobby-error"></div>
         </div>
@@ -120,7 +120,7 @@
   <script src="js/vfx.js?v=36"></script>
   <script src="js/touch.js?v=36"></script>
   <script src="js/bgm.js?v=44"></script>
-  <script src="js/ui.js?v=47"></script>
+  <script src="js/ui.js?v=49"></script>
   <script>
     const mahjongGame = new MahjongGame();
     initUI(mahjongGame);
@@ -380,10 +380,17 @@
       mahjongGame.players[0].name = name;
       if (typeof BGM !== 'undefined') BGM.prewarm();
       if (typeof SFX !== 'undefined') SFX.preload();
-      var el = document.documentElement;
-      var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-      if (rfs) rfs.call(el).then(function(){startGame()}).catch(function(){startGame()});
-      else startGame();
+      // Start game IMMEDIATELY — don't depend on fullscreen promise
+      startGame();
+      // Try fullscreen in background (non-blocking)
+      try {
+        var el = document.documentElement;
+        var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+        if (rfs) {
+          var p = rfs.call(el);
+          if (p && p.catch) p.catch(function(){});
+        }
+      } catch(e) { console.log('[FS] fullscreen error:', e); }
     }
 
     function startAIWatch() {
@@ -399,10 +406,16 @@
       mahjongGame._watchRoundsLeft = 8;
       if (typeof BGM !== 'undefined') BGM.prewarm();
       if (typeof SFX !== 'undefined') SFX.preload();
-      var el = document.documentElement;
-      var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-      if (rfs) rfs.call(el).then(function(){startGame()}).catch(function(){startGame()});
-      else startGame();
+      // Start game IMMEDIATELY — don't depend on fullscreen promise
+      startGame();
+      try {
+        var el = document.documentElement;
+        var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+        if (rfs) {
+          var p = rfs.call(el);
+          if (p && p.catch) p.catch(function(){});
+        }
+      } catch(e) {}
     }
 
     // === 工具函式 ===
