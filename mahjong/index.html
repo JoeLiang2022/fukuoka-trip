@@ -104,7 +104,7 @@
     <script src="js/vfx.js?v=36"></script>
   <script src="js/touch.js?v=36"></script>
   <script src="js/bgm.js?v=44"></script>
-  <script src="js/ui.js?v=44"></script>
+  <script src="js/ui.js?v=45"></script>
   <script>
     const mahjongGame = new MahjongGame();
     initUI(mahjongGame);
@@ -335,7 +335,9 @@
     window.addEventListener('orientationchange', function(){setTimeout(setVH,200)});
     function checkOrientation() {
       var hint = document.getElementById('landscape-hint');
-      hint.style.display = (window.innerWidth < 600 && window.innerHeight > window.innerWidth) ? 'flex' : 'none';
+      var startScreen = document.getElementById('start-screen');
+      var isStartVisible = startScreen && startScreen.style.display !== 'none';
+      hint.style.display = (!isStartVisible && window.innerWidth < 600 && window.innerHeight > window.innerWidth) ? 'flex' : 'none';
     }
     checkOrientation();
     window.addEventListener('resize', checkOrientation);

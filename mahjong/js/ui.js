@@ -1231,6 +1231,7 @@ function onTileClick(tile) {
 
 function startGame() {
   document.getElementById('start-screen').style.display = 'none';
+  if (typeof checkOrientation === 'function') checkOrientation();
   document.getElementById('result-overlay').classList.remove('show');
   document.getElementById('action-bar').classList.remove('show');
   selectedTileId = null;
@@ -1340,6 +1341,7 @@ function showDiceAnimation(g, callback) {
 
 function startMultiplayerGame() {
   document.getElementById('start-screen').style.display = 'none';
+  if (typeof checkOrientation === 'function') checkOrientation();
   document.getElementById('result-overlay').classList.remove('show');
   document.getElementById('action-bar').classList.remove('show');
   selectedTileId = null;
