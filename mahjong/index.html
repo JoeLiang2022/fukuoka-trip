@@ -389,7 +389,13 @@
       }
       mahjongGame._mySeat = mySeat;
       mahjongGame._isMultiplayer = true;
-      mahjongGame._isHost = MahjongNet.isHost;
+      // If only one human player, this player must act as host (controls game logic)
+      var humanCount = 0;
+      for (var j = 0; j < msg.seats.length; j++) {
+        if (msg.seats[j].isHuman) humanCount++;
+      }
+      mahjongGame._isHost = MahjongNet.isHost || humanCount <= 1;
+      dbg('isHost=' + mahjongGame._isHost + ' (netHost=' + MahjongNet.isHost + ', humans=' + humanCount + ')');
       MahjongNet.onAction = function(msg) {
         handleRemoteAction(msg);
       };
