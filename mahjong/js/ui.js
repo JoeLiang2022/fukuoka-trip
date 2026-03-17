@@ -296,7 +296,7 @@ function renderGame(g) {
   }
 
   var overlay = document.getElementById('result-overlay');
-  if (g.phase === 'ended') {
+  if (g.phase === 'ended' || g.phase === 'game_over') {
     renderEndScreen(g);
     overlay.classList.add('show');
   } else {
@@ -1207,12 +1207,13 @@ function backToResult() {
 // ===== 牌的點擊與遊戲控制 =====
 
 function quitGame() {
-  if (confirm('確定要退出這將嗎？')) {
+  if (confirm('確定要退出嗎？')) {
     if (game._isMultiplayer) {
       // 多人遊戲：通知伺服器遊戲結束，回到聊天室
       MahjongNet.sendGameEnd();
     } else {
-      game.quitGame();
+      // 單人遊戲：直接重新載入回到主畫面
+      location.reload();
     }
   }
 }
