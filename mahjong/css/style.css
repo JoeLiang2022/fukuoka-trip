@@ -578,33 +578,34 @@ html, body { background: #1a5c2a; color: #fff; font-family: "Noto Sans TC", "Mic
 #start-screen .start-content {
   position: relative; z-index: 1;
   display: flex; flex-direction: column; align-items: center;
-  padding: 16px 14px; max-width: 340px; width: calc(100% - 24px);
+  padding: 12px 14px; max-width: 340px; width: calc(100% - 24px);
   max-height: calc(100vh - 24px); max-height: calc(var(--vh,1vh) * 100 - 24px);
   overflow-y: auto; overflow-x: hidden;
-  margin: auto 0;
+  -webkit-overflow-scrolling: touch;
+  margin: auto;
   background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.4) 100%);
   border: 2px solid rgba(255,215,0,0.25);
   border-radius: 20px;
   box-shadow: 0 0 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,215,0,0.1);
 }
 #start-screen .start-logo {
-  font-size: 60px; margin-bottom: 0;
+  font-size: 40px; margin-bottom: 0;
   filter: drop-shadow(0 4px 16px rgba(0,0,0,0.6));
   animation: logoFloat 3s ease-in-out infinite;
 }
 @keyframes logoFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
 #start-screen h1 {
-  font-size: 28px; font-weight: 900; margin: 2px 0 0;
+  font-size: 22px; font-weight: 900; margin: 2px 0 0;
   color: #ffd700;
   text-shadow: 0 2px 8px rgba(255,215,0,0.3), 0 0 2px rgba(0,0,0,0.8);
   letter-spacing: 6px;
 }
 #start-screen .subtitle {
-  font-size: 11px; color: rgba(255,215,0,0.5); margin-bottom: 14px;
+  font-size: 11px; color: rgba(255,215,0,0.5); margin-bottom: 8px;
   letter-spacing: 3px; font-weight: bold;
 }
 #start-screen .name-input-row {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 14px; width: 100%; max-width: 280px;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px; width: 100%; max-width: 280px;
 }
 #start-screen .name-input-row label { display: none; }
 #start-screen .name-input-row input {
@@ -616,7 +617,7 @@ html, body { background: #1a5c2a; color: #fff; font-family: "Noto Sans TC", "Mic
 #start-screen .name-input-row input:focus { border-color: #ffd700; box-shadow: 0 0 8px rgba(255,215,0,0.3); }
 #start-screen .name-input-row input::placeholder { color: rgba(255,255,255,0.3); }
 #start-screen .btn-primary {
-  width: 100%; max-width: 280px; padding: 14px 24px; font-size: 20px; font-weight: 900;
+  width: 100%; max-width: 280px; padding: 10px 24px; font-size: 18px; font-weight: 900;
   background: linear-gradient(180deg, #e53e3e 0%, #c53030 50%, #9b2c2c 100%);
   color: #fff; border: 2px solid rgba(255,215,0,0.5); border-radius: 12px;
   cursor: pointer; font-family: inherit; margin: 4px 0;
@@ -626,7 +627,7 @@ html, body { background: #1a5c2a; color: #fff; font-family: "Noto Sans TC", "Mic
 }
 #start-screen .btn-primary:active { transform: scale(0.96); }
 #start-screen .btn-ai {
-  width: 100%; max-width: 280px; padding: 12px 24px; font-size: 17px; font-weight: 900;
+  width: 100%; max-width: 280px; padding: 10px 24px; font-size: 16px; font-weight: 900;
   background: linear-gradient(180deg, #805ad5 0%, #6b46c1 50%, #553c9a 100%);
   color: #fff; border: 2px solid rgba(255,215,0,0.3); border-radius: 12px;
   cursor: pointer; font-family: inherit; margin: 4px 0;
