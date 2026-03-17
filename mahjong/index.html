@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%231a5c2a' width='180' height='180' rx='24'/><text x='90' y='125' font-size='110' text-anchor='middle'>🀄</text></svg>">
   <title>台灣麻將</title>
-  <link rel="stylesheet" href="css/style.css?v=47">
+  <link rel="stylesheet" href="css/style.css?v=48">
 </head>
 <body>
   <div id="game-table" ontouchstart="">
@@ -19,7 +19,7 @@
         <div class="wind-circle">東風圈</div>
         <div class="remaining">剩餘 -- 張</div>
       </div>
-      <div id="version-tag">v47</div>
+      <div id="version-tag">v48</div>
       <div id="wall-north" class="wall-side wall-h"></div>
       <div id="wall-south" class="wall-side wall-h"></div>
       <div id="wall-west" class="wall-side wall-v"></div>
@@ -82,7 +82,10 @@
             <input type="text" id="room-code-input" placeholder="輸入編號加入" maxlength="4" style="text-transform:uppercase">
             <button class="btn-primary" onclick="doJoinRoom()">加入</button>
           </div>
-          <button class="btn-secondary" onclick="backToLogin()">返回</button>
+          <div class="btn-row" style="margin-top:4px">
+            <button class="btn-secondary" onclick="backToLogin()">返回</button>
+            <button class="btn-secondary" onclick="backToLogin();setTimeout(goFullscreenAndStart,100)">🎮 單人</button>
+          </div>
           <div id="lobby-error" class="lobby-error"></div>
         </div>
 
