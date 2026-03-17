@@ -19,7 +19,7 @@
         <div class="wind-circle">東風圈</div>
         <div class="remaining">剩餘 -- 張</div>
       </div>
-      <div id="version-tag">v49</div>
+      <div id="version-tag">v50</div>
       <div id="wall-north" class="wall-side wall-h"></div>
       <div id="wall-south" class="wall-side wall-h"></div>
       <div id="wall-west" class="wall-side wall-v"></div>
@@ -78,6 +78,7 @@
           <div class="lobby-list-title">🏠 遊戲大廳</div>
           <div id="room-list" class="room-list"><div class="room-list-empty">搜尋中...</div></div>
           <button class="btn-secondary btn-small-text" onclick="refreshRoomList()">🔄 重新整理</button>
+          <button class="btn-primary" onclick="doCreateRoom()" style="margin-top:6px">➕ 建立房間</button>
           <div class="room-join-row">
             <input type="text" id="room-code-input" placeholder="輸入編號加入" maxlength="4" style="text-transform:uppercase">
             <button class="btn-primary" onclick="doJoinRoom()">加入</button>
@@ -194,6 +195,35 @@
     function doJoinByCode(code) {
       document.getElementById('room-code-input').value = code;
       doJoinRoom();
+    }
+
+    function doCreateRoom() {
+      var name = getPlayerName();
+      if (!name) { alert('請輸入暱稱'); return; }
+      document.getElementById('lobby-error').textContent = '建立中...';
+
+      MahjongNet.onLobbyUpdate = renderChatroom;
+      MahjongNet.onGameStart = onMultiplayerStart;
+      MahjongNet.onChat = onChatMessage;
+      MahjongNet.onGameEnd = onGameEndReturn;
+      MahjongNet.onPlayerReplaced = onPlayerReplacedInGame;
+      MahjongNet.onError = function(msg) {
+        document.getElementById('lobby-error').textContent = msg;
+        document.getElementById('chatroom-error').textContent = msg;
+      };
+
+      MahjongNet.createRoom(name, function(err) {
+        if (err) {
+          document.getElementById('lobby-error').textContent = err;
+          return;
+        }
+        clearInterval(_roomListInterval);
+        _isReady = false;
+        document.getElementById('menu-lobby-list').style.display = 'none';
+        document.getElementById('menu-chatroom').style.display = 'block';
+        document.getElementById('chatroom-error').textContent = '';
+        updateReadyBtn();
+      });
     }
 
     function doJoinRoom() {
