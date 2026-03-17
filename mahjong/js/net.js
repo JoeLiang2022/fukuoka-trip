@@ -81,6 +81,7 @@ var MahjongNet = (function() {
         isHost = true;
         isMultiplayer = true;
         lobbyState = msg.lobby;
+        if (typeof dbg === 'function') dbg('net: created room=' + msg.code + ' seat=' + msg.seat);
         if (onLobbyUpdate) onLobbyUpdate(lobbyState);
         break;
 
@@ -89,17 +90,20 @@ var MahjongNet = (function() {
         roomCode = msg.code;
         isMultiplayer = true;
         lobbyState = msg.lobby;
+        if (typeof dbg === 'function') dbg('net: joined room=' + msg.code + ' seat=' + msg.seat);
         if (_joinCallback) { var jcb = _joinCallback; _joinCallback = null; jcb(null); }
         if (onLobbyUpdate) onLobbyUpdate(lobbyState);
         break;
 
       case 'lobby':
         lobbyState = msg.data;
+        if (typeof dbg === 'function') dbg('net: lobby update, ready=' + JSON.stringify(msg.data.seats.map(function(s){return s.ready;})));
         if (onLobbyUpdate) onLobbyUpdate(lobbyState);
         break;
 
       case 'gameStart':
         console.log('[Net] gameStart received:', JSON.stringify(msg));
+        if (typeof dbg === 'function') dbg('net: gameStart received, handler=' + (onGameStart ? 'SET' : 'NULL'));
         if (onGameStart) onGameStart(msg);
         else console.warn('[Net] gameStart received but no onGameStart handler!');
         break;
@@ -130,6 +134,7 @@ var MahjongNet = (function() {
 
       case 'error':
         console.warn('[Net] Server error:', msg.message);
+        if (typeof dbg === 'function') dbg('net: ERROR: ' + msg.message);
         if (_joinCallback) { var jcb = _joinCallback; _joinCallback = null; jcb(msg.message); return; }
         if (onError) onError(msg.message);
         break;
@@ -174,7 +179,9 @@ var MahjongNet = (function() {
   }
 
   function toggleReady() {
-    console.log('[Net] toggleReady called, ws=' + (ws ? 'connected' : 'null') + ', readyState=' + (ws ? ws.readyState : 'N/A'));
+    var state = ws ? ('readyState=' + ws.readyState) : 'ws=null';
+    if (typeof dbg === 'function') dbg('net.toggleReady: ' + state);
+    console.log('[Net] toggleReady called, ' + state);
     send({ type: 'ready' });
   }
 

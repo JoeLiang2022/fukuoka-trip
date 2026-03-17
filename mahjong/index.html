@@ -117,7 +117,7 @@
   <script src="js/sound.js?v=36"></script>
   <script src="js/voice.js?v=44"></script>
   <script src="js/analysis.js?v=43"></script>
-  <script src="js/net.js?v=51"></script>
+  <script src="js/net.js?v=52"></script>
   <script src="js/vfx.js?v=36"></script>
   <script src="js/touch.js?v=36"></script>
   <script src="js/bgm.js?v=44"></script>
@@ -127,6 +127,20 @@
     initUI(mahjongGame);
     var _isReady = false;
     var _roomListInterval = null;
+
+    // === Debug overlay (temporary) ===
+    var _debugEl = document.createElement('div');
+    _debugEl.id = 'debug-overlay';
+    _debugEl.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#0f0;font:11px monospace;padding:4px 6px;max-height:120px;overflow-y:auto;z-index:99999;pointer-events:none;';
+    document.body.appendChild(_debugEl);
+    var _debugLines = [];
+    function dbg(msg) {
+      _debugLines.push('[' + new Date().toLocaleTimeString() + '] ' + msg);
+      if (_debugLines.length > 15) _debugLines.shift();
+      _debugEl.textContent = _debugLines.join('\n');
+      _debugEl.scrollTop = _debugEl.scrollHeight;
+      console.log('[DBG]', msg);
+    }
 
     function getPlayerName() {
       var el = document.getElementById('player-name');
@@ -201,6 +215,7 @@
       var name = getPlayerName();
       if (!name) { alert('請輸入暱稱'); return; }
       document.getElementById('lobby-error').textContent = '建立中...';
+      dbg('doCreateRoom: name=' + name);
 
       MahjongNet.onLobbyUpdate = renderChatroom;
       MahjongNet.onGameStart = onMultiplayerStart;
@@ -215,8 +230,10 @@
       MahjongNet.createRoom(name, function(err) {
         if (err) {
           document.getElementById('lobby-error').textContent = err;
+          dbg('createRoom error: ' + err);
           return;
         }
+        dbg('createRoom OK, seat=' + MahjongNet.mySeat + ' room=' + MahjongNet.roomCode);
         clearInterval(_roomListInterval);
         _isReady = false;
         document.getElementById('menu-lobby-list').style.display = 'none';
@@ -234,6 +251,7 @@
         return;
       }
       document.getElementById('lobby-error').textContent = '加入中...';
+      dbg('doJoinRoom: name=' + name + ' code=' + code);
 
       MahjongNet.onLobbyUpdate = renderChatroom;
       MahjongNet.onGameStart = onMultiplayerStart;
@@ -248,8 +266,10 @@
       MahjongNet.joinRoom(code, name, function(err) {
         if (err) {
           document.getElementById('lobby-error').textContent = err;
+          dbg('joinRoom error: ' + err);
           return;
         }
+        dbg('joinRoom OK, seat=' + MahjongNet.mySeat + ' room=' + MahjongNet.roomCode);
         clearInterval(_roomListInterval);
         _isReady = false;
         document.getElementById('menu-lobby-list').style.display = 'none';
@@ -323,7 +343,7 @@
 
     function doToggleReady() {
       _isReady = !_isReady;
-      console.log('[DEBUG] doToggleReady, _isReady:', _isReady, 'mySeat:', MahjongNet.mySeat, 'roomCode:', MahjongNet.roomCode);
+      dbg('doToggleReady: _isReady=' + _isReady + ' seat=' + MahjongNet.mySeat + ' room=' + MahjongNet.roomCode);
       MahjongNet.toggleReady();
       updateReadyBtn();
     }
@@ -358,7 +378,7 @@
 
     // === 多人遊戲開始 ===
     function onMultiplayerStart(msg) {
-      console.log('[DEBUG] onMultiplayerStart called, msg:', JSON.stringify(msg));
+      dbg('onMultiplayerStart! seats=' + JSON.stringify(msg.seats));
       clearInterval(_roomListInterval);
       var mySeat = MahjongNet.mySeat;
       for (var i = 0; i < 4; i++) {
