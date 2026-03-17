@@ -99,7 +99,9 @@ var MahjongNet = (function() {
         break;
 
       case 'gameStart':
+        console.log('[Net] gameStart received:', JSON.stringify(msg));
         if (onGameStart) onGameStart(msg);
+        else console.warn('[Net] gameStart received but no onGameStart handler!');
         break;
 
       case 'action':

@@ -19,7 +19,7 @@
         <div class="wind-circle">東風圈</div>
         <div class="remaining">剩餘 -- 張</div>
       </div>
-      <div id="version-tag">v50</div>
+      <div id="version-tag">v51</div>
       <div id="wall-north" class="wall-side wall-h"></div>
       <div id="wall-south" class="wall-side wall-h"></div>
       <div id="wall-west" class="wall-side wall-v"></div>
@@ -117,7 +117,7 @@
   <script src="js/sound.js?v=36"></script>
   <script src="js/voice.js?v=44"></script>
   <script src="js/analysis.js?v=43"></script>
-  <script src="js/net.js?v=46"></script>
+  <script src="js/net.js?v=51"></script>
   <script src="js/vfx.js?v=36"></script>
   <script src="js/touch.js?v=36"></script>
   <script src="js/bgm.js?v=44"></script>
@@ -323,6 +323,7 @@
 
     function doToggleReady() {
       _isReady = !_isReady;
+      console.log('[DEBUG] doToggleReady, _isReady:', _isReady, 'ws connected:', !!MahjongNet.mySeat >= 0);
       MahjongNet.toggleReady();
       updateReadyBtn();
     }
@@ -357,6 +358,7 @@
 
     // === 多人遊戲開始 ===
     function onMultiplayerStart(msg) {
+      console.log('[DEBUG] onMultiplayerStart called, msg:', JSON.stringify(msg));
       clearInterval(_roomListInterval);
       var mySeat = MahjongNet.mySeat;
       for (var i = 0; i < 4; i++) {
