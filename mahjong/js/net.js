@@ -24,7 +24,10 @@ var MahjongNet = (function() {
   var _joinCallback = null;
   var _connectCallback = null;
 
+  var EXTERNAL_WS_URL = 'wss://mahjong-server-oc2m.onrender.com';
+
   function getWsUrl() {
+    if (EXTERNAL_WS_URL) return EXTERNAL_WS_URL;
     var loc = window.location;
     var proto = loc.protocol === 'https:' ? 'wss:' : 'ws:';
     return proto + '//' + loc.host + '/mahjong-ws';
