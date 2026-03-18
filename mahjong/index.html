@@ -117,6 +117,7 @@
   <script src="js/sound.js?v=36"></script>
   <script src="js/voice.js?v=44"></script>
   <script src="js/analysis.js?v=43"></script>
+  <script src="js/collector.js?v=1"></script>
   <script src="js/net.js?v=52"></script>
   <script src="js/vfx.js?v=36"></script>
   <script src="js/touch.js?v=36"></script>
@@ -462,6 +463,8 @@
       mahjongGame.players[3].name = 'AI-北';
       mahjongGame._isAIWatch = true;
       mahjongGame._watchRoundsLeft = 8;
+      mahjongGame._totalWatchRounds = 8;
+      if (typeof GameCollector !== 'undefined') GameCollector.startSession();
       if (typeof BGM !== 'undefined') BGM.prewarm();
       if (typeof SFX !== 'undefined') SFX.preload();
       // Start game IMMEDIATELY — don't depend on fullscreen promise

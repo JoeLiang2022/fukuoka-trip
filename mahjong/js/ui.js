@@ -918,8 +918,13 @@ function renderEndScreen(g) {
       (game._isMultiplayer ? '<button class="btn-quit" onclick="backToChatroom()">🏠 回到聊天室</button>' : '<button class="btn-quit" onclick="quitGame()">退出</button>') + '</div>';
     // AI 觀戰自動下一局（有限次數）
     if (game._isAIWatch) {
+      if (typeof GameCollector !== 'undefined') {
+        var roundIdx = (game._totalWatchRounds || 8) - (game._watchRoundsLeft || 0);
+        GameCollector.collectRound(game, roundIdx);
+      }
       if (typeof game._watchRoundsLeft === 'number') game._watchRoundsLeft--;
       if (game._watchRoundsLeft <= 0) {
+        if (typeof GameCollector !== 'undefined') GameCollector.submitSession();
         game.phase = 'game_over';
         _aiWatchTimer = setTimeout(function(){ _aiWatchTimer = null; renderEndScreen(game); document.getElementById('result-overlay').classList.add('show'); }, 3000);
       } else {
@@ -937,8 +942,13 @@ function renderEndScreen(g) {
       (game._isMultiplayer ? '<button class="btn-quit" onclick="backToChatroom()">🏠 回到聊天室</button>' : '<button class="btn-quit" onclick="quitGame()">退出</button>') + '</div>';
     // AI 觀戰自動下一局（有限次數）
     if (game._isAIWatch) {
+      if (typeof GameCollector !== 'undefined') {
+        var roundIdx2 = (game._totalWatchRounds || 8) - (game._watchRoundsLeft || 0);
+        GameCollector.collectRound(game, roundIdx2);
+      }
       if (typeof game._watchRoundsLeft === 'number') game._watchRoundsLeft--;
       if (game._watchRoundsLeft <= 0) {
+        if (typeof GameCollector !== 'undefined') GameCollector.submitSession();
         game.phase = 'game_over';
         _aiWatchTimer = setTimeout(function(){ _aiWatchTimer = null; renderEndScreen(game); document.getElementById('result-overlay').classList.add('show'); }, 3000);
       } else {
