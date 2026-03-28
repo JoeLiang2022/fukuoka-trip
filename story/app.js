@@ -182,7 +182,7 @@ ${HOOK_TECHNIQUES.join('\n')}
     const resp = await fetch(API_BASE + '/api/story-generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: prompt })
+      body: JSON.stringify({ prompt: prompt, style: _selectedStyle })
     });
     if (!resp.ok) throw new Error('API error: ' + resp.status);
     const data = await resp.json();
