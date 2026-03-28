@@ -347,31 +347,20 @@ async function publishStory() {
   const id = Date.now().toString(36);
   const filename = id + '.html';
 
-  // Collect image data from rendered chapters
-  var images = [];
-  story.chapters.forEach(function(ch, i) {
-    var imgEl = document.getElementById('chImg' + i);
-    if (imgEl) {
-      var img = imgEl.querySelector('img');
-      if (img && img.src.startsWith('data:')) images[i] = img.src;
-    }
-  });
-
-  // Build standalone HTML page for the story
+  // Build standalone HTML page for the story (text only, no images to keep payload small)
   var html = '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">';
   html += '<title>' + escHtml(story.title) + '</title>';
   html += '<link rel="stylesheet" href="reader.css?v=1">';
   html += '</head><body>';
-  html += '<div class="reader-header"><a href="index.html" class="back-link">← 所有故事</a></div>';
+  html += '<div class="reader-header"><a href="index.html" class="back-link">\u2190 所有故事</a></div>';
   html += '<article class="story">';
   html += '<h1 class="story-title">' + escHtml(story.title) + '</h1>';
   story.chapters.forEach(function(ch, i) {
     html += '<section class="chapter">';
-    if (images[i]) html += '<div class="chapter-cover"><img src="' + images[i] + '" alt=""></div>';
-    html += '<div class="chapter-num">第 ' + ch.num + ' 篇</div>';
+    html += '<div class="chapter-num">\u7B2C ' + ch.num + ' \u7BC7</div>';
     html += '<h2>' + escHtml(ch.title) + '</h2>';
     html += '<div class="chapter-content">' + escHtml(ch.text).replace(/\n/g, '<br>') + '</div>';
-    if (ch.hook) html += '<blockquote class="hook">💬 ' + escHtml(ch.hook) + '</blockquote>';
+    if (ch.hook) html += '<blockquote class="hook">\uD83D\uDCAC ' + escHtml(ch.hook) + '</blockquote>';
     html += '</section>';
   });
   html += '</article>';
@@ -380,11 +369,16 @@ async function publishStory() {
 
   try {
     // Upload via server proxy
-    await fetch(API_BASE + '/api/story-publish', {
+    var pubResp = await fetch(API_BASE + '/api/story-publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: id, title: story.title, chapters: story.chapters.length, html: html })
-    }).then(function(r) { if (!r.ok) throw new Error('Publish API ' + r.status); return r.json(); });
+    });
+    if (!pubResp.ok) {
+      var errData = {};
+      try { errData = await pubResp.json(); } catch(_) {}
+      throw new Error(errData.error || 'Publish API ' + pubResp.status);
+    }
 
     var url = STORIES_BASE + filename;
     showToast('✅ 已發佈！');
