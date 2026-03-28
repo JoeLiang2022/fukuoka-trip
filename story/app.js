@@ -4,6 +4,28 @@
 // API calls go through server proxy (no key in frontend)
 
 const API_BASE = 'https://live-subtitle.onrender.com';
+const ACCESS_CODE = '0910164482';
+const STORIES_BASE = 'https://joeliang2022.github.io/fukuoka-trip/stories/';
+
+// === Auth Gate ===
+function checkAuth() {
+  var code = document.getElementById('authCode').value.trim();
+  if (code === ACCESS_CODE) {
+    sessionStorage.setItem('storyAuth', '1');
+    document.getElementById('authGate').style.display = 'none';
+    document.getElementById('mainApp').style.display = '';
+    init();
+  } else {
+    document.getElementById('authError').style.display = '';
+    document.getElementById('authCode').value = '';
+  }
+}
+// Auto-login if already authed
+if (sessionStorage.getItem('storyAuth') === '1') {
+  document.getElementById('authGate').style.display = 'none';
+  document.getElementById('mainApp').style.display = '';
+  init();
+}
 
 let _topics = {};
 let _styles = [];
@@ -208,6 +230,7 @@ function renderStory(story) {
   });
 
   html += '<div class="export-bar">' +
+    '<button onclick="publishStory()">📤 發佈</button>' +
     '<button onclick="copyAll()">📋 複製全部</button>' +
     '<button onclick="downloadMD()">⬇️ 下載 MD</button>' +
   '</div>';
@@ -310,6 +333,69 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// === Publish Story to GitHub Pages ===
+async function publishStory() {
+  if (!window._currentStory) { showToast('沒有故事可發佈'); return; }
+  const story = window._currentStory;
+  showToast('📤 發佈中...');
+
+  // Generate story ID (timestamp-based)
+  const id = Date.now().toString(36);
+  const filename = id + '.html';
+
+  // Collect image data from rendered chapters
+  var images = [];
+  story.chapters.forEach(function(ch, i) {
+    var imgEl = document.getElementById('chImg' + i);
+    if (imgEl) {
+      var img = imgEl.querySelector('img');
+      if (img && img.src.startsWith('data:')) images[i] = img.src;
+    }
+  });
+
+  // Build standalone HTML page for the story
+  var html = '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">';
+  html += '<title>' + escHtml(story.title) + '</title>';
+  html += '<link rel="stylesheet" href="reader.css?v=1">';
+  html += '</head><body>';
+  html += '<div class="reader-header"><a href="index.html" class="back-link">← 所有故事</a></div>';
+  html += '<article class="story">';
+  html += '<h1 class="story-title">' + escHtml(story.title) + '</h1>';
+  story.chapters.forEach(function(ch, i) {
+    html += '<section class="chapter">';
+    if (images[i]) html += '<div class="chapter-cover"><img src="' + images[i] + '" alt=""></div>';
+    html += '<div class="chapter-num">第 ' + ch.num + ' 篇</div>';
+    html += '<h2>' + escHtml(ch.title) + '</h2>';
+    html += '<div class="chapter-content">' + escHtml(ch.text).replace(/\n/g, '<br>') + '</div>';
+    if (ch.hook) html += '<blockquote class="hook">💬 ' + escHtml(ch.hook) + '</blockquote>';
+    html += '</section>';
+  });
+  html += '</article>';
+  html += '<div class="reader-footer"><a href="index.html">← 更多故事</a></div>';
+  html += '</body></html>';
+
+  try {
+    // Upload via server proxy
+    await fetch(API_BASE + '/api/story-publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, title: story.title, chapters: story.chapters.length, html: html })
+    }).then(function(r) { if (!r.ok) throw new Error('Publish API ' + r.status); return r.json(); });
+
+    var url = STORIES_BASE + filename;
+    showToast('✅ 已發佈！');
+    // Show publish result
+    var output = document.getElementById('output');
+    output.innerHTML += '<div style="margin:16px 0;padding:16px;border-radius:12px;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);text-align:center">' +
+      '<div style="font-size:15px;color:#2ecc71;font-weight:600;margin-bottom:8px">✅ 故事已發佈</div>' +
+      '<a href="' + url + '" target="_blank" style="color:#4ecdc4;word-break:break-all">' + url + '</a>' +
+      '<div style="margin-top:8px"><button onclick="navigator.clipboard.writeText(\'' + url + '\');showToast(\'已複製連結\')" style="padding:6px 16px;border-radius:8px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.1);color:#4ecdc4;cursor:pointer">📋 複製連結</button></div>' +
+    '</div>';
+  } catch (e) {
+    showToast('❌ 發佈失敗: ' + e.message);
+  }
 }
 
 // === Boot ===
