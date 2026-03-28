@@ -399,4 +399,9 @@ async function publishStory() {
 }
 
 // === Boot ===
-init();
+// Only init if already authenticated (otherwise wait for checkAuth)
+if (sessionStorage.getItem('storyAuth') !== '1') {
+  // Show auth gate, don't init
+} else {
+  // Already handled by auto-login block above
+}
