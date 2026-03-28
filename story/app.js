@@ -177,6 +177,7 @@ async function generate() {
     if (!resp.ok) throw new Error('API error: ' + resp.status);
     const data = await resp.json();
     const raw = data.text || '';
+    var newsSources = data.sources || [];
 
     // Parse JSON from response (strip markdown fences if any)
     let story;
@@ -189,6 +190,9 @@ async function generate() {
       btn.disabled = false; btn.textContent = '✨ 生成故事';
       return;
     }
+
+    // Attach sources to story for news
+    if (newsSources.length > 0) story._sources = newsSources;
 
     // Save to localStorage
     saveStory(topic, style.name, audience.name, story);
@@ -221,6 +225,16 @@ function renderStory(story) {
       '</div>' +
     '</div>';
   });
+
+  // Show news sources if available
+  if (story._sources && story._sources.length > 0) {
+    html += '<div style="margin:16px 0;padding:14px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)">';
+    html += '<div style="font-size:13px;color:#f093fb;font-weight:600;margin-bottom:8px">📰 新聞來源</div>';
+    story._sources.forEach(function(src) {
+      if (src.url) html += '<div style="margin:4px 0"><a href="' + escHtml(src.url) + '" target="_blank" style="color:#4ecdc4;font-size:13px;text-decoration:none">' + escHtml(src.title || src.url) + '</a></div>';
+    });
+    html += '</div>';
+  }
 
   html += '<div class="export-bar">' +
     '<button onclick="publishStory()">📤 發佈</button>' +
