@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📖 AI Story Creator</title>
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+<div class="header">
+  <h1>📖 AI Story Creator</h1>
+  <p>從概念到故事，AI 幫你寫出抓眼球的篇章</p>
+</div>
+<div class="container">
+  <div class="section-title">🎯 目標觀眾</div>
+  <div class="chip-row" id="audienceRow"></div>
+  <div class="section-title">🎨 故事風格</div>
+  <div class="chip-row" id="styleRow"></div>
+  <div class="section-title">🔥 熱門主題</div>
+  <div class="cat-row" id="catRow"></div>
+  <div class="topic-grid" id="topicGrid"></div>
+  <div class="custom-input">
+    <input type="text" id="customTopic" placeholder="✏️ 或輸入自訂主題..." maxlength="100">
+  </div>
+  <div class="chapter-count">
+    <span>📄 篇章數</span>
+    <div class="count-btns">
+      <button onclick="setChapters(3)" id="ch3" class="active">3篇</button>
+      <button onclick="setChapters(5)" id="ch5">5篇</button>
+      <button onclick="setChapters(7)" id="ch7">7篇</button>
+    </div>
+  </div>
+  <button class="gen-btn" id="btnGenerate" onclick="generate()">✨ 生成故事</button>
+  <div id="output"></div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="app.js?v=1"></script>
+</body>
+</html>
