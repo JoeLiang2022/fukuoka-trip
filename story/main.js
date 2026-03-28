@@ -133,7 +133,7 @@ function selectStyle(id) {
           if (topicGrid) {
             topicGrid.innerHTML = titles.map(function(t) {
               return '<div class="topic-card" onclick="selectTopic(this,\'' + t.replace(/'/g, "\\'") + '\')">' + t + '</div>';
-            }).join('');
+            }).join('') + '<div style="grid-column:1/-1;text-align:center;padding:8px"><button onclick="selectStyle(_selectedStyle)" style="padding:8px 20px;border-radius:10px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.08);color:#f093fb;font-size:13px;cursor:pointer">🔄 換一批</button></div>';
           }
         } catch(e) {
           if (topicGrid) topicGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:12px;color:#888">生成失敗，請直接輸入主題</div>';
