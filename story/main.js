@@ -683,9 +683,56 @@ async function aiScoreStory() {
     if (score.highlights) html += '<div style="font-size:13px;color:#4ecdc4;margin-bottom:6px">✅ ' + escHtml(score.highlights) + '</div>';
     if (score.weaknesses) html += '<div style="font-size:13px;color:#f5576c;margin-bottom:6px">⚠️ ' + escHtml(score.weaknesses) + '</div>';
     if (score.feedback) html += '<div style="font-size:13px;color:#ccc;line-height:1.6">' + escHtml(score.feedback) + '</div>';
+    // Find low-scoring areas
+    var lowAreas = [];
+    var areaLabels = {plot:'劇情',characters:'角色',pacing:'節奏',hook:'吸引力'};
+    for (var ak in areaLabels) { if (s[ak] !== undefined && s[ak] < 9) lowAreas.push(areaLabels[ak] + '(' + s[ak] + '→9)'); }
+    if (lowAreas.length > 0) {
+      window._lastScores = score;
+      html += '<div style="margin-top:12px;text-align:center"><button onclick="aiOptimizeLowScores()" style="padding:10px 24px;border-radius:10px;border:none;background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;font-size:14px;font-weight:600;cursor:pointer">🔧 優化低分項目：' + lowAreas.join('、') + '</button></div>';
+    }
     html += '</div>';
     document.getElementById('output').innerHTML += html;
   } catch(e) { showToast('評分失敗: ' + e.message); }
+}
+
+// === AI Optimize Low Scores (targeted) ===
+async function aiOptimizeLowScores() {
+  if (!window._currentStory || !window._lastScores) { showToast('請先評分'); return; }
+  var scores = window._lastScores.scores || {};
+  var weaknesses = window._lastScores.weaknesses || '';
+  var feedback = window._lastScores.feedback || '';
+  // Find which areas need improvement
+  var improvements = [];
+  if (scores.plot < 9) improvements.push('劇情邏輯（目前' + scores.plot + '分）：加強因果關係、減少巧合');
+  if (scores.characters < 9) improvements.push('角色深度（目前' + scores.characters + '分）：用行為和對話展現性格，增加內心掙扎');
+  if (scores.pacing < 9) improvements.push('節奏感（目前' + scores.pacing + '分）：調整快慢節奏，關鍵處用短句');
+  if (scores.hook < 9) improvements.push('吸引力（目前' + scores.hook + '分）：加強開頭懸念和結尾 cliffhanger');
+
+  showToast('🔧 優化中（只改低分部分）...');
+  var story = window._currentStory;
+  var storyJson = JSON.stringify({ title: story.title, chapters: story.chapters.map(function(ch) { return { num: ch.num, title: ch.title, text: ch.text, hook: ch.hook }; }) });
+
+  var prompt = '以下故事需要局部優化（不要整篇重寫，只改善弱項）。\n\n' +
+    '需要改善的項目：\n' + improvements.join('\n') + '\n\n' +
+    '評審意見：' + weaknesses + '\n' + feedback + '\n\n' +
+    '規則：\n- 只修改需要改善的部分，保留好的內容\n- 禁止出現指令用語（自我矛盾、付出代價等）\n- 禁止結尾變 TED 演講\n- 回覆完整的優化後 JSON（同格式）\n\n' + storyJson;
+
+  try {
+    var resp = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: prompt }) });
+    if (!resp.ok) throw new Error('API ' + resp.status);
+    var data = await resp.json();
+    var raw = data.text || '';
+    var tick3 = String.fromCharCode(96,96,96);
+    var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
+    var optimized = JSON.parse(cleaned);
+    if (optimized.chapters) {
+      window._currentStory.chapters = optimized.chapters;
+      if (optimized.title) window._currentStory.title = optimized.title;
+      renderStory(window._currentStory);
+      showToast('✅ 低分項目已優化，請重新評分確認');
+    }
+  } catch(e) { showToast('優化失敗: ' + e.message); }
 }
 
 // === AI Optimize Story ===
