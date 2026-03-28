@@ -78,6 +78,18 @@ function renderStyles() {
 function selectStyle(id) {
   _selectedStyle = id;
   renderStyles();
+  // Hide topic section for news/finance (they use Google Search, no topic needed)
+  var isNews = (id === 'news' || id === 'finance');
+  var topicEls = document.querySelectorAll('.section-title');
+  var catRow = document.getElementById('catRow');
+  var topicGrid = document.getElementById('topicGrid');
+  var customInput = document.querySelector('.custom-input');
+  if (catRow) catRow.style.display = isNews ? 'none' : '';
+  if (topicGrid) topicGrid.style.display = isNews ? 'none' : '';
+  if (customInput) customInput.style.display = isNews ? 'none' : '';
+  // Hide "熱門主題" title
+  topicEls.forEach(function(el) { if (el.textContent.includes('熱門主題')) el.style.display = isNews ? 'none' : ''; });
+}
 }
 
 // === Render Categories ===
@@ -133,8 +145,9 @@ const HOOK_TECHNIQUES = [
 
 // === Generate Story ===
 async function generate() {
-  const topic = document.getElementById('customTopic').value.trim() || _selectedTopic;
-  if (!topic) { showToast('請選擇或輸入一個主題'); return; }
+  var isNews = (_selectedStyle === 'news' || _selectedStyle === 'finance');
+  const topic = isNews ? '今天的最新' + (_selectedStyle === 'finance' ? '財經' : '') + '新聞' : (document.getElementById('customTopic').value.trim() || _selectedTopic);
+  if (!topic && !isNews) { showToast('請選擇或輸入一個主題'); return; }
 
   const style = _styles.find(s => s.id === _selectedStyle) || _styles[0];
   const audience = _audiences.find(a => a.id === _selectedAudience) || _audiences[0];
