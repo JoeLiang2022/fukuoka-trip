@@ -4,7 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>📖 AI Story Creator</title>
-<link rel="stylesheet" href="style.css?v=1">
+<link rel="stylesheet" href="style.css?v=3">
+<style>
+/* Inline critical auth gate styles */
+body{background:#0a0a0f;color:#e8e8e8;font-family:'Segoe UI',sans-serif;margin:0}
+.auth-gate{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e)}
+.auth-box{text-align:center;padding:40px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);max-width:320px;width:90%}
+.auth-icon{font-size:48px;margin-bottom:12px}
+.auth-box h2{font-size:20px;color:#f093fb;margin-bottom:4px}
+.auth-box p{font-size:13px;color:#888;margin-bottom:20px}
+.auth-box input{width:100%;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#fff;font-size:16px;text-align:center;letter-spacing:2px;margin-bottom:12px;box-sizing:border-box}
+.auth-box input:focus{border-color:#f093fb;outline:none}
+.auth-box button{width:100%;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+</style>
 </head>
 <body>
 <div id="authGate" class="auth-gate">
