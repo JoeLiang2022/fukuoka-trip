@@ -118,7 +118,7 @@ function selectStyle(id) {
     _selectedTopic = '';
     // Call AI to generate titles
     try {
-      var titlePrompt = '你是故事創作專家。請根據「' + (style ? style.name : id) + '」風格，生成 10 個吸引人的故事名稱。\n\n用 JSON 回覆（不要 markdown）：{"titles":["故事名稱1","故事名稱2",...]}\n\n要求：名稱要有懸念感、吸引人點擊、適合社群媒體、繁體中文';
+      var titlePrompt = '你是社群媒體故事創作專家，熟悉網路上最熱門、最高流量的故事題材。請根據「' + (style ? style.name : id) + '」風格，生成 20 個目前最熱門、最容易爆紅的故事名稱。\n\n用 JSON 回覆（不要 markdown）：{"titles":["故事名稱1","故事名稱2",...]}\n\n要求：\n- 參考抖音、小紅書、IG 上最火的故事類型\n- 名稱要有懸念感、讓人忍不住想點\n- 要符合當下流行趨勢\n- 繁體中文\n- 20 個，從最熱門排到次熱門';
       fetch(API_BASE + '/api/story-generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
