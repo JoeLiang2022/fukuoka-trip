@@ -158,38 +158,16 @@ async function generate() {
   btn.textContent = '⏳ 生成中...';
   output.innerHTML = '<div class="loading"><div class="spinner"></div><p>AI 正在構思故事架構...</p></div>';
 
-  const prompt = `你是一個專業的社群媒體故事創作者。請根據以下設定創作一個分篇章的故事。
-
-【主題】${topic}
-【風格】${style.name} — ${style.prompt}
-【目標觀眾】${audience.name} — ${audience.tone}
-【篇章數】${_chapters} 篇
-【語言】繁體中文
-
-【抓眼球技巧（必須融入）】
-${HOOK_TECHNIQUES.join('\n')}
-
-【輸出格式】請用 JSON 格式回覆，不要加 markdown 標記：
-{
-  "title": "故事總標題（要吸引人點擊）",
-  "chapters": [
-    {
-      "num": 1,
-      "title": "篇章標題（要有懸念感）",
-      "text": "篇章內容（200-400字，適合社群媒體閱讀）",
-      "imagePrompt": "用英文描述這篇的配圖場景（適合AI生圖，cinematic style）",
-      "hook": "這篇的金句（適合截圖分享，一句話）"
-    }
-  ]
-}
-
-要求：
-- 每篇都能獨立閱讀，但串起來是完整故事
-- 第一篇開頭要在3秒內抓住注意力
-- 每篇結尾要有懸念讓人想看下一篇
-- 最後一篇要有震撼或感動的結尾
-- 金句要適合做成社群圖卡
-- 配圖描述要具體、有電影感`;
+  var prompt = '你是一個專業的社群媒體故事創作者。請根據以下設定創作一個分篇章的故事。\n\n' +
+    '【主題】' + topic + '\n' +
+    '【風格】' + style.name + ' — ' + style.prompt + '\n' +
+    '【目標觀眾】' + audience.name + ' — ' + audience.tone + '\n' +
+    '【篇章數】' + _chapters + ' 篇\n' +
+    '【語言】繁體中文\n\n' +
+    '【抓眼球技巧（必須融入）】\n' + HOOK_TECHNIQUES.join('\n') + '\n\n' +
+    '【輸出格式】請用 JSON 格式回覆，不要加 markdown 標記：\n' +
+    '{\n  "title": "故事總標題（要吸引人點擊）",\n  "chapters": [\n    {\n      "num": 1,\n      "title": "篇章標題（要有懸念感）",\n      "text": "篇章內容（200-400字，適合社群媒體閱讀）",\n      "imagePrompt": "用英文描述這篇的配圖場景（適合AI生圖，cinematic style）",\n      "hook": "這篇的金句（適合截圖分享，一句話）"\n    }\n  ]\n}\n\n' +
+    '要求：\n- 每篇都能獨立閱讀，但串起來是完整故事\n- 第一篇開頭要在3秒內抓住注意力\n- 每篇結尾要有懸念讓人想看下一篇\n- 最後一篇要有震撼或感動的結尾\n- 金句要適合做成社群圖卡\n- 配圖描述要具體、有電影感';
 
   try {
     const resp = await fetch(API_BASE + '/api/story-generate', {
@@ -204,7 +182,8 @@ ${HOOK_TECHNIQUES.join('\n')}
     // Parse JSON from response (strip markdown fences if any)
     let story;
     try {
-      const cleaned = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      var tick3 = String.fromCharCode(96,96,96);
+      var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
       story = JSON.parse(cleaned);
     } catch (e) {
       output.innerHTML = '<div class="loading"><p>⚠️ AI 回覆格式異常，請重試</p><pre style="font-size:12px;color:#666;max-height:200px;overflow:auto">' + escHtml(raw.substring(0, 500)) + '</pre></div>';
