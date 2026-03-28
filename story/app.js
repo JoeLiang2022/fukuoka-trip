@@ -98,14 +98,22 @@ function selectStyle(id) {
       countBtns.innerHTML = '<button onclick="setChapters(3)" id="ch3" class="active">3篇</button><button onclick="setChapters(5)" id="ch5">5篇</button><button onclick="setChapters(7)" id="ch7">7篇</button>';
     }
   }
+  // Filter topic categories by style
+  if (!isNews) {
+    var style = _styles.find(function(s) { return s.id === id; });
+    var allowedCats = style && style.cats && style.cats.length > 0 ? style.cats : Object.keys(_topics);
+    renderCategories(allowedCats);
+    if (allowedCats.length > 0) selectCategory(allowedCats[0]);
+  }
 }
 
 // === Render Categories ===
-function renderCategories() {
-  const row = document.getElementById('catRow');
-  row.innerHTML = Object.keys(_topics).map(cat =>
-    '<div class="cat-btn' + (cat === _selectedCat ? ' active' : '') + '" onclick="selectCategory(\'' + cat.replace(/'/g, "\\'") + '\')">' + cat + '</div>'
-  ).join('');
+function renderCategories(allowedCats) {
+  var row = document.getElementById('catRow');
+  var cats = allowedCats || Object.keys(_topics);
+  row.innerHTML = cats.map(function(cat) {
+    return '<div class="cat-btn' + (cat === _selectedCat ? ' active' : '') + '" onclick="selectCategory(\'' + cat.replace(/'/g, "\\'") + '\')">' + cat + '</div>';
+  }).join('');
 }
 function selectCategory(cat) {
   _selectedCat = cat;
