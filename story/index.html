@@ -7,6 +7,17 @@
 <link rel="stylesheet" href="style.css?v=1">
 </head>
 <body>
+<div id="authGate" class="auth-gate">
+  <div class="auth-box">
+    <div class="auth-icon">📖</div>
+    <h2>AI Story Creator</h2>
+    <p>請輸入存取碼</p>
+    <input type="password" id="authCode" placeholder="Access Code" maxlength="20" onkeydown="if(event.key==='Enter')checkAuth()">
+    <button onclick="checkAuth()">進入</button>
+    <div id="authError" style="color:#f5576c;font-size:13px;margin-top:8px;display:none">存取碼錯誤</div>
+  </div>
+</div>
+<div id="mainApp" style="display:none">
 <div class="header">
   <h1>📖 AI Story Creator</h1>
   <p>從概念到故事，AI 幫你寫出抓眼球的篇章</p>
@@ -34,6 +45,7 @@
   <div id="output"></div>
 </div>
 <div class="toast" id="toast"></div>
-<script src="app.js?v=1"></script>
+</div><!-- end mainApp -->
+<script src="app.js?v=2"></script>
 </body>
 </html>
