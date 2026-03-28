@@ -11,7 +11,7 @@ const STORIES_BASE = 'https://joeliang2022.github.io/fukuoka-trip/stories/';
 function checkAuth() {
   var code = document.getElementById('authCode').value.trim();
   if (code === ACCESS_CODE) {
-    sessionStorage.setItem('storyAuth', '1');
+    try { sessionStorage.setItem('storyAuth', '1'); } catch(e) {}
     document.getElementById('authGate').style.display = 'none';
     document.getElementById('mainApp').style.display = '';
     init();
@@ -21,11 +21,13 @@ function checkAuth() {
   }
 }
 // Auto-login if already authed
-if (sessionStorage.getItem('storyAuth') === '1') {
-  document.getElementById('authGate').style.display = 'none';
-  document.getElementById('mainApp').style.display = '';
-  init();
-}
+try {
+  if (sessionStorage.getItem('storyAuth') === '1') {
+    document.getElementById('authGate').style.display = 'none';
+    document.getElementById('mainApp').style.display = '';
+    init();
+  }
+} catch(e) { /* Safari private mode may block sessionStorage */ }
 
 let _topics = {};
 let _styles = [];
