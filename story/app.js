@@ -231,30 +231,30 @@ async function generateImage(prompt, chapterIdx) {
   const imgEl = document.getElementById('chImg' + chapterIdx);
   if (!imgEl) return;
   try {
-    const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=' + GEMINI_KEY, {
+    // Use Imagen 4 predict API
+    const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=' + GEMINI_KEY, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: 'Generate an image: ' + prompt + '. Style: cinematic, dramatic lighting, high quality, 16:9 aspect ratio.' }] }],
-        generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+        instances: [{ prompt: prompt + ', cinematic style, dramatic lighting, high quality' }],
+        parameters: { sampleCount: 1, aspectRatio: '16:9' }
       })
     });
-    if (!resp.ok) throw new Error('Image API error');
+    if (!resp.ok) throw new Error('Imagen ' + resp.status);
     const data = await resp.json();
-    // Look for inline image data
-    const parts = data.candidates?.[0]?.content?.parts || [];
-    const imgPart = parts.find(p => p.inlineData);
-    if (imgPart && imgPart.inlineData) {
-      imgEl.innerHTML = '<img src="data:' + imgPart.inlineData.mimeType + ';base64,' + imgPart.inlineData.data + '" alt="chapter image">';
+    const predictions = data.predictions || [];
+    if (predictions.length > 0 && predictions[0].bytesBase64Encoded) {
+      imgEl.innerHTML = '<img src="data:image/png;base64,' + predictions[0].bytesBase64Encoded + '" alt="">';
     } else {
-      imgEl.innerHTML = '<span style="color:#555">🖼️ 配圖生成失敗（點擊重試）</span>';
-      imgEl.onclick = () => { imgEl.innerHTML = '<div class="img-loading"><div class="spinner"></div><span>重新生成...</span></div>'; generateImage(prompt, chapterIdx); };
+      throw new Error('No image');
     }
   } catch (e) {
-    imgEl.innerHTML = '<span style="color:#555">🖼️ ' + escHtml(e.message) + '</span>';
-    imgEl.onclick = () => { imgEl.innerHTML = '<div class="img-loading"><div class="spinner"></div><span>重新生成...</span></div>'; generateImage(prompt, chapterIdx); };
+    imgEl.innerHTML = '<span style="color:#555">\uD83D\uDDBC\uFE0F ' + escHtml(e.message) + '</span>';
+    imgEl.style.cursor = 'pointer';
+    imgEl.onclick = function() { imgEl.innerHTML = '<div class="img-loading"><div class="spinner"></div><span>Retry...</span></div>'; imgEl.onclick = null; generateImage(prompt, chapterIdx); };
   }
 }
+
 
 function regenImage(idx) {
   if (!window._currentStory) return;
