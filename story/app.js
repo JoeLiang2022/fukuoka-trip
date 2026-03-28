@@ -155,6 +155,40 @@ async function generate() {
 
   btn.disabled = true;
   btn.textContent = '⏳ 生成中...';
+  output.innerHTML = '<div class="loading"><div class="spinner"></div><p>' + (isNews ? '搜尋今日新聞中...' : 'AI 正在構思故事架構...') + '</p></div>';
+
+  // News mode: completely different prompt
+  if (isNews) {
+    var newsPrompt = '請搜尋今天（' + new Date().toISOString().split('T')[0] + '）最重要的' + (_selectedStyle === 'finance' ? '財經' : '') + '新聞。\n\n' +
+      '請用 JSON 格式回覆，不要加 markdown 標記：\n' +
+      '{\n  "date": "今天日期",\n  "articles": [\n    {\n      "title": "新聞標題",\n      "summary": "2-3句重點摘要",\n      "source": "來源媒體名稱",\n      "category": "分類（如：國際/政治/科技/財經/社會）"\n    }\n  ]\n}\n\n' +
+      '要求：\n- 列出 ' + _chapters + ' 則最重要的新聞\n- 每則新聞的摘要要精簡但完整\n- 標題要吸引人\n- 必須是今天真實發生的新聞\n- 用繁體中文';
+    try {
+      var resp = await fetch(API_BASE + '/api/story-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: newsPrompt, style: _selectedStyle })
+      });
+      if (!resp.ok) throw new Error('API error: ' + resp.status);
+      var data = await resp.json();
+      var raw = data.text || '';
+      var newsSources = data.sources || [];
+      var tick3 = String.fromCharCode(96,96,96);
+      var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
+      var newsData;
+      try { newsData = JSON.parse(cleaned); } catch(e) { newsData = null; }
+      renderNews(newsData, raw, newsSources);
+    } catch(e) {
+      output.innerHTML = '<div class="loading"><p>❌ ' + escHtml(e.message) + '</p></div>';
+    }
+    btn.disabled = false; btn.textContent = '✨ 生成故事';
+    return;
+  }
+
+  // Story mode (original)
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 生成中...';
   output.innerHTML = '<div class="loading"><div class="spinner"></div><p>AI 正在構思故事架構...</p></div>';
 
   var prompt = '你是一個專業的社群媒體故事創作者。請根據以下設定創作一個分篇章的故事。\n\n' +
@@ -203,6 +237,51 @@ async function generate() {
     output.innerHTML = '<div class="loading"><p>❌ ' + escHtml(e.message) + '</p></div>';
   }
   btn.disabled = false; btn.textContent = '✨ 生成故事';
+}
+
+// === Render News (Google News style) ===
+function renderNews(newsData, rawText, sources) {
+  var output = document.getElementById('output');
+  var html = '';
+  if (newsData && newsData.articles) {
+    html += '<div style="margin:20px 0 12px;text-align:center"><div style="font-size:20px;font-weight:700;color:#fff">📰 ' + (_selectedStyle === 'finance' ? '財經' : '今日') + '新聞</div><div style="font-size:12px;color:#666;margin-top:4px">' + (newsData.date || new Date().toISOString().split('T')[0]) + '</div></div>';
+    newsData.articles.forEach(function(article, i) {
+      var sourceUrl = '';
+      if (sources && sources[i] && sources[i].url) sourceUrl = sources[i].url;
+      else if (sources && sources.length > 0) {
+        // Try to match by title
+        for (var s = 0; s < sources.length; s++) {
+          if (sources[s].title && article.title && sources[s].title.indexOf(article.title.substring(0, 10)) >= 0) { sourceUrl = sources[s].url; break; }
+        }
+      }
+      html += '<div style="margin:10px 0;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)">';
+      if (article.category) html += '<div style="font-size:11px;color:#f093fb;font-weight:600;margin-bottom:4px">' + escHtml(article.category) + '</div>';
+      html += '<div style="font-size:16px;font-weight:600;color:#eee;margin-bottom:6px;line-height:1.4">' + escHtml(article.title) + '</div>';
+      html += '<div style="font-size:14px;color:#aaa;line-height:1.6">' + escHtml(article.summary) + '</div>';
+      html += '<div style="margin-top:8px;display:flex;align-items:center;gap:8px">';
+      if (article.source) html += '<span style="font-size:12px;color:#888">' + escHtml(article.source) + '</span>';
+      if (sourceUrl) html += '<a href="' + escHtml(sourceUrl) + '" target="_blank" style="font-size:12px;color:#4ecdc4;text-decoration:none">閱讀全文 →</a>';
+      html += '</div></div>';
+    });
+  } else {
+    // Fallback: show raw text
+    html += '<div style="margin:20px 0;padding:16px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)">';
+    html += '<div style="font-size:15px;color:#ccc;line-height:1.8;white-space:pre-wrap">' + escHtml(rawText) + '</div>';
+    html += '</div>';
+  }
+  // Show all sources at bottom
+  if (sources && sources.length > 0) {
+    html += '<div style="margin:12px 0;padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04)">';
+    html += '<div style="font-size:12px;color:#888;margin-bottom:6px">📎 新聞來源</div>';
+    sources.forEach(function(src) {
+      if (src.url) html += '<div style="margin:3px 0"><a href="' + escHtml(src.url) + '" target="_blank" style="color:#4ecdc4;font-size:12px;text-decoration:none">' + escHtml(src.title || src.url) + '</a></div>';
+    });
+    html += '</div>';
+  }
+  html += '<div class="export-bar"><button onclick="copyAll()">📋 複製全部</button></div>';
+  output.innerHTML = html;
+  // Store for copy
+  window._currentStory = newsData;
 }
 
 // === Render Story ===
