@@ -347,7 +347,7 @@ async function publishStory() {
   const id = Date.now().toString(36);
   const filename = id + '.html';
 
-  // Build standalone HTML page for the story (text only, no images to keep payload small)
+  // Build standalone HTML page for the story
   var html = '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">';
   html += '<title>' + escHtml(story.title) + '</title>';
   html += '<link rel="stylesheet" href="reader.css?v=1">';
@@ -355,8 +355,24 @@ async function publishStory() {
   html += '<div class="reader-header"><a href="index.html" class="back-link">\u2190 所有故事</a></div>';
   html += '<article class="story">';
   html += '<h1 class="story-title">' + escHtml(story.title) + '</h1>';
+
+  // Collect images as separate entries
+  var imageEntries = [];
   story.chapters.forEach(function(ch, i) {
+    var imgEl = document.getElementById('chImg' + i);
+    var imgData = null;
+    if (imgEl) {
+      var img = imgEl.querySelector('img');
+      if (img && img.src && img.src.startsWith('data:')) {
+        var parts = img.src.split(',');
+        if (parts.length === 2) {
+          imgData = parts[1]; // base64 only
+          imageEntries.push({ idx: i, data: imgData });
+        }
+      }
+    }
     html += '<section class="chapter">';
+    if (imgData) html += '<div class="chapter-cover"><img src="img/' + id + '_' + i + '.png" alt=""></div>';
     html += '<div class="chapter-num">\u7B2C ' + ch.num + ' \u7BC7</div>';
     html += '<h2>' + escHtml(ch.title) + '</h2>';
     html += '<div class="chapter-content">' + escHtml(ch.text).replace(/\n/g, '<br>') + '</div>';
@@ -368,11 +384,11 @@ async function publishStory() {
   html += '</body></html>';
 
   try {
-    // Upload via server proxy
+    // Upload via server proxy (images sent separately)
     var pubResp = await fetch(API_BASE + '/api/story-publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id, title: story.title, chapters: story.chapters.length, html: html })
+      body: JSON.stringify({ id: id, title: story.title, chapters: story.chapters.length, html: html, images: imageEntries })
     });
     if (!pubResp.ok) {
       var errData = {};
