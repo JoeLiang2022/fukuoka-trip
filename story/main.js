@@ -37,6 +37,7 @@ let _selectedAudience = 'young';
 let _selectedTopic = '';
 let _selectedCat = '';
 let _chapters = 3;
+let _generateImages = false;
 
 // === Init ===
 async function init() {
@@ -191,6 +192,14 @@ function promptCustomChapters() {
   if (n && !isNaN(n) && parseInt(n) > 0 && parseInt(n) <= 200) {
     setChapters(parseInt(n));
   }
+}
+
+function toggleImages(on) {
+  _generateImages = on;
+  var btnOn = document.getElementById('imgOn');
+  var btnOff = document.getElementById('imgOff');
+  if (btnOn) btnOn.classList.toggle('active', on);
+  if (btnOff) btnOff.classList.toggle('active', !on);
 }
 
 // === Story Hook Techniques (injected into prompt) ===
@@ -444,10 +453,18 @@ function renderStory(story) {
 
   output.innerHTML = html;
 
-  // Generate images async
-  story.chapters.forEach((ch, i) => {
-    generateImage(ch.imagePrompt, i);
-  });
+  // Generate images async (only if enabled)
+  if (_generateImages) {
+    story.chapters.forEach((ch, i) => {
+      generateImage(ch.imagePrompt, i);
+    });
+  } else {
+    // Hide image placeholders
+    story.chapters.forEach((ch, i) => {
+      var imgEl = document.getElementById('chImg' + i);
+      if (imgEl) imgEl.style.display = 'none';
+    });
+  }
 
   // Store for copy/export
   window._currentStory = story;
