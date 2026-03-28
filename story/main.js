@@ -277,7 +277,7 @@ async function generate() {
   var totalBatches = Math.ceil(_chapters / batchSize);
   var allChapters = [];
   var storyTitle = '';
-  var characterDesc = '';
+  var characters = '';
 
   try {
     for (var batch = 0; batch < totalBatches; batch++) {
@@ -291,7 +291,7 @@ async function generate() {
 
       var prevSummary = '';
       if (!isFirst && allChapters.length > 0) {
-        prevSummary = '【前情提要】故事標題：' + storyTitle + '\n主角外貌：' + characterDesc + '\n';
+        prevSummary = '【前情提要】故事標題：' + storyTitle + '\n角色外貌：' + characters + '\n';
         var last3 = allChapters.slice(-3);
         last3.forEach(function(ch) { prevSummary += '第' + ch.num + '篇「' + ch.title + '」：' + (ch.text || '').substring(0, 80) + '...\n'; });
         prevSummary += '\n請接續上面的劇情，寫第 ' + startNum + ' 到第 ' + (startNum + thisCount - 1) + ' 篇。\n\n';
@@ -309,7 +309,7 @@ async function generate() {
         '❌ 禁止出現：自我矛盾、付出代價、感情轉折、累積、終於等指令用語\n\n' +
         (isFirst ? '【抓眼球技巧】\n' + HOOK_TECHNIQUES.join('\n') + '\n\n' : '') +
         '【輸出格式】JSON（不要 markdown）：\n' +
-        '{"title":"' + (storyTitle || '故事總標題') + '","characterDesc":"' + (characterDesc || '主角英文外貌描述') + '","chapters":[{"num":' + startNum + ',"title":"篇章標題","text":"200-400字內容","imagePrompt":"英文配圖描述含主角外貌","hook":"金句"}]}\n\n' +
+        '{"title":"故事總標題","characters":[{"name":"角色名","appearance":"英文外貌"}],"chapters":[{"num":' + startNum + ',"title":"篇章標題","text":"200-400字","imagePrompt":"英文配圖含角色外貌","hook":"金句"}]}\n\n' +
         '要求：' + (isFirst ? '第一篇開頭3秒抓住注意力。' : '') + (isLast ? '最後一篇要有震撼或感動的結尾。' : '每篇結尾留懸念。') + ' 人物預設台灣人長相。';
 
       var resp = await fetch(API_BASE + '/api/story-generate', {
@@ -326,14 +326,14 @@ async function generate() {
         var batchStory = JSON.parse(cleaned);
         if (isFirst) {
           storyTitle = batchStory.title || topic;
-          characterDesc = batchStory.characterDesc || '';
+          characters = JSON.stringify(batchStory.characters || []);
         }
         if (batchStory.chapters) allChapters = allChapters.concat(batchStory.chapters);
       } catch(pe) { /* skip bad batch */ }
     }
 
     if (allChapters.length === 0) throw new Error('生成失敗');
-    var story = { title: storyTitle, characterDesc: characterDesc, chapters: allChapters };
+    var story = { title: storyTitle, characters: characters, chapters: allChapters };
     saveStory(topic, style.name, audience.name, story);
     renderStory(story);
   } catch (e) {
@@ -429,6 +429,9 @@ function renderStory(story) {
   }
 
   html += '<div class="export-bar">' +
+    '<button onclick="aiScoreStory()">📊 AI 評分</button>' +
+    '<button onclick="aiOptimizeStory()">✨ AI 優化</button>' +
+    '<button onclick="regenAllImages()">🖼️ 重新生圖</button>' +
     '<button onclick="publishStory()">📤 發佈</button>' +
     '<button onclick="copyAll()">📋 複製全部</button>' +
     '<button onclick="downloadMD()">⬇️ 下載 MD</button>' +
@@ -632,6 +635,71 @@ async function publishStory() {
   } catch (e) {
     showToast('❌ 發佈失敗: ' + e.message);
   }
+}
+
+// === AI Score Story ===
+async function aiScoreStory() {
+  if (!window._currentStory) { showToast('沒有故事'); return; }
+  showToast('📊 AI 評分中...');
+  var storyText = window._currentStory.chapters.map(function(ch) { return ch.title + '\n' + ch.text; }).join('\n\n');
+  var prompt = '請評分以下故事（滿分10分），用 JSON 回覆：{"scores":{"plot":8,"characters":7,"pacing":8,"hook":9,"overall":8},"feedback":"一段具體改善建議","highlights":"最好的部分","weaknesses":"最需要改善的部分"}\n\n評分標準：plot=劇情邏輯, characters=角色深度, pacing=節奏感, hook=吸引力, overall=整體\n\n故事：\n' + storyText;
+  try {
+    var resp = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: prompt }) });
+    if (!resp.ok) throw new Error('API ' + resp.status);
+    var data = await resp.json();
+    var raw = data.text || '';
+    var tick3 = String.fromCharCode(96,96,96);
+    var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
+    var score = JSON.parse(cleaned);
+    var s = score.scores || {};
+    var html = '<div style="margin:16px 0;padding:16px;border-radius:14px;background:rgba(240,147,251,0.06);border:1px solid rgba(240,147,251,0.2)">';
+    html += '<div style="font-size:16px;font-weight:700;color:#f093fb;margin-bottom:12px">📊 AI 評分</div>';
+    html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">';
+    var labels = {plot:'劇情',characters:'角色',pacing:'節奏',hook:'吸引力',overall:'整體'};
+    for (var k in labels) { if (s[k] !== undefined) html += '<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:' + (s[k] >= 8 ? '#2ecc71' : s[k] >= 6 ? '#f39c12' : '#e74c3c') + '">' + s[k] + '</div><div style="font-size:11px;color:#888">' + labels[k] + '</div></div>'; }
+    html += '</div>';
+    if (score.highlights) html += '<div style="font-size:13px;color:#4ecdc4;margin-bottom:6px">✅ ' + escHtml(score.highlights) + '</div>';
+    if (score.weaknesses) html += '<div style="font-size:13px;color:#f5576c;margin-bottom:6px">⚠️ ' + escHtml(score.weaknesses) + '</div>';
+    if (score.feedback) html += '<div style="font-size:13px;color:#ccc;line-height:1.6">' + escHtml(score.feedback) + '</div>';
+    html += '</div>';
+    document.getElementById('output').innerHTML += html;
+  } catch(e) { showToast('評分失敗: ' + e.message); }
+}
+
+// === AI Optimize Story ===
+async function aiOptimizeStory() {
+  if (!window._currentStory) { showToast('沒有故事'); return; }
+  if (!confirm('AI 將優化整個故事，這會替換目前的內容。繼續嗎？')) return;
+  showToast('✨ AI 優化中...');
+  var story = window._currentStory;
+  var storyJson = JSON.stringify({ title: story.title, chapters: story.chapters.map(function(ch) { return { num: ch.num, title: ch.title, text: ch.text }; }) });
+  var prompt = '以下是一個已完成的故事 JSON。請優化它：改善文筆、加強角色深度、修正邏輯漏洞、增加細節描寫。\n\n規則：角色矛盾透過行為展現，禁止出現「自我矛盾」「付出代價」等指令用語。用具體動作描寫人物。\n\n回覆優化後的完整 JSON（同樣格式，不要 markdown）：\n\n' + storyJson;
+  try {
+    var resp = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: prompt }) });
+    if (!resp.ok) throw new Error('API ' + resp.status);
+    var data = await resp.json();
+    var raw = data.text || '';
+    var tick3 = String.fromCharCode(96,96,96);
+    var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
+    var optimized = JSON.parse(cleaned);
+    if (optimized.chapters) {
+      window._currentStory.title = optimized.title || story.title;
+      window._currentStory.chapters = optimized.chapters;
+      renderStory(window._currentStory);
+      showToast('✅ 故事已優化');
+    }
+  } catch(e) { showToast('優化失敗: ' + e.message); }
+}
+
+// === Regenerate All Images ===
+function regenAllImages() {
+  if (!window._currentStory) { showToast('沒有故事'); return; }
+  showToast('🖼️ 重新生成所有圖片...');
+  window._currentStory.chapters.forEach(function(ch, i) {
+    var imgEl = document.getElementById('chImg' + i);
+    if (imgEl) imgEl.innerHTML = '<div class="img-loading"><div class="spinner"></div><span>重新生成...</span></div>';
+    generateImage(ch.imagePrompt, i);
+  });
 }
 
 // === Published Stories Management ===
