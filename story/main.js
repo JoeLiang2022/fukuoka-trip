@@ -101,7 +101,7 @@ function selectStyle(id) {
       countBtns.innerHTML = '<button onclick="setChapters(30)" id="ch30" class="active">30則</button><button onclick="setChapters(60)" id="ch60">60則</button><button onclick="setChapters(100)" id="ch100">100則</button>';
     } else {
       _chapters = 3;
-      countBtns.innerHTML = '<button onclick="setChapters(3)" id="ch3" class="active">3篇</button><button onclick="setChapters(5)" id="ch5">5篇</button><button onclick="setChapters(7)" id="ch7">7篇</button>';
+      countBtns.innerHTML = '<button onclick="setChapters(3)" id="ch3" class="active">3篇</button><button onclick="setChapters(5)" id="ch5">5篇</button><button onclick="setChapters(7)" id="ch7">7篇</button><button onclick="setChapters(30)" id="ch30">30篇</button><button onclick="setChapters(60)" id="ch60">60篇</button><button onclick="promptCustomChapters()" id="chCustom">自訂</button>';
     }
   }
   // For non-news styles: generate AI story title suggestions
@@ -177,10 +177,20 @@ function selectTopic(el, topic) {
 // === Chapter Count ===
 function setChapters(n) {
   _chapters = n;
-  [3,5,7].forEach(x => {
-    var b = document.getElementById('ch' + x);
-    if (b) b.classList.toggle('active', x === n);
-  });
+  document.querySelectorAll('.count-btns button').forEach(function(b) { b.classList.remove('active'); });
+  var btn = document.getElementById('ch' + n);
+  if (btn) btn.classList.add('active');
+  else {
+    var custom = document.getElementById('chCustom');
+    if (custom) { custom.classList.add('active'); custom.textContent = n + '篇'; }
+  }
+}
+
+function promptCustomChapters() {
+  var n = prompt('請輸入篇章數（1-200）：');
+  if (n && !isNaN(n) && parseInt(n) > 0 && parseInt(n) <= 200) {
+    setChapters(parseInt(n));
+  }
 }
 
 // === Story Hook Techniques (injected into prompt) ===
@@ -262,62 +272,75 @@ async function generate() {
     return;
   }
 
-  // Story mode (original)
-
-  btn.disabled = true;
-  btn.textContent = '⏳ 生成中...';
-  output.innerHTML = '<div class="loading"><div class="spinner"></div><p>AI 正在構思故事架構...</p></div>';
-
-  var prompt = '你是一個專業的社群媒體故事創作者。請根據以下設定創作一個分篇章的故事。\n\n' +
-    '【主題】' + topic + '\n' +
-    '【風格】' + style.name + ' — ' + style.prompt + '\n' +
-    '【目標觀眾】' + audience.name + ' — ' + audience.tone + '\n' +
-    '【篇章數】' + _chapters + ' 篇\n' +
-    '【語言】繁體中文\n\n' +
-    '【寫作品質要求 — 嚴格遵守】\n' +
-    '核心原則：角色驅動，不是情節驅動。以下規則是你創作前的思考框架，絕對不能直接寫進故事文字裡。\n\n' +
-    '1. 角色的性格矛盾，只能透過行為和對話展現，不能直接描述。禁止寫「她最害怕失去的是...」「他最大的矛盾是...」這種台詞。\n' +
-    '2. 每篇的核心衝突，女主必須自己做一個選擇，且這個選擇要讓她付出代價（情感、利益、或關係上的損失）。\n' +
-    '3. 男主不能在女主陷入困境時立刻出現解決問題，至少讓她先掙扎一篇。\n' +
-    '4. 每個大行動（買公司、公開宣告等）必須有前面篇章的細節累積才能支撐，不能突然發生。\n' +
-    '5. 具體場景優先於標籤：不要寫「他眼神冷漠氣場強大」，要寫「他沒有抬頭，只是繼續翻手上的文件，像是她根本不存在」。\n' +
-    '6. 寫完每篇問自己：讀者會記住這篇的哪個具體瞬間？如果答不出來，重寫。\n' +
-    '7. 伏筆邏輯一致，禁止用巧合或硬解釋收伏筆。感情轉折必須有累積，讀者要覺得「終於！」而不是「怎麼突然就好了？」\n\n' +
-    '【抓眼球技巧（必須融入）】\n' + HOOK_TECHNIQUES.join('\n') + '\n\n' +
-    '【輸出格式】請用 JSON 格式回覆，不要加 markdown 標記：\n' +
-    '{\n  "title": "故事總標題（要吸引人點擊）",\n  "characterDesc": "主角的英文外貌描述（髮型、膚色、穿著、年齡，用於AI生圖保持一致）",\n  "chapters": [\n    {\n      "num": 1,\n      "title": "篇章標題（要有懸念感）",\n      "text": "篇章內容（200-400字，適合社群媒體閱讀）",\n      "imagePrompt": "用英文描述這篇的配圖場景（適合AI生圖，cinematic style，包含主角外貌描述）",\n      "hook": "這篇的金句（適合截圖分享，一句話）"\n    }\n  ]\n}\n\n' +
-    '要求：\n- 每篇都能獨立閱讀，但串起來是完整故事\n- 第一篇開頭要在3秒內抓住注意力\n- 每篇結尾要有懸念讓人想看下一篇\n- 最後一篇要有震撼或感動的結尾\n- 金句要適合做成社群圖卡\n- 配圖描述要具體、有電影感\n- characterDesc 要詳細描述主角外貌（髮型、膚色、穿著），每篇 imagePrompt 都要包含相同的主角外貌描述以保持一致\n- 人物預設為台灣人/東亞人長相，除非故事設定為其他國家';
+  // Story mode — batch for large chapter counts
+  var batchSize = _chapters <= 7 ? _chapters : 5;
+  var totalBatches = Math.ceil(_chapters / batchSize);
+  var allChapters = [];
+  var storyTitle = '';
+  var characterDesc = '';
 
   try {
-    const resp = await fetch(API_BASE + '/api/story-generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: prompt, style: _selectedStyle })
-    });
-    if (!resp.ok) throw new Error('API error: ' + resp.status);
-    const data = await resp.json();
-    const raw = data.text || '';
-    var newsSources = data.sources || [];
+    for (var batch = 0; batch < totalBatches; batch++) {
+      var startNum = allChapters.length + 1;
+      var remaining = _chapters - allChapters.length;
+      var thisCount = Math.min(batchSize, remaining);
+      var isFirst = batch === 0;
+      var isLast = (allChapters.length + thisCount) >= _chapters;
 
-    // Parse JSON from response (strip markdown fences if any)
-    let story;
-    try {
+      output.innerHTML = '<div class="loading"><div class="spinner"></div><p>AI 正在創作... (' + allChapters.length + '/' + _chapters + ' 篇)</p></div>';
+
+      var prevSummary = '';
+      if (!isFirst && allChapters.length > 0) {
+        prevSummary = '【前情提要】故事標題：' + storyTitle + '\n主角外貌：' + characterDesc + '\n';
+        var last3 = allChapters.slice(-3);
+        last3.forEach(function(ch) { prevSummary += '第' + ch.num + '篇「' + ch.title + '」：' + (ch.text || '').substring(0, 80) + '...\n'; });
+        prevSummary += '\n請接續上面的劇情，寫第 ' + startNum + ' 到第 ' + (startNum + thisCount - 1) + ' 篇。\n\n';
+      }
+
+      var prompt = prevSummary + '你是一個專業的社群媒體故事創作者。' + (isFirst ? '請根據以下設定創作一個分篇章的故事。' : '請接續前面的劇情繼續寫。') + '\n\n' +
+        '【主題】' + topic + '\n' +
+        '【風格】' + style.name + ' — ' + style.prompt + '\n' +
+        '【目標觀眾】' + audience.name + ' — ' + audience.tone + '\n' +
+        '【本批篇章】第 ' + startNum + ' 到第 ' + (startNum + thisCount - 1) + ' 篇（共 ' + thisCount + ' 篇）\n' +
+        '【總篇章數】' + _chapters + ' 篇\n' +
+        '【語言】繁體中文\n\n' +
+        '【寫作品質要求 — 嚴格遵守】\n' +
+        '核心原則：角色驅動，不是情節驅動。以下規則是你創作前的思考框架，絕對不能直接寫進故事文字裡。\n\n' +
+        '1. 角色的性格矛盾，只能透過行為和對話展現，不能直接描述。\n' +
+        '2. 每篇的核心衝突，女主必須自己做選擇並付出代價。\n' +
+        '3. 男主不能立刻救場，至少讓女主先掙扎一篇。\n' +
+        '4. 大行動需要前面篇章的細節累積。\n' +
+        '5. 用行為和細節展現人物，不用形容詞貼標籤。\n' +
+        '6. 每篇要有讀者記得住的具體瞬間。\n' +
+        '7. 伏筆邏輯一致，感情轉折要有累積。\n\n' +
+        (isFirst ? '【抓眼球技巧】\n' + HOOK_TECHNIQUES.join('\n') + '\n\n' : '') +
+        '【輸出格式】JSON（不要 markdown）：\n' +
+        '{"title":"' + (storyTitle || '故事總標題') + '","characterDesc":"' + (characterDesc || '主角英文外貌描述') + '","chapters":[{"num":' + startNum + ',"title":"篇章標題","text":"200-400字內容","imagePrompt":"英文配圖描述含主角外貌","hook":"金句"}]}\n\n' +
+        '要求：' + (isFirst ? '第一篇開頭3秒抓住注意力。' : '') + (isLast ? '最後一篇要有震撼或感動的結尾。' : '每篇結尾留懸念。') + ' 人物預設台灣人長相。';
+
+      var resp = await fetch(API_BASE + '/api/story-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt, style: _selectedStyle })
+      });
+      if (!resp.ok) continue;
+      var data = await resp.json();
+      var raw = data.text || '';
       var tick3 = String.fromCharCode(96,96,96);
       var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
-      story = JSON.parse(cleaned);
-    } catch (e) {
-      output.innerHTML = '<div class="loading"><p>⚠️ AI 回覆格式異常，請重試</p><pre style="font-size:12px;color:#666;max-height:200px;overflow:auto">' + escHtml(raw.substring(0, 500)) + '</pre></div>';
-      btn.disabled = false; btn.textContent = '✨ 生成故事';
-      return;
+      try {
+        var batchStory = JSON.parse(cleaned);
+        if (isFirst) {
+          storyTitle = batchStory.title || topic;
+          characterDesc = batchStory.characterDesc || '';
+        }
+        if (batchStory.chapters) allChapters = allChapters.concat(batchStory.chapters);
+      } catch(pe) { /* skip bad batch */ }
     }
 
-    // Attach sources to story for news
-    if (newsSources.length > 0) story._sources = newsSources;
-
-    // Save to localStorage
+    if (allChapters.length === 0) throw new Error('生成失敗');
+    var story = { title: storyTitle, characterDesc: characterDesc, chapters: allChapters };
     saveStory(topic, style.name, audience.name, story);
-
-    // Render
     renderStory(story);
   } catch (e) {
     output.innerHTML = '<div class="loading"><p>❌ ' + escHtml(e.message) + '</p></div>';
