@@ -40,10 +40,11 @@ let _chapters = 3;
 
 // === Init ===
 async function init() {
+  var cacheBust = '?t=' + Date.now();
   const [topicsRes, stylesRes, audiencesRes] = await Promise.all([
-    fetch('topics.json').then(r => r.json()),
-    fetch('styles.json').then(r => r.json()),
-    fetch('audiences.json').then(r => r.json())
+    fetch('topics.json' + cacheBust).then(r => r.json()),
+    fetch('styles.json' + cacheBust).then(r => r.json()),
+    fetch('audiences.json' + cacheBust).then(r => r.json())
   ]);
   _topics = topicsRes;
   _styles = stylesRes;
