@@ -182,9 +182,9 @@ async function generate() {
         var thisCount = Math.min(batchSize, remaining);
         output.innerHTML = '<div class="loading"><div class="spinner"></div><p>搜尋新聞中... (' + allArticles.length + '/' + _chapters + ')</p></div>';
 
-        var skipList = allArticles.map(function(a) { return a.title; }).join('、');
+        var recentTitles = allArticles.slice(-5).map(function(a) { return a.title; }).join(', ');
         var newsPrompt = '你是一位專業新聞記者。請搜尋今天（' + newsDate + '）最重要的' + newsType + '新聞。\n\n' +
-          (skipList ? '以下新聞已經列過，請不要重複：\n' + skipList + '\n\n' : '') +
+          (recentTitles ? 'Avoid these: ' + recentTitles + '\n\n' : '') +
           '請用 JSON 格式回覆，不要加 markdown 標記：\n' +
           '{"articles":[{"title":"新聞標題","summary":"2-3句記者播報風格摘要","source":"來源媒體","url":"新聞連結URL","category":"分類","time":"時間"}]}\n\n' +
           '要求：列出 ' + thisCount + ' 則不同的重要新聞，每則必須有真實連結URL，用繁體中文，記者播報口吻';
@@ -194,7 +194,7 @@ async function generate() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: newsPrompt, style: _selectedStyle })
         });
-        if (!resp.ok) throw new Error('API error: ' + resp.status);
+        if (!resp.ok) { continue; }
         var data = await resp.json();
         var raw = data.text || '';
         if (data.sources) allSources = allSources.concat(data.sources);
