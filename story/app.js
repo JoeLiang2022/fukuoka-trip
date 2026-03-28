@@ -90,7 +90,6 @@ function selectStyle(id) {
   // Hide "熱門主題" title
   topicEls.forEach(function(el) { if (el.textContent.includes('熱門主題')) el.style.display = isNews ? 'none' : ''; });
 }
-}
 
 // === Render Categories ===
 function renderCategories() {
