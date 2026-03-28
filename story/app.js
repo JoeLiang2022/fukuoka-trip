@@ -1,9 +1,9 @@
 // AI Story Creator — app.js
 // Data-driven: loads topics.json, styles.json, audiences.json
 // Stories stored in localStorage
+// API calls go through server proxy (no key in frontend)
 
-const GEMINI_KEY = 'AIzaSyBf3IShOpfmjYafpbpJd9JpyIOdMiJZSzM';
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + GEMINI_KEY;
+const API_BASE = 'https://live-subtitle.onrender.com';
 
 let _topics = {};
 let _styles = [];
@@ -155,17 +155,14 @@ ${HOOK_TECHNIQUES.join('\n')}
 - 配圖描述要具體、有電影感`;
 
   try {
-    const resp = await fetch(GEMINI_URL, {
+    const resp = await fetch(API_BASE + '/api/story-generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.9, maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } }
-      })
+      body: JSON.stringify({ prompt: prompt })
     });
     if (!resp.ok) throw new Error('API error: ' + resp.status);
     const data = await resp.json();
-    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const raw = data.text || '';
 
     // Parse JSON from response (strip markdown fences if any)
     let story;
@@ -226,27 +223,22 @@ function renderStory(story) {
   window._currentStory = story;
 }
 
-// === Image Generation (Gemini) ===
+// === Image Generation (via server proxy) ===
 async function generateImage(prompt, chapterIdx) {
   const imgEl = document.getElementById('chImg' + chapterIdx);
   if (!imgEl) return;
   try {
-    // Use Imagen 4 predict API
-    const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=' + GEMINI_KEY, {
+    const resp = await fetch(API_BASE + '/api/story-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        instances: [{ prompt: prompt + ', cinematic style, dramatic lighting, high quality' }],
-        parameters: { sampleCount: 1, aspectRatio: '16:9' }
-      })
+      body: JSON.stringify({ prompt: prompt })
     });
-    if (!resp.ok) throw new Error('Imagen ' + resp.status);
+    if (!resp.ok) throw new Error('Image API ' + resp.status);
     const data = await resp.json();
-    const predictions = data.predictions || [];
-    if (predictions.length > 0 && predictions[0].bytesBase64Encoded) {
-      imgEl.innerHTML = '<img src="data:image/png;base64,' + predictions[0].bytesBase64Encoded + '" alt="">';
+    if (data.image) {
+      imgEl.innerHTML = '<img src="data:image/png;base64,' + data.image + '" alt="">';
     } else {
-      throw new Error('No image');
+      throw new Error(data.error || 'No image');
     }
   } catch (e) {
     imgEl.innerHTML = '<span style="color:#555">\uD83D\uDDBC\uFE0F ' + escHtml(e.message) + '</span>';
