@@ -58,6 +58,13 @@ body{background:#0a0a0f;color:#e8e8e8;font-family:'Segoe UI',sans-serif;margin:0
 </div>
 <div class="toast" id="toast"></div>
 </div><!-- end mainApp -->
-<script src="app.js?v=2"></script>
+<script>
+// Fallback if app.js fails to load
+window.onerror = function(msg, url, line) {
+  var g = document.getElementById('authGate');
+  if (g) g.innerHTML = '<div class="auth-box"><div class="auth-icon">⚠️</div><h2>載入錯誤</h2><p>' + msg + '</p><p style="margin-top:12px"><a href="." style="color:#f093fb">重新整理</a></p></div>';
+};
+</script>
+<script src="app.js?v=4"></script>
 </body>
 </html>
