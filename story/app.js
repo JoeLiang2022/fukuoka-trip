@@ -1,0 +1,324 @@
+// AI Story Creator — app.js
+// Data-driven: loads topics.json, styles.json, audiences.json
+// Stories stored in localStorage
+
+const GEMINI_KEY = 'AIzaSyBf3IShOpfmjYafpbpJd9JpyIOdMiJZSzM';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + GEMINI_KEY;
+
+let _topics = {};
+let _styles = [];
+let _audiences = [];
+let _selectedStyle = 'suspense';
+let _selectedAudience = 'young';
+let _selectedTopic = '';
+let _selectedCat = '';
+let _chapters = 3;
+
+// === Init ===
+async function init() {
+  const [topicsRes, stylesRes, audiencesRes] = await Promise.all([
+    fetch('topics.json').then(r => r.json()),
+    fetch('styles.json').then(r => r.json()),
+    fetch('audiences.json').then(r => r.json())
+  ]);
+  _topics = topicsRes;
+  _styles = stylesRes;
+  _audiences = audiencesRes;
+  renderAudiences();
+  renderStyles();
+  renderCategories();
+  // Default: first category
+  const cats = Object.keys(_topics);
+  if (cats.length) selectCategory(cats[0]);
+}
+
+// === Render Audiences ===
+function renderAudiences() {
+  const row = document.getElementById('audienceRow');
+  row.innerHTML = _audiences.map(a =>
+    '<div class="chip' + (a.id === _selectedAudience ? ' active' : '') + '" onclick="selectAudience(\'' + a.id + '\')">' + a.icon + ' ' + a.name + '</div>'
+  ).join('');
+}
+function selectAudience(id) {
+  _selectedAudience = id;
+  renderAudiences();
+}
+
+// === Render Styles ===
+function renderStyles() {
+  const row = document.getElementById('styleRow');
+  row.innerHTML = _styles.map(s =>
+    '<div class="chip' + (s.id === _selectedStyle ? ' active' : '') + '" onclick="selectStyle(\'' + s.id + '\')">' + s.icon + ' ' + s.name + '</div>'
+  ).join('');
+}
+function selectStyle(id) {
+  _selectedStyle = id;
+  renderStyles();
+}
+
+// === Render Categories ===
+function renderCategories() {
+  const row = document.getElementById('catRow');
+  row.innerHTML = Object.keys(_topics).map(cat =>
+    '<div class="cat-btn' + (cat === _selectedCat ? ' active' : '') + '" onclick="selectCategory(\'' + cat.replace(/'/g, "\\'") + '\')">' + cat + '</div>'
+  ).join('');
+}
+function selectCategory(cat) {
+  _selectedCat = cat;
+  renderCategories();
+  renderTopics(cat);
+}
+
+// === Render Topics ===
+function renderTopics(cat) {
+  const grid = document.getElementById('topicGrid');
+  const list = _topics[cat] || [];
+  grid.innerHTML = list.map(t =>
+    '<div class="topic-card' + (t === _selectedTopic ? ' selected' : '') + '" onclick="selectTopic(this,\'' + t.replace(/'/g, "\\'") + '\')">' + t + '</div>'
+  ).join('');
+}
+function selectTopic(el, topic) {
+  _selectedTopic = topic;
+  document.getElementById('customTopic').value = '';
+  document.querySelectorAll('.topic-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// === Chapter Count ===
+function setChapters(n) {
+  _chapters = n;
+  [3,5,7].forEach(x => {
+    var b = document.getElementById('ch' + x);
+    if (b) b.classList.toggle('active', x === n);
+  });
+}
+
+// === Story Hook Techniques (injected into prompt) ===
+const HOOK_TECHNIQUES = [
+  '開頭用一個震撼的事實或問題抓住注意力（前3秒法則）',
+  '每篇結尾留下懸念或cliffhanger，讓讀者想看下一篇',
+  '在故事中插入「你可能不知道」「更可怕的是」等轉折語',
+  '用具體數字和細節增加可信度（例如：距離地球4.2光年）',
+  '加入讀者能代入的情境（想像一下，如果你...）',
+  '使用對比和反差製造衝擊（表面上...但實際上...）',
+  '在關鍵處使用短句增加節奏感和緊張感',
+  '每篇都有一個「金句」適合截圖分享',
+  '用故事化的方式呈現知識，不要像教科書',
+  '結尾要有餘韻，讓讀者思考或產生情緒'
+];
+
+// === Generate Story ===
+async function generate() {
+  const topic = document.getElementById('customTopic').value.trim() || _selectedTopic;
+  if (!topic) { showToast('請選擇或輸入一個主題'); return; }
+
+  const style = _styles.find(s => s.id === _selectedStyle) || _styles[0];
+  const audience = _audiences.find(a => a.id === _selectedAudience) || _audiences[0];
+  const btn = document.getElementById('btnGenerate');
+  const output = document.getElementById('output');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 生成中...';
+  output.innerHTML = '<div class="loading"><div class="spinner"></div><p>AI 正在構思故事架構...</p></div>';
+
+  const prompt = `你是一個專業的社群媒體故事創作者。請根據以下設定創作一個分篇章的故事。
+
+【主題】${topic}
+【風格】${style.name} — ${style.prompt}
+【目標觀眾】${audience.name} — ${audience.tone}
+【篇章數】${_chapters} 篇
+【語言】繁體中文
+
+【抓眼球技巧（必須融入）】
+${HOOK_TECHNIQUES.join('\n')}
+
+【輸出格式】請用 JSON 格式回覆，不要加 markdown 標記：
+{
+  "title": "故事總標題（要吸引人點擊）",
+  "chapters": [
+    {
+      "num": 1,
+      "title": "篇章標題（要有懸念感）",
+      "text": "篇章內容（200-400字，適合社群媒體閱讀）",
+      "imagePrompt": "用英文描述這篇的配圖場景（適合AI生圖，cinematic style）",
+      "hook": "這篇的金句（適合截圖分享，一句話）"
+    }
+  ]
+}
+
+要求：
+- 每篇都能獨立閱讀，但串起來是完整故事
+- 第一篇開頭要在3秒內抓住注意力
+- 每篇結尾要有懸念讓人想看下一篇
+- 最後一篇要有震撼或感動的結尾
+- 金句要適合做成社群圖卡
+- 配圖描述要具體、有電影感`;
+
+  try {
+    const resp = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.9, maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } }
+      })
+    });
+    if (!resp.ok) throw new Error('API error: ' + resp.status);
+    const data = await resp.json();
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Parse JSON from response (strip markdown fences if any)
+    let story;
+    try {
+      const cleaned = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      story = JSON.parse(cleaned);
+    } catch (e) {
+      output.innerHTML = '<div class="loading"><p>⚠️ AI 回覆格式異常，請重試</p><pre style="font-size:12px;color:#666;max-height:200px;overflow:auto">' + escHtml(raw.substring(0, 500)) + '</pre></div>';
+      btn.disabled = false; btn.textContent = '✨ 生成故事';
+      return;
+    }
+
+    // Save to localStorage
+    saveStory(topic, style.name, audience.name, story);
+
+    // Render
+    renderStory(story);
+  } catch (e) {
+    output.innerHTML = '<div class="loading"><p>❌ ' + escHtml(e.message) + '</p></div>';
+  }
+  btn.disabled = false; btn.textContent = '✨ 生成故事';
+}
+
+// === Render Story ===
+function renderStory(story) {
+  const output = document.getElementById('output');
+  let html = '<div class="story-header"><div class="story-title">' + escHtml(story.title) + '</div><div class="story-meta">' + _chapters + ' 篇章 · AI 生成</div></div>';
+
+  story.chapters.forEach((ch, i) => {
+    html += '<div class="chapter-card" id="chapter' + i + '">' +
+      '<div class="chapter-img" id="chImg' + i + '"><div class="img-loading"><div class="spinner"></div><span>生成配圖中...</span></div></div>' +
+      '<div class="chapter-body">' +
+        '<div class="chapter-num">第 ' + ch.num + ' 篇</div>' +
+        '<div class="chapter-title">' + escHtml(ch.title) + '</div>' +
+        '<div class="chapter-text">' + escHtml(ch.text) + '</div>' +
+        (ch.hook ? '<div style="margin-top:12px;padding:10px 14px;border-radius:10px;background:rgba(240,147,251,0.08);border-left:3px solid #f093fb;font-size:14px;color:#f093fb;font-weight:600">💬 ' + escHtml(ch.hook) + '</div>' : '') +
+      '</div>' +
+      '<div class="chapter-actions">' +
+        '<button onclick="copyChapter(' + i + ')">📋 複製</button>' +
+        '<button onclick="regenImage(' + i + ')">🖼️ 重新生圖</button>' +
+      '</div>' +
+    '</div>';
+  });
+
+  html += '<div class="export-bar">' +
+    '<button onclick="copyAll()">📋 複製全部</button>' +
+    '<button onclick="downloadMD()">⬇️ 下載 MD</button>' +
+  '</div>';
+
+  output.innerHTML = html;
+
+  // Generate images async
+  story.chapters.forEach((ch, i) => {
+    generateImage(ch.imagePrompt, i);
+  });
+
+  // Store for copy/export
+  window._currentStory = story;
+}
+
+// === Image Generation (Gemini) ===
+async function generateImage(prompt, chapterIdx) {
+  const imgEl = document.getElementById('chImg' + chapterIdx);
+  if (!imgEl) return;
+  try {
+    const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=' + GEMINI_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: 'Generate an image: ' + prompt + '. Style: cinematic, dramatic lighting, high quality, 16:9 aspect ratio.' }] }],
+        generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+      })
+    });
+    if (!resp.ok) throw new Error('Image API error');
+    const data = await resp.json();
+    // Look for inline image data
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    const imgPart = parts.find(p => p.inlineData);
+    if (imgPart && imgPart.inlineData) {
+      imgEl.innerHTML = '<img src="data:' + imgPart.inlineData.mimeType + ';base64,' + imgPart.inlineData.data + '" alt="chapter image">';
+    } else {
+      imgEl.innerHTML = '<span style="color:#555">🖼️ 配圖生成失敗（點擊重試）</span>';
+      imgEl.onclick = () => { imgEl.innerHTML = '<div class="img-loading"><div class="spinner"></div><span>重新生成...</span></div>'; generateImage(prompt, chapterIdx); };
+    }
+  } catch (e) {
+    imgEl.innerHTML = '<span style="color:#555">🖼️ ' + escHtml(e.message) + '</span>';
+    imgEl.onclick = () => { imgEl.innerHTML = '<div class="img-loading"><div class="spinner"></div><span>重新生成...</span></div>'; generateImage(prompt, chapterIdx); };
+  }
+}
+
+function regenImage(idx) {
+  if (!window._currentStory) return;
+  const ch = window._currentStory.chapters[idx];
+  if (!ch) return;
+  var imgEl = document.getElementById('chImg' + idx);
+  if (imgEl) imgEl.innerHTML = '<div class="img-loading"><div class="spinner"></div><span>重新生成...</span></div>';
+  generateImage(ch.imagePrompt, idx);
+}
+
+// === Copy & Export ===
+function copyChapter(idx) {
+  if (!window._currentStory) return;
+  const ch = window._currentStory.chapters[idx];
+  const text = '【第' + ch.num + '篇】' + ch.title + '\n\n' + ch.text + (ch.hook ? '\n\n💬 ' + ch.hook : '');
+  navigator.clipboard.writeText(text).then(() => showToast('已複製第' + ch.num + '篇'));
+}
+
+function copyAll() {
+  if (!window._currentStory) return;
+  const s = window._currentStory;
+  let text = '📖 ' + s.title + '\n\n';
+  s.chapters.forEach(ch => {
+    text += '═══════════════════\n【第' + ch.num + '篇】' + ch.title + '\n═══════════════════\n\n' + ch.text + '\n';
+    if (ch.hook) text += '\n💬 ' + ch.hook + '\n';
+    text += '\n';
+  });
+  navigator.clipboard.writeText(text).then(() => showToast('已複製全部故事'));
+}
+
+function downloadMD() {
+  if (!window._currentStory) return;
+  const s = window._currentStory;
+  let md = '# ' + s.title + '\n\n';
+  s.chapters.forEach(ch => {
+    md += '## 第' + ch.num + '篇：' + ch.title + '\n\n' + ch.text + '\n\n';
+    if (ch.hook) md += '> 💬 ' + ch.hook + '\n\n';
+    md += '---\n\n';
+  });
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = s.title.replace(/[^\w\u4e00-\u9fff]/g, '_') + '.md';
+  a.click();
+}
+
+// === Storage ===
+function saveStory(topic, style, audience, story) {
+  try {
+    const list = JSON.parse(localStorage.getItem('storyHistory') || '[]');
+    list.unshift({ topic, style, audience, story, date: new Date().toISOString() });
+    if (list.length > 20) list.length = 20;
+    localStorage.setItem('storyHistory', JSON.stringify(list));
+  } catch (_) {}
+}
+
+// === Utils ===
+function escHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// === Boot ===
+init();
