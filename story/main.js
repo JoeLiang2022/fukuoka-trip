@@ -87,7 +87,12 @@ function selectStyle(id) {
   if (catRow) catRow.style.display = isNews ? 'none' : '';
   if (topicGrid) topicGrid.style.display = isNews ? 'none' : '';
   if (customInput) customInput.style.display = isNews ? 'none' : '';
-  topicEls.forEach(function(el) { if (el.textContent.includes('熱門主題')) el.style.display = isNews ? 'none' : ''; });
+  topicEls.forEach(function(el) {
+    if (el.textContent.includes('熱門主題')) {
+      el.style.display = isNews ? 'none' : '';
+      if (!isNews) el.textContent = '📝 選擇故事名稱';
+    }
+  });
   // Switch chapter count buttons for news mode
   var countBtns = document.querySelector('.count-btns');
   if (countBtns) {
@@ -99,12 +104,44 @@ function selectStyle(id) {
       countBtns.innerHTML = '<button onclick="setChapters(3)" id="ch3" class="active">3篇</button><button onclick="setChapters(5)" id="ch5">5篇</button><button onclick="setChapters(7)" id="ch7">7篇</button>';
     }
   }
-  // Filter topic categories by style
+  // For non-news styles: generate AI story title suggestions
   if (!isNews) {
     var style = _styles.find(function(s) { return s.id === id; });
-    var allowedCats = style && style.cats && style.cats.length > 0 ? style.cats : Object.keys(_topics);
-    renderCategories(allowedCats);
-    if (allowedCats.length > 0) selectCategory(allowedCats[0]);
+    // Hide static topics, show loading
+    var topicGrid = document.getElementById('topicGrid');
+    var catRow = document.getElementById('catRow');
+    if (catRow) catRow.style.display = 'none';
+    if (topicGrid) {
+      topicGrid.style.display = '';
+      topicGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#888"><div class="spinner" style="width:24px;height:24px;border:2px solid rgba(240,147,251,0.2);border-top-color:#f093fb;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 8px"></div>AI 正在構思故事名稱...</div>';
+    }
+    _selectedTopic = '';
+    // Call AI to generate titles
+    try {
+      var titlePrompt = '你是故事創作專家。請根據「' + (style ? style.name : id) + '」風格，生成 10 個吸引人的故事名稱。\n\n用 JSON 回覆（不要 markdown）：{"titles":["故事名稱1","故事名稱2",...]}\n\n要求：名稱要有懸念感、吸引人點擊、適合社群媒體、繁體中文';
+      fetch(API_BASE + '/api/story-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: titlePrompt, style: id })
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        var raw = data.text || '';
+        var tick3 = String.fromCharCode(96,96,96);
+        var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
+        try {
+          var result = JSON.parse(cleaned);
+          var titles = result.titles || [];
+          if (topicGrid) {
+            topicGrid.innerHTML = titles.map(function(t) {
+              return '<div class="topic-card" onclick="selectTopic(this,\'' + t.replace(/'/g, "\\'") + '\')">' + t + '</div>';
+            }).join('');
+          }
+        } catch(e) {
+          if (topicGrid) topicGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:12px;color:#888">生成失敗，請直接輸入主題</div>';
+        }
+      }).catch(function() {
+        if (topicGrid) topicGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:12px;color:#888">生成失敗，請直接輸入主題</div>';
+      });
+    } catch(e) {}
   }
 }
 
