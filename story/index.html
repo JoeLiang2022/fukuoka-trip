@@ -53,6 +53,13 @@ body{background:#0a0a0f;color:#e8e8e8;font-family:'Segoe UI',sans-serif;margin:0
       <button onclick="setChapters(7)" id="ch7">7篇</button>
     </div>
   </div>
+  <div class="chapter-count">
+    <span>🖼️ 配圖</span>
+    <div class="count-btns">
+      <button onclick="toggleImages(false)" id="imgOff" class="active">關閉</button>
+      <button onclick="toggleImages(true)" id="imgOn">開啟</button>
+    </div>
+  </div>
   <button class="gen-btn" id="btnGenerate" onclick="generate()">✨ 生成故事</button>
   <button class="gen-btn" style="background:linear-gradient(135deg,#333,#555);margin-top:8px" onclick="showPublished()">📂 已發佈故事</button>
   <div id="output"></div>
