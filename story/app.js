@@ -78,7 +78,6 @@ function renderStyles() {
 function selectStyle(id) {
   _selectedStyle = id;
   renderStyles();
-  // Hide topic section for news/finance (they use Google Search, no topic needed)
   var isNews = (id === 'news' || id === 'finance');
   var topicEls = document.querySelectorAll('.section-title');
   var catRow = document.getElementById('catRow');
@@ -87,8 +86,18 @@ function selectStyle(id) {
   if (catRow) catRow.style.display = isNews ? 'none' : '';
   if (topicGrid) topicGrid.style.display = isNews ? 'none' : '';
   if (customInput) customInput.style.display = isNews ? 'none' : '';
-  // Hide "熱門主題" title
   topicEls.forEach(function(el) { if (el.textContent.includes('熱門主題')) el.style.display = isNews ? 'none' : ''; });
+  // Switch chapter count buttons for news mode
+  var countBtns = document.querySelector('.count-btns');
+  if (countBtns) {
+    if (isNews) {
+      _chapters = 30;
+      countBtns.innerHTML = '<button onclick="setChapters(30)" id="ch30" class="active">30則</button><button onclick="setChapters(60)" id="ch60">60則</button><button onclick="setChapters(100)" id="ch100">100則</button>';
+    } else {
+      _chapters = 3;
+      countBtns.innerHTML = '<button onclick="setChapters(3)" id="ch3" class="active">3篇</button><button onclick="setChapters(5)" id="ch5">5篇</button><button onclick="setChapters(7)" id="ch7">7篇</button>';
+    }
+  }
 }
 
 // === Render Categories ===
@@ -157,32 +166,53 @@ async function generate() {
   btn.textContent = '⏳ 生成中...';
   output.innerHTML = '<div class="loading"><div class="spinner"></div><p>' + (isNews ? '搜尋今日新聞中...' : 'AI 正在構思故事架構...') + '</p></div>';
 
-  // News mode: completely different prompt — Google News style with links
+  // News mode: batch API calls for 30/60/100 articles
   if (isNews) {
     var newsType = _selectedStyle === 'finance' ? '財經' : '';
-    var newsPrompt = '你是一位專業新聞記者。請搜尋今天（' + new Date().toISOString().split('T')[0] + '）最重要的' + newsType + '新聞。\n\n' +
-      '請用 JSON 格式回覆，不要加 markdown 標記：\n' +
-      '{\n  "date": "今天日期",\n  "headline": "今日頭條一句話摘要",\n  "articles": [\n    {\n      "title": "新聞標題",\n      "summary": "用新聞記者播報的口吻寫 2-3 句重點摘要，要客觀專業",\n      "source": "來源媒體名稱（如：聯合報、中央社、BBC中文）",\n      "url": "新聞原始連結 URL",\n      "category": "分類（國際/政治/科技/財經/社會/體育/娛樂）",\n      "time": "發佈時間（如：2小時前、今天 14:30）"\n    }\n  ]\n}\n\n' +
-      '要求：\n- 列出 ' + _chapters + ' 則最重要的新聞\n- 每則新聞必須附上真實的新聞連結 URL\n- 用新聞記者播報的專業口吻\n- 必須是今天真實發生的新聞\n- 用繁體中文\n- 來源要標明是哪家媒體';
+    var batchSize = 15;
+    var totalBatches = Math.ceil(_chapters / batchSize);
+    var allArticles = [];
+    var allSources = [];
+    var newsDate = new Date().toISOString().split('T')[0];
+    var headline = '';
+
     try {
-      var resp = await fetch(API_BASE + '/api/story-generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: newsPrompt, style: _selectedStyle })
-      });
-      if (!resp.ok) throw new Error('API error: ' + resp.status);
-      var data = await resp.json();
-      var raw = data.text || '';
-      var newsSources = data.sources || [];
-      var tick3 = String.fromCharCode(96,96,96);
-      var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
-      var newsData;
-      try { newsData = JSON.parse(cleaned); } catch(e) { newsData = null; }
-      renderNews(newsData, raw, newsSources);
+      for (var batch = 0; batch < totalBatches; batch++) {
+        var remaining = _chapters - (batch * batchSize);
+        var thisCount = Math.min(batchSize, remaining);
+        output.innerHTML = '<div class="loading"><div class="spinner"></div><p>搜尋新聞中... (' + allArticles.length + '/' + _chapters + ')</p></div>';
+
+        var skipList = allArticles.map(function(a) { return a.title; }).join('、');
+        var newsPrompt = '你是一位專業新聞記者。請搜尋今天（' + newsDate + '）最重要的' + newsType + '新聞。\n\n' +
+          (skipList ? '以下新聞已經列過，請不要重複：\n' + skipList + '\n\n' : '') +
+          '請用 JSON 格式回覆，不要加 markdown 標記：\n' +
+          '{"articles":[{"title":"新聞標題","summary":"2-3句記者播報風格摘要","source":"來源媒體","url":"新聞連結URL","category":"分類","time":"時間"}]}\n\n' +
+          '要求：列出 ' + thisCount + ' 則不同的重要新聞，每則必須有真實連結URL，用繁體中文，記者播報口吻';
+
+        var resp = await fetch(API_BASE + '/api/story-generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: newsPrompt, style: _selectedStyle })
+        });
+        if (!resp.ok) throw new Error('API error: ' + resp.status);
+        var data = await resp.json();
+        var raw = data.text || '';
+        if (data.sources) allSources = allSources.concat(data.sources);
+        var tick3 = String.fromCharCode(96,96,96);
+        var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
+        try {
+          var batchData = JSON.parse(cleaned);
+          if (batchData.articles) allArticles = allArticles.concat(batchData.articles);
+          if (batchData.headline && !headline) headline = batchData.headline;
+          if (batchData.date) newsDate = batchData.date;
+        } catch(pe) { /* skip bad batch */ }
+      }
+      var newsData = { date: newsDate, headline: headline, articles: allArticles };
+      renderNews(newsData, '', allSources);
     } catch(e) {
       output.innerHTML = '<div class="loading"><p>❌ ' + escHtml(e.message) + '</p></div>';
     }
-    btn.disabled = false; btn.textContent = '✨ 生成故事';
+    btn.disabled = false; btn.textContent = '✨ 生成';
     return;
   }
 
@@ -289,9 +319,10 @@ function renderNews(newsData, rawText, sources) {
     });
     html += '</div>';
   }
-  html += '<div class="export-bar"><button onclick="copyAll()">📋 複製全部</button></div>';
+  html += '<div class="export-bar"><button onclick="publishNews()">📤 發佈新聞</button><button onclick="copyAll()">📋 複製全部</button></div>';
   output.innerHTML = html;
   window._currentStory = newsData;
+  window._currentNewsSources = sources;
 }
 
 // === Render Story ===
@@ -429,6 +460,45 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// === Publish News to GitHub Pages ===
+async function publishNews() {
+  if (!window._currentStory || !window._currentStory.articles) { showToast('沒有新聞可發佈'); return; }
+  var news = window._currentStory;
+  showToast('📤 發佈新聞中...');
+  var id = 'news-' + new Date().toISOString().split('T')[0];
+  var filename = id + '.html';
+  var html = '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">';
+  html += '<title>' + escHtml((news.date || '') + ' 今日新聞') + '</title><link rel="stylesheet" href="reader.css?v=1"></head><body>';
+  html += '<div class="stories-header"><h1>📰 今日新聞</h1><p>' + escHtml(news.date || '') + '</p>';
+  if (news.headline) html += '<p style="color:#f093fb;margin-top:8px;font-weight:600">' + escHtml(news.headline) + '</p>';
+  html += '</div><div class="stories-list" style="max-width:700px">';
+  news.articles.forEach(function(a) {
+    var url = a.url || '#';
+    html += '<div style="padding:16px 20px;border-radius:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);margin-bottom:10px">';
+    if (a.category) html += '<span style="font-size:11px;color:#f093fb;font-weight:600;padding:2px 8px;border-radius:4px;background:rgba(240,147,251,0.1)">' + escHtml(a.category) + '</span> ';
+    if (a.time) html += '<span style="font-size:11px;color:#666">' + escHtml(a.time) + '</span>';
+    html += '<div style="margin-top:6px"><a href="' + escHtml(url) + '" target="_blank" style="font-size:17px;font-weight:600;color:#eee;text-decoration:none;line-height:1.4">' + escHtml(a.title) + '</a></div>';
+    html += '<div style="font-size:14px;color:#aaa;line-height:1.7;margin-top:6px">' + escHtml(a.summary) + '</div>';
+    html += '<div style="margin-top:8px">';
+    if (a.source) html += '<span style="font-size:12px;color:#888">📰 ' + escHtml(a.source) + '</span> ';
+    html += '<a href="' + escHtml(url) + '" target="_blank" style="font-size:12px;color:#4ecdc4;text-decoration:none;font-weight:600">閱讀全文 →</a>';
+    html += '</div></div>';
+  });
+  html += '</div><div style="text-align:center;padding:20px"><a href="index.html" style="color:#f093fb;text-decoration:none">← 所有故事</a></div></body></html>';
+  try {
+    var pubResp = await fetch(API_BASE + '/api/story-publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, title: (news.date || '') + ' 今日新聞', chapters: news.articles.length, html: html })
+    });
+    if (!pubResp.ok) { var e = {}; try { e = await pubResp.json(); } catch(_){} throw new Error(e.error || 'Publish ' + pubResp.status); }
+    var url = STORIES_BASE + filename;
+    showToast('✅ 新聞已發佈！');
+    var output = document.getElementById('output');
+    output.innerHTML += '<div style="margin:16px 0;padding:16px;border-radius:12px;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);text-align:center"><div style="font-size:15px;color:#2ecc71;font-weight:600;margin-bottom:8px">✅ 新聞已發佈</div><a href="' + url + '" target="_blank" style="color:#4ecdc4;word-break:break-all">' + url + '</a></div>';
+  } catch(e) { showToast('❌ 發佈失敗: ' + e.message); }
 }
 
 // === Publish Story to GitHub Pages ===
