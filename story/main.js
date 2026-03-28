@@ -640,6 +640,52 @@ async function publishStory() {
   }
 }
 
+// === Published Stories Management ===
+async function showPublished() {
+  var output = document.getElementById('output');
+  output.innerHTML = '<div class="loading"><div class="spinner"></div><p>載入已發佈故事...</p></div>';
+  try {
+    var resp = await fetch(API_BASE + '/api/story-list');
+    if (!resp.ok) throw new Error('API ' + resp.status);
+    var data = await resp.json();
+    var stories = data.stories || [];
+    if (stories.length === 0) {
+      output.innerHTML = '<div style="text-align:center;padding:40px;color:#888">還沒有發佈的故事</div>';
+      return;
+    }
+    var html = '<div style="margin:20px 0 12px"><div style="font-size:18px;font-weight:700;color:#fff">📂 已發佈故事（' + stories.length + '）</div></div>';
+    stories.forEach(function(s, i) {
+      html += '<div style="margin:8px 0;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between">';
+      html += '<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600;color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(s.title) + '</div>';
+      html += '<div style="font-size:12px;color:#666;margin-top:2px">' + (s.chapters || 0) + ' 篇 · ' + (s.date || '') + '</div></div>';
+      html += '<div style="display:flex;gap:6px;flex-shrink:0;margin-left:12px">';
+      html += '<a href="https://joeliang2022.github.io/fukuoka-trip/stories/' + escHtml(s.file) + '" target="_blank" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.08);color:#4ecdc4;font-size:12px;text-decoration:none">查看</a>';
+      html += '<button onclick="deletePublished(\'' + escHtml(s.id) + '\',\'' + escHtml(s.file) + '\')" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(245,87,108,0.3);background:rgba(245,87,108,0.08);color:#f5576c;font-size:12px;cursor:pointer">刪除</button>';
+      html += '</div></div>';
+    });
+    output.innerHTML = html;
+  } catch(e) {
+    output.innerHTML = '<div style="text-align:center;padding:40px;color:#888">載入失敗: ' + escHtml(e.message) + '</div>';
+  }
+}
+
+async function deletePublished(id, file) {
+  if (!confirm('確定要刪除「' + id + '」嗎？')) return;
+  showToast('🗑 刪除中...');
+  try {
+    var resp = await fetch(API_BASE + '/api/story-delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id, file: file })
+    });
+    if (!resp.ok) throw new Error('API ' + resp.status);
+    showToast('✅ 已刪除');
+    showPublished();
+  } catch(e) {
+    showToast('❌ 刪除失敗: ' + e.message);
+  }
+}
+
 // === Boot ===
 // Only init if already authenticated (otherwise wait for checkAuth)
 if (sessionStorage.getItem('storyAuth') !== '1') {
