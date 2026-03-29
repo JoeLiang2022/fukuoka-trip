@@ -783,6 +783,19 @@ html += '</body></html>';
       '<a href="' + url + '" target="_blank" style="color:#4ecdc4;word-break:break-all">' + url + '</a>' +
       '<div style="margin-top:8px"><button onclick="navigator.clipboard.writeText(\'' + url + '\');showToast(\'已複製連結\')" style="padding:6px 16px;border-radius:8px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.1);color:#4ecdc4;cursor:pointer">📋 複製連結</button></div>' +
     '</div>';
+    // Generate TTS audio after publish if voice is selected
+    if (_voiceMode.startsWith('gemini') && story.chapters) {
+      showToast('🔊 生成語音中...');
+      try {
+        var ttsResp = await fetch(API_BASE + '/api/story/gen-audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
+          body: JSON.stringify({ id: id, chapterTexts: story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }), voice: _voiceMode === 'gemini-m' ? 'male' : 'female' })
+        });
+        if (ttsResp.ok) { showToast('✅ 語音已生成'); }
+        else { showToast('⚠️ 語音生成失敗，故事已發佈'); }
+      } catch(ttsE) { showToast('⚠️ 語音生成失敗: ' + ttsE.message); }
+    }
   } catch (e) {
     showToast('❌ 發佈失敗: ' + e.message);
   }
