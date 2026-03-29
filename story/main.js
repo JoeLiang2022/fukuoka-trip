@@ -708,6 +708,31 @@ async function aiScoreStory() {
       }
       scoreHtml += '</div>';
       if (score.feedback) scoreHtml += '<div style="font-size:12px;color:#aaa;margin-top:4px">' + escHtml(score.feedback) + '</div>';
+      // Compare with previous round
+      if (history.length > 0) {
+        var prev = history[history.length - 1].scores;
+        var changes = [];
+        for (var ck in labels) {
+          if (s[ck] !== undefined && prev[ck] !== undefined) {
+            var diff = s[ck] - prev[ck];
+            if (diff !== 0) changes.push(labels[ck] + (diff > 0 ? '↑' : '↓') + Math.abs(diff));
+          }
+        }
+        if (changes.length > 0) {
+          var changeEl = document.getElementById('scoreRound' + round);
+          if (changeEl) changeEl.innerHTML += '<div style="font-size:12px;color:#888;margin-top:4px">變化：' + changes.join(' ') + '</div>';
+        }
+        // Rollback if overall got worse
+        var prevAvg = 0, curAvg = 0, cnt = 0;
+        for (var ak in labels) { if (s[ak] && prev[ak]) { prevAvg += prev[ak]; curAvg += s[ak]; cnt++; } }
+        if (cnt > 0 && curAvg / cnt < prevAvg / cnt && window._prevChapters) {
+          story.chapters = window._prevChapters;
+          window._currentStory = story;
+          var rbEl = document.getElementById('scoreRound' + round);
+          if (rbEl) rbEl.innerHTML += '<div style="font-size:12px;color:#f5576c;margin-top:4px">⚠️ 分數下降，已回滾到上一版</div>';
+          break;
+        }
+      }
       history.push({ round: round, scores: s, low: lowItems.join('、') });
 
       var el = document.getElementById('scoreRound' + round);
@@ -725,7 +750,7 @@ async function aiScoreStory() {
       // Step 2: Optimize low scores
       el.innerHTML += '<div style="font-size:12px;color:#888;margin-top:6px">🔧 優化中...</div>';
       var storyJson = JSON.stringify({ title: story.title, chapters: story.chapters.map(function(ch) { return { num: ch.num, title: ch.title, text: ch.text, hook: ch.hook }; }) });
-      var optPrompt = '局部優化（只改低分部分，保留好的）。低分項目：' + lowItems.join('、') + '\n改善建議：' + (score.feedback || '') + '\n' + (score.lowAreas || '') + '\n\n規則：禁止指令用語、禁止TED演講結尾\n回覆優化後JSON（同格式）：\n' + storyJson;
+      var optPrompt = '局部優化。重要：只改善低分項目，絕對不能降低已有高分維度的品質。保留所有好的部分不動。低分項目：' + lowItems.join('、') + '\n改善建議：' + (score.feedback || '') + '\n' + (score.lowAreas || '') + '\n\n規則：禁止指令用語、禁止TED演講結尾\n回覆優化後JSON（同格式）：\n' + storyJson;
       var resp2 = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: optPrompt }) });
       if (!resp2.ok) break;
       var data2 = await resp2.json();
@@ -733,6 +758,8 @@ async function aiScoreStory() {
       var cleaned2 = raw2.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
       var optimized; try { optimized = JSON.parse(cleaned2); } catch(pe2) { var jm2 = cleaned2.match(/\{[\s\S]*\}/); if (jm2) optimized = JSON.parse(jm2[0]); else throw pe2; }
       if (optimized.chapters) {
+        // Save previous version for potential rollback
+        window._prevChapters = JSON.parse(JSON.stringify(story.chapters));
         story.chapters = optimized.chapters;
         if (optimized.title) story.title = optimized.title;
         window._currentStory = story;
