@@ -845,8 +845,8 @@ async function aiScoreStory() {
     output.innerHTML += histHtml;
   }
 
-  // Re-render with optimized content
-  renderStory(window._currentStory);
+  // Don't re-render — keep score results visible
+  // renderStory(window._currentStory);
 }
 
 // === AI Optimize Low Scores (targeted) ===
