@@ -674,41 +674,83 @@ async function publishStory() {
   }
 }
 
-// === AI Score Story ===
+// === AI Score + Auto-Optimize Loop ===
 async function aiScoreStory() {
   if (!window._currentStory) { showToast('沒有故事'); return; }
-  showToast('📊 AI 評分中...');
-  var storyText = window._currentStory.chapters.map(function(ch) { return ch.title + '\n' + ch.text; }).join('\n\n');
-  var prompt = '請評分以下故事（滿分10分），用 JSON 回覆：{"scores":{"plot":8,"characters":7,"pacing":8,"hook":9,"overall":8},"feedback":"一段具體改善建議","highlights":"最好的部分","weaknesses":"最需要改善的部分"}\n\n評分標準：plot=劇情邏輯, characters=角色深度, pacing=節奏感, hook=吸引力, overall=整體\n\n故事：\n' + storyText;
-  try {
-    var resp = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: prompt }) });
-    if (!resp.ok) throw new Error('API ' + resp.status);
-    var data = await resp.json();
-    var raw = data.text || '';
-    var tick3 = String.fromCharCode(96,96,96);
-    var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
-    var score = JSON.parse(cleaned);
-    var s = score.scores || {};
-    var html = '<div style="margin:16px 0;padding:16px;border-radius:14px;background:rgba(240,147,251,0.06);border:1px solid rgba(240,147,251,0.2)">';
-    html += '<div style="font-size:16px;font-weight:700;color:#f093fb;margin-bottom:12px">📊 AI 評分</div>';
-    html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">';
-    var labels = {plot:'劇情',characters:'角色',pacing:'節奏',hook:'吸引力',overall:'整體'};
-    for (var k in labels) { if (s[k] !== undefined) html += '<div style="text-align:center"><div style="font-size:24px;font-weight:700;color:' + (s[k] >= 8 ? '#2ecc71' : s[k] >= 6 ? '#f39c12' : '#e74c3c') + '">' + s[k] + '</div><div style="font-size:11px;color:#888">' + labels[k] + '</div></div>'; }
-    html += '</div>';
-    if (score.highlights) html += '<div style="font-size:13px;color:#4ecdc4;margin-bottom:6px">✅ ' + escHtml(score.highlights) + '</div>';
-    if (score.weaknesses) html += '<div style="font-size:13px;color:#f5576c;margin-bottom:6px">⚠️ ' + escHtml(score.weaknesses) + '</div>';
-    if (score.feedback) html += '<div style="font-size:13px;color:#ccc;line-height:1.6">' + escHtml(score.feedback) + '</div>';
-    // Find low-scoring areas
-    var lowAreas = [];
-    var areaLabels = {plot:'劇情',characters:'角色',pacing:'節奏',hook:'吸引力'};
-    for (var ak in areaLabels) { if (s[ak] !== undefined && s[ak] < 9) lowAreas.push(areaLabels[ak] + '(' + s[ak] + '→9)'); }
-    if (lowAreas.length > 0) {
-      window._lastScores = score;
-      html += '<div style="margin-top:12px;text-align:center"><button onclick="aiOptimizeLowScores()" style="padding:10px 24px;border-radius:10px;border:none;background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;font-size:14px;font-weight:600;cursor:pointer">🔧 優化低分項目：' + lowAreas.join('、') + '</button></div>';
-    }
-    html += '</div>';
-    document.getElementById('output').innerHTML += html;
-  } catch(e) { showToast('評分失敗: ' + e.message); }
+  var output = document.getElementById('output');
+  var maxRounds = 5;
+  var history = [];
+  var story = window._currentStory;
+
+  for (var round = 1; round <= maxRounds; round++) {
+    // Step 1: Score
+    output.innerHTML += '<div id="scoreRound' + round + '" style="margin:12px 0;padding:14px;border-radius:12px;background:rgba(240,147,251,0.06);border:1px solid rgba(240,147,251,0.15)"><div style="font-size:14px;color:#f093fb;font-weight:600">📊 第 ' + round + ' 輪評分中...</div></div>';
+    var storyText = story.chapters.map(function(ch) { return ch.title + '\n' + ch.text; }).join('\n\n');
+    var scorePrompt = '評分以下文章（滿分10），用JSON回覆：{"scores":{"scene":0,"character":0,"depth":0,"pacing":0,"foreshadow":0,"tone":0,"memorable":0},"feedback":"改善建議","lowAreas":"最需改善的具體問題"}\n\n評分標準：scene=場景具體度 character=人物真實感 depth=概念深度 pacing=結構節奏 foreshadow=伏筆收尾 tone=語氣一致性 memorable=讀者記憶點\n\n' + storyText;
+    try {
+      var resp = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: scorePrompt }) });
+      if (!resp.ok) break;
+      var data = await resp.json();
+      var raw = data.text || '';
+      var tick3 = String.fromCharCode(96,96,96);
+      var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
+      var score = JSON.parse(cleaned);
+      var s = score.scores || {};
+      var labels = {scene:'場景',character:'人物',depth:'深度',pacing:'節奏',foreshadow:'伏筆',tone:'語氣',memorable:'記憶點'};
+      var allAbove9 = true;
+      var lowItems = [];
+      var scoreHtml = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">';
+      for (var k in labels) {
+        if (s[k] !== undefined) {
+          scoreHtml += '<span style="font-size:12px;color:' + (s[k] >= 9 ? '#2ecc71' : s[k] >= 7 ? '#f39c12' : '#e74c3c') + '">' + labels[k] + ' ' + s[k] + '</span>';
+          if (s[k] < 9) { allAbove9 = false; lowItems.push(labels[k] + '(' + s[k] + ')'); }
+        }
+      }
+      scoreHtml += '</div>';
+      if (score.feedback) scoreHtml += '<div style="font-size:12px;color:#aaa;margin-top:4px">' + escHtml(score.feedback) + '</div>';
+      history.push({ round: round, scores: s, low: lowItems.join('、') });
+
+      var el = document.getElementById('scoreRound' + round);
+      if (el) el.innerHTML = '<div style="font-size:14px;color:#f093fb;font-weight:600">📊 第 ' + round + ' 輪</div>' + scoreHtml + (lowItems.length > 0 ? '<div style="font-size:12px;color:#f5576c;margin-top:4px">低分：' + lowItems.join('、') + '</div>' : '<div style="font-size:13px;color:#2ecc71;font-weight:600;margin-top:4px">✅ 全部 9 分以上！</div>');
+
+      if (allAbove9) {
+        showToast('✅ 全部達標！共 ' + round + ' 輪');
+        break;
+      }
+      if (round >= maxRounds) {
+        showToast('⚠️ 已達最大輪數 ' + maxRounds);
+        break;
+      }
+
+      // Step 2: Optimize low scores
+      el.innerHTML += '<div style="font-size:12px;color:#888;margin-top:6px">🔧 優化中...</div>';
+      var storyJson = JSON.stringify({ title: story.title, chapters: story.chapters.map(function(ch) { return { num: ch.num, title: ch.title, text: ch.text, hook: ch.hook }; }) });
+      var optPrompt = '局部優化（只改低分部分，保留好的）。低分項目：' + lowItems.join('、') + '\n改善建議：' + (score.feedback || '') + '\n' + (score.lowAreas || '') + '\n\n規則：禁止指令用語、禁止TED演講結尾\n回覆優化後JSON（同格式）：\n' + storyJson;
+      var resp2 = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: optPrompt }) });
+      if (!resp2.ok) break;
+      var data2 = await resp2.json();
+      var raw2 = data2.text || '';
+      var cleaned2 = raw2.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
+      var optimized = JSON.parse(cleaned2);
+      if (optimized.chapters) {
+        story.chapters = optimized.chapters;
+        if (optimized.title) story.title = optimized.title;
+        window._currentStory = story;
+      }
+    } catch(e) { showToast('第 ' + round + ' 輪失敗: ' + e.message); break; }
+  }
+
+  // Show history summary
+  if (history.length > 1) {
+    var histHtml = '<div style="margin:12px 0;padding:12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)">';
+    histHtml += '<div style="font-size:13px;color:#f093fb;font-weight:600;margin-bottom:6px">📈 改進歷程</div>';
+    history.forEach(function(h) { histHtml += '<div style="font-size:12px;color:#aaa">第' + h.round + '輪：' + (h.low || '全部達標') + '</div>'; });
+    histHtml += '</div>';
+    output.innerHTML += histHtml;
+  }
+
+  // Re-render with optimized content
+  renderStory(window._currentStory);
 }
 
 // === AI Optimize Low Scores (targeted) ===
