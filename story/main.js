@@ -751,12 +751,20 @@ async function publishStory() {
   var audioBase = 'https://joeliang2022.github.io/fukuoka-trip/stories/audio/';
   var audioFiles = [];
   for (var ai = 0; ai < story.chapters.length; ai++) { audioFiles.push('"' + audioBase + id + '_' + ai + '.wav"'); }
-  html += '<audio id="ap" preload="auto"></audio>';
+  html += '<audio id="ap" preload="auto" crossorigin="anonymous"></audio>';
   html += '<script>';
   html += 'var au=document.getElementById("ap");';
   html += 'var files=[' + audioFiles.join(',') + '];';
-  html += 'var ci=0,playing=false;';
-  html += 'function playChapter(i){if(i>=files.length){document.getElementById("ttsStatus").textContent="朗讀完畢";playing=false;ci=0;document.getElementById("btnTTS").textContent="🔊 朗讀";return;}ci=i;document.getElementById("ttsStatus").textContent="第"+(i+1)+"篇/"+files.length;au.src=files[i];au.onended=function(){playChapter(i+1);};au.play();}';
+  html += 'var ci=0,playing=false,actx=null,src=null,rev=null;';
+  // Setup Web Audio with reverb
+  html += 'function setupAudio(){if(actx)return;try{actx=new(window.AudioContext||window.webkitAudioContext)();src=actx.createMediaElementSource(au);';
+  // Create reverb using IIR filter (simple room reverb simulation)
+  html += 'var conv=actx.createConvolver();var rate=actx.sampleRate;var len=rate*1.5;var buf=actx.createBuffer(2,len,rate);';
+  html += 'for(var ch=0;ch<2;ch++){var d=buf.getChannelData(ch);for(var j=0;j<len;j++){d[j]=(Math.random()*2-1)*Math.pow(1-j/len,2.5);}}';
+  html += 'conv.buffer=buf;var dry=actx.createGain();dry.gain.value=0.85;var wet=actx.createGain();wet.gain.value=0.15;';
+  html += 'src.connect(dry);src.connect(conv);conv.connect(wet);dry.connect(actx.destination);wet.connect(actx.destination);';
+  html += '}catch(e){src=null;actx=null;}}';
+  html += 'function playChapter(i){if(i>=files.length){document.getElementById("ttsStatus").textContent="朗讀完畢";playing=false;ci=0;document.getElementById("btnTTS").textContent="🔊 朗讀";return;}ci=i;document.getElementById("ttsStatus").textContent="第"+(i+1)+"篇/"+files.length;setupAudio();au.src=files[i];au.onended=function(){playChapter(i+1);};au.play();}';
   html += 'function toggleTTS(){if(playing){au.pause();playing=false;document.getElementById("btnTTS").textContent="▶ 繼續";}else{playing=true;document.getElementById("btnTTS").textContent="⏸ 暫停";if(au.src&&au.paused&&au.currentTime>0){au.play();}else{playChapter(ci);}}}';
   html += 'function stopTTS(){au.pause();au.removeAttribute("src");playing=false;ci=0;document.getElementById("btnTTS").textContent="🔊 朗讀";document.getElementById("ttsStatus").textContent="已停止";}';
   html += '<\/script>';
