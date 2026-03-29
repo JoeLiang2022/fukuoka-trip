@@ -747,30 +747,23 @@ async function publishStory() {
   });
   html += '</article>';
   html += '<div class="reader-footer"><a href="index.html">← 更多故事</a></div>';
-  // Audio Player — uses pre-generated audio files (works in background)
+  // Audio Player — simple, uses absolute URLs for reliability
   html += '<div class="audio-bar" id="audioBar">';
   html += '<button id="btnTTS" onclick="toggleTTS()">🔊 朗讀</button>';
   html += '<div class="progress"><span class="current-chapter" id="ttsStatus">點擊開始朗讀</span></div>';
   html += '<button onclick="stopTTS()" style="background:#333;padding:6px 12px;font-size:12px">⏹</button>';
   html += '</div>';
-  html += '<audio id="audioEl" preload="none"></audio>';
+  var audioBase = 'https://joeliang2022.github.io/fukuoka-trip/stories/audio/';
+  var audioFiles = [];
+  for (var ai = 0; ai < story.chapters.length; ai++) { audioFiles.push('"' + audioBase + id + '_' + ai + '.mp3"'); }
+  html += '<audio id="ap" preload="auto"></audio>';
   html += '<script>';
-  // Audio player: try mp3 files first, fallback to browser TTS
-  html += 'var _a=document.getElementById("audioEl"),_p=false,_i=0,_c=document.querySelectorAll(".chapter"),_id="' + id + '",_fb=false;';
-  // Check if audio file exists via HEAD request
-  html += 'function tryAudio(i,cb){var x=new XMLHttpRequest();x.open("HEAD","audio/"+_id+"_"+i+".mp3");x.onload=function(){cb(x.status>=200&&x.status<400)};x.onerror=function(){cb(false)};x.send()}';
-  // Play audio file
-  html += 'function playFile(i){_a.src="audio/"+_id+"_"+i+".mp3";_a.onended=function(){doNext(i+1)};_a.onerror=function(){doNext(i+1)};_a.play().catch(function(){doNext(i+1)})}';
-  // Browser TTS fallback
-  html += 'function playTTS(i){if(typeof speechSynthesis==="undefined"){doNext(i+1);return}var ch=_c[i];if(!ch){doNext(i+1);return}var t=(ch.querySelector("h2")||{}).textContent||"";var b=(ch.querySelector(".chapter-content")||{}).textContent||"";var u=new SpeechSynthesisUtterance(t+"。"+b);u.lang="zh-TW";u.rate=1;u.onend=function(){doNext(i+1)};u.onerror=function(){doNext(i+1)};speechSynthesis.speak(u)}';
-  // Play chapter (auto-detect mode)
-  html += 'function playCh(i){if(_fb){playTTS(i);return}tryAudio(i,function(ok){if(ok){playFile(i)}else{_fb=true;playTTS(i)}})}';
-  // Next chapter
-  html += 'function doNext(i){if(i>=_c.length){document.getElementById("ttsStatus").textContent="朗讀完畢";_p=false;_i=0;document.getElementById("btnTTS").textContent="🔊 朗讀";return}_i=i;document.getElementById("ttsStatus").textContent="第"+(i+1)+"篇/"+_c.length;if(_c[i])_c[i].scrollIntoView({behavior:"smooth"});playCh(i)}';
-  // Toggle play/pause
-  html += 'function toggleTTS(){if(_p){_a.pause();if(typeof speechSynthesis!=="undefined")speechSynthesis.pause();_p=false;document.getElementById("btnTTS").textContent="▶ 繼續"}else{_p=true;document.getElementById("btnTTS").textContent="⏸ 暫停";if(_a.src&&_a.paused&&_a.currentTime>0){_a.play()}else if(typeof speechSynthesis!=="undefined"&&speechSynthesis.paused){speechSynthesis.resume()}else{doNext(_i)}}}';
-  // Stop
-  html += 'function stopTTS(){_a.pause();_a.removeAttribute("src");if(typeof speechSynthesis!=="undefined")speechSynthesis.cancel();_p=false;_i=0;_fb=false;document.getElementById("btnTTS").textContent="🔊 朗讀";document.getElementById("ttsStatus").textContent="已停止"}';
+  html += 'var au=document.getElementById("ap");';
+  html += 'var files=[' + audioFiles.join(',') + '];';
+  html += 'var ci=0,playing=false;';
+  html += 'function playChapter(i){if(i>=files.length){document.getElementById("ttsStatus").textContent="朗讀完畢";playing=false;ci=0;document.getElementById("btnTTS").textContent="🔊 朗讀";return;}ci=i;document.getElementById("ttsStatus").textContent="第"+(i+1)+"篇/"+files.length;au.src=files[i];au.onended=function(){playChapter(i+1);};au.play();}';
+  html += 'function toggleTTS(){if(playing){au.pause();playing=false;document.getElementById("btnTTS").textContent="▶ 繼續";}else{playing=true;document.getElementById("btnTTS").textContent="⏸ 暫停";if(au.src&&au.paused&&au.currentTime>0){au.play();}else{playChapter(ci);}}}';
+  html += 'function stopTTS(){au.pause();au.removeAttribute("src");playing=false;ci=0;document.getElementById("btnTTS").textContent="🔊 朗讀";document.getElementById("ttsStatus").textContent="已停止";}';
   html += '<\/script>';
 html += '</body></html>';
 
