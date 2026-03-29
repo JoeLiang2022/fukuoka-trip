@@ -68,6 +68,15 @@ body{background:#0a0a0f;color:#e8e8e8;font-family:'Segoe UI',sans-serif;margin:0
       <button onclick="setLength('long')" id="lenLong">長 500-800字</button>
     </div>
   </div>
+  <div class="chapter-count">
+    <span>🔊 語音</span>
+    <div class="count-btns">
+      <button onclick="setVoice('off')" id="voiceOff" class="active">關閉</button>
+      <button onclick="setVoice('browser')" id="voiceBrowser">🆓 瀏覽器</button>
+      <button onclick="setVoice('gemini-f')" id="voiceGeminiF">🤖 女聲</button>
+      <button onclick="setVoice('gemini-m')" id="voiceGeminiM">🤖 男聲</button>
+    </div>
+  </div>
   <button class="gen-btn" id="btnGenerate" onclick="generate()">✨ 生成故事</button>
   <button class="gen-btn" style="background:linear-gradient(135deg,#333,#555);margin-top:8px" onclick="showPublished()">📂 已發佈故事</button>
   <div id="output"></div>
