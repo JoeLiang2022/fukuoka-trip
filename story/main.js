@@ -755,13 +755,22 @@ async function publishStory() {
   html += '</div>';
   html += '<audio id="audioEl" preload="none"></audio>';
   html += '<script>';
-  html += 'var _a=document.getElementById("audioEl"),_p=false,_i=0,_c=document.querySelectorAll(".chapter"),_id="' + id + '";';
-  // Try audio file first, fall back to browser TTS
-  html += 'function playAudio(i){var src="audio/"+_id+"_"+i+".mp3";_a.src=src;_a.onended=function(){playNext(i+1)};_a.onerror=function(){readChTTS(i)};_a.play().catch(function(){readChTTS(i)})}';
-  html += 'function readChTTS(i){if(typeof speechSynthesis==="undefined")return;var ch=_c[i];var t=(ch.querySelector("h2")||{}).textContent||"";var b=(ch.querySelector(".chapter-content")||{}).textContent||"";var u=new SpeechSynthesisUtterance(t+"。"+b);u.lang="zh-TW";u.rate=1;u.onend=function(){playNext(i+1)};speechSynthesis.speak(u)}';
-  html += 'function playNext(i){if(i>=_c.length){document.getElementById("ttsStatus").textContent="朗讀完畢";_p=false;_i=0;document.getElementById("btnTTS").textContent="🔊 朗讀";return}_i=i;document.getElementById("ttsStatus").textContent="第"+(i+1)+"篇/"+_c.length;_c[i].scrollIntoView({behavior:"smooth"});playAudio(i)}';
-  html += 'function toggleTTS(){if(_p){_a.pause();if(typeof speechSynthesis!=="undefined")speechSynthesis.pause();_p=false;document.getElementById("btnTTS").textContent="▶ 繼續"}else{if(_a.src&&_a.paused&&_a.currentTime>0){_a.play();_p=true;document.getElementById("btnTTS").textContent="⏸ 暫停"}else if(typeof speechSynthesis!=="undefined"&&speechSynthesis.paused){speechSynthesis.resume();_p=true;document.getElementById("btnTTS").textContent="⏸ 暫停"}else{_p=true;document.getElementById("btnTTS").textContent="⏸ 暫停";playNext(_i)}}}';
-  html += 'function stopTTS(){_a.pause();_a.src="";if(typeof speechSynthesis!=="undefined")speechSynthesis.cancel();_p=false;_i=0;document.getElementById("btnTTS").textContent="🔊 朗讀";document.getElementById("ttsStatus").textContent="已停止"}';
+  // Audio player: try mp3 files first, fallback to browser TTS
+  html += 'var _a=document.getElementById("audioEl"),_p=false,_i=0,_c=document.querySelectorAll(".chapter"),_id="' + id + '",_fb=false;';
+  // Check if audio file exists via HEAD request
+  html += 'function tryAudio(i,cb){var x=new XMLHttpRequest();x.open("HEAD","audio/"+_id+"_"+i+".mp3");x.onload=function(){cb(x.status>=200&&x.status<400)};x.onerror=function(){cb(false)};x.send()}';
+  // Play audio file
+  html += 'function playFile(i){_a.src="audio/"+_id+"_"+i+".mp3";_a.onended=function(){doNext(i+1)};_a.onerror=function(){doNext(i+1)};_a.play().catch(function(){doNext(i+1)})}';
+  // Browser TTS fallback
+  html += 'function playTTS(i){if(typeof speechSynthesis==="undefined"){doNext(i+1);return}var ch=_c[i];if(!ch){doNext(i+1);return}var t=(ch.querySelector("h2")||{}).textContent||"";var b=(ch.querySelector(".chapter-content")||{}).textContent||"";var u=new SpeechSynthesisUtterance(t+"。"+b);u.lang="zh-TW";u.rate=1;u.onend=function(){doNext(i+1)};u.onerror=function(){doNext(i+1)};speechSynthesis.speak(u)}';
+  // Play chapter (auto-detect mode)
+  html += 'function playCh(i){if(_fb){playTTS(i);return}tryAudio(i,function(ok){if(ok){playFile(i)}else{_fb=true;playTTS(i)}})}';
+  // Next chapter
+  html += 'function doNext(i){if(i>=_c.length){document.getElementById("ttsStatus").textContent="朗讀完畢";_p=false;_i=0;document.getElementById("btnTTS").textContent="🔊 朗讀";return}_i=i;document.getElementById("ttsStatus").textContent="第"+(i+1)+"篇/"+_c.length;if(_c[i])_c[i].scrollIntoView({behavior:"smooth"});playCh(i)}';
+  // Toggle play/pause
+  html += 'function toggleTTS(){if(_p){_a.pause();if(typeof speechSynthesis!=="undefined")speechSynthesis.pause();_p=false;document.getElementById("btnTTS").textContent="▶ 繼續"}else{_p=true;document.getElementById("btnTTS").textContent="⏸ 暫停";if(_a.src&&_a.paused&&_a.currentTime>0){_a.play()}else if(typeof speechSynthesis!=="undefined"&&speechSynthesis.paused){speechSynthesis.resume()}else{doNext(_i)}}}';
+  // Stop
+  html += 'function stopTTS(){_a.pause();_a.removeAttribute("src");if(typeof speechSynthesis!=="undefined")speechSynthesis.cancel();_p=false;_i=0;_fb=false;document.getElementById("btnTTS").textContent="🔊 朗讀";document.getElementById("ttsStatus").textContent="已停止"}';
   html += '<\/script>';
 html += '</body></html>';
 
