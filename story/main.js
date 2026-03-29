@@ -694,7 +694,7 @@ async function aiScoreStory() {
       var raw = data.text || '';
       var tick3 = String.fromCharCode(96,96,96);
       var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
-      var score = JSON.parse(cleaned);
+      var score; try { score = JSON.parse(cleaned); } catch(pe) { var jsonMatch = cleaned.match(/\{[\s\S]*\}/); if (jsonMatch) score = JSON.parse(jsonMatch[0]); else throw pe; }
       var s = score.scores || {};
       var labels = {scene:'場景',character:'人物',depth:'深度',pacing:'節奏',foreshadow:'伏筆',tone:'語氣',memorable:'記憶點'};
       var allAbove9 = true;
@@ -731,13 +731,19 @@ async function aiScoreStory() {
       var data2 = await resp2.json();
       var raw2 = data2.text || '';
       var cleaned2 = raw2.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
-      var optimized = JSON.parse(cleaned2);
+      var optimized; try { optimized = JSON.parse(cleaned2); } catch(pe2) { var jm2 = cleaned2.match(/\{[\s\S]*\}/); if (jm2) optimized = JSON.parse(jm2[0]); else throw pe2; }
       if (optimized.chapters) {
         story.chapters = optimized.chapters;
         if (optimized.title) story.title = optimized.title;
         window._currentStory = story;
       }
-    } catch(e) { showToast('第 ' + round + ' 輪失敗: ' + e.message); break; }
+    } catch(e) { 
+      var el2 = document.getElementById('scoreRound' + round);
+      if (el2) el2.innerHTML += '<div style="font-size:12px;color:#f5576c;margin-top:4px">❌ 失敗: ' + escHtml(e.message) + '</div>';
+      break;
+    }
+    // Delay between rounds to avoid rate limit
+    await new Promise(function(r) { setTimeout(r, 2000); })
   }
 
   // Show history summary
