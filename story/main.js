@@ -785,7 +785,7 @@ async function aiScoreStory() {
       break;
     }
     // Delay between rounds to avoid rate limit
-    await new Promise(function(r) { setTimeout(r, 2000); })
+    await new Promise(function(r) { setTimeout(r, 3000); })
   }
 
   // Show history summary
