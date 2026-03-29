@@ -377,7 +377,10 @@ async function generate() {
       if (!isFirst && allChapters.length > 0) {
         prevSummary = '【前情提要】故事標題：' + storyTitle + '\n角色外貌：' + characters + '\n';
         var last3 = allChapters.slice(-3);
-        last3.forEach(function(ch) { prevSummary += '第' + ch.num + '篇「' + ch.title + '」：' + (ch.text || '').substring(0, 80) + '...\n'; });
+        last3.forEach(function(ch) { prevSummary += '第' + ch.num + '篇「' + ch.title + '」：' + (ch.text || '').substring(0, 150) + '...\n'; });
+        // Include first lines of ALL previous chapters to prevent repetition
+        prevSummary += '\n【已寫過的開頭（禁止重複）】\n';
+        allChapters.forEach(function(ch) { prevSummary += '第' + ch.num + '篇開頭：' + (ch.text || '').substring(0, 40) + '\n'; });
         prevSummary += '\n請接續上面的劇情，寫第 ' + startNum + ' 到第 ' + (startNum + thisCount - 1) + ' 篇。\n\n';
       }
 
@@ -390,26 +393,25 @@ async function generate() {
         '【總篇章數】' + _chapters + ' 篇\n' +
         '【語言】繁體中文\n\n' +
         '【你的角色：國際級暢銷書總編輯，20年經驗，不接受平庸】\n\n' +
-        '【品質流程】完成每篇後用7維度自評（場景/人物/深度/節奏/伏筆/語氣/記憶點），低於9分就重寫。\n\n' +
-        '【核心品質要求】\n' +
-        '❌ 禁止每篇結尾說教（禁止「你是自己命運的編劇」「由你來寫」「你準備好了嗎」這類句子）\n' +
-        '❌ 禁止指令用語寫進內容（自我矛盾、付出代價等）\n' +
-        '❌ 禁止案例人物突然出現沒有鋪墊\n' +
+        '【⚠️ 最重要的規則 — 禁止重複】\n' +
+        '❌ 每篇的開頭段落必須完全不同，禁止重複相同的場景描述或動作\n' +
+        '❌ 禁止每篇都用同一個角色的同一個動作開場（例如「推了推眼鏡」「端起咖啡」）\n' +
+        '✅ 每篇要有不同的敘事切入點：可以從不同角色視角、不同時間、不同地點、不同情緒開始\n' +
+        '✅ 場景要移動！不能30篇都在同一個房間。要有戶外、移動中、回憶、夢境等場景變化\n' +
+        '✅ 角色要有個人慾望和代價，不能只是「講課的人」和「聽課的人」\n\n' +
+        '【品質要求】\n' +
+        '❌ 禁止結尾說教（禁止「你準備好了嗎」「由你來寫」這類句子）\n' +
+        '❌ 禁止指令用語寫進內容\n' +
         '✅ ' + getLengthText() + '，要有足夠的細節和深度\n' +
-        '✅ 不只「點名」現象，要「拆解」背後的心理機制（為什麼這樣做有效、為什麼人會被影響）\n' +
-        '✅ 每篇至少一個反直覺洞見（讓讀者說「我從來沒這樣想過」）\n' +
-        '✅ 結尾用具體場景或案例收尾，不要用宣告句或勵志語錄\n' +
-        '【小說類】角色矛盾透過行為展現，女主自己做選擇\n' +
-        '【非故事類】案例要有掙扎、結構要有節奏變化、深度要到「拆解機制」不只「點名現象」\n\n' +
-        
-        '【小說類】角色矛盾透過行為展現，女主自己做選擇\n' +
-        '【非故事類】案例要有掙扎、結構要有節奏變化、要有反直覺洞見\n\n' +
-        '【輸出格式】JSON 中加入 scores 欄位：\n' +
-        '{"title":"...","scores":{"scene":9,"character":9,"depth":9,"pacing":9,"foreshadow":9,"tone":9,"memorable":9,"avg":9},"chapters":[...]}\n\n' +
+        '✅ 每篇至少一個反直覺洞見\n' +
+        '✅ 結尾用具體場景收尾，不要用宣告句\n' +
+        '✅ 小說類：角色矛盾透過行為展現\n' +
+        '✅ 非故事類：案例要有掙扎、結構要有節奏變化\n\n' +
         (isFirst ? '【抓眼球技巧】\n' + HOOK_TECHNIQUES.join('\n') + '\n\n' : '') +
         '【輸出格式】JSON（不要 markdown），必須包含 ' + thisCount + ' 篇：\n' +
         '{"title":"故事總標題","characters":[{"name":"角色名","appearance":"英文外貌"}],"chapters":[{"num":' + startNum + ',"title":"第一篇標題","text":"' + getLengthText() + '內容","imagePrompt":"英文寫實攝影風格配圖描述，不要插畫或繪畫風格","hook":"金句"},{"num":' + (startNum+1) + ',"title":"第二篇標題","text":"...","imagePrompt":"...","hook":"..."}]}\n' +
-        '⚠️ chapters 陣列必須包含 ' + thisCount + ' 個元素，不能少於 ' + thisCount + ' 篇\n\n' +
+        '⚠️ chapters 陣列必須包含 ' + thisCount + ' 個元素，不能少於 ' + thisCount + ' 篇\n' +
+        '⚠️ 每篇開頭必須不同！檢查前面已寫過的開頭，確保不重複\n\n' +
         '要求：' + (isFirst ? '第一篇開頭3秒抓住注意力。' : '') + (isLast ? '最後一篇要有震撼或感動的結尾。' : '每篇結尾留懸念。') + ' 人物預設台灣人長相。';
 
       var resp = await fetch(API_BASE + '/api/story-generate', {
