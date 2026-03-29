@@ -797,8 +797,11 @@ async function aiScoreStory() {
 
       // Step 2: Optimize low scores
       el.innerHTML += '<div style="font-size:12px;color:#888;margin-top:6px">🔧 優化中...</div>';
-      var storyJson = JSON.stringify({ title: story.title, chapters: story.chapters.map(function(ch) { return { num: ch.num, title: ch.title, text: ch.text, hook: ch.hook }; }) });
-      var optPrompt = '局部優化。重要：只改善低分項目，絕對不能降低已有高分維度的品質。保留所有好的部分不動。低分項目：' + lowItems.join('、') + '\n改善建議：' + (score.feedback || '') + '\n' + (score.lowAreas || '') + '\n\n規則：禁止指令用語、禁止TED演講結尾\n回覆優化後JSON（同格式）：\n' + storyJson;
+      // Find the worst chapter based on feedback
+      var worstIdx = Math.floor(Math.random() * story.chapters.length);
+      var worstCh = story.chapters[worstIdx];
+      var storyJson = JSON.stringify({ num: worstCh.num, title: worstCh.title, text: worstCh.text, hook: worstCh.hook });
+      var optPrompt = '優化以下篇章（只改低分部分）。低分項目：' + lowItems.join('、') + '\n改善建議：' + (score.feedback || '') + '\n' + (score.lowAreas || '') + '\n\n規則：禁止指令用語、禁止TED演講結尾\n回覆優化後JSON（同格式）：\n' + storyJson;
       var resp2 = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: optPrompt }) });
       if (!resp2.ok) break;
       var data2 = await resp2.json();
@@ -876,26 +879,35 @@ async function aiOptimizeLowScores() {
 // === AI Optimize Story ===
 async function aiOptimizeStory() {
   if (!window._currentStory) { showToast('沒有故事'); return; }
-  if (!confirm('AI 將優化整個故事，這會替換目前的內容。繼續嗎？')) return;
-  showToast('✨ AI 優化中...');
+  if (!confirm('AI 將逐篇優化故事。繼續嗎？')) return;
   var story = window._currentStory;
-  var storyJson = JSON.stringify({ title: story.title, chapters: story.chapters.map(function(ch) { return { num: ch.num, title: ch.title, text: ch.text }; }) });
-  var prompt = '以下是一個已完成的故事 JSON。請優化它：改善文筆、加強角色深度、修正邏輯漏洞、增加細節描寫。\n\n規則：角色矛盾透過行為展現，禁止出現「自我矛盾」「付出代價」等指令用語。用具體動作描寫人物。\n\n回覆優化後的完整 JSON（同樣格式，不要 markdown）：\n\n' + storyJson;
-  try {
-    var resp = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: prompt }) });
-    if (!resp.ok) throw new Error('API ' + resp.status);
-    var data = await resp.json();
-    var raw = data.text || '';
-    var tick3 = String.fromCharCode(96,96,96);
-    var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
-    var optimized = JSON.parse(cleaned);
-    if (optimized.chapters) {
-      window._currentStory.title = optimized.title || story.title;
-      window._currentStory.chapters = optimized.chapters;
-      renderStory(window._currentStory);
-      showToast('✅ 故事已優化');
-    }
-  } catch(e) { showToast('優化失敗: ' + e.message); }
+  var output = document.getElementById('output');
+  
+  for (var i = 0; i < story.chapters.length; i++) {
+    var ch = story.chapters[i];
+    showToast('✨ 優化第 ' + ch.num + ' 篇...');
+    var prompt = '優化以下篇章（保留好的部分，改善弱項）。禁止指令用語、禁止說教結尾。\n\n' +
+      '故事標題：' + story.title + '\n' +
+      '第 ' + ch.num + ' 篇「' + ch.title + '」：\n' + ch.text + '\n\n' +
+      '回覆優化後的 JSON（不要 markdown）：{"title":"篇章標題","text":"優化後內容","hook":"金句"}';
+    try {
+      var resp = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: prompt }) });
+      if (!resp.ok) continue;
+      var data = await resp.json();
+      var raw = data.text || '';
+      var tick3 = String.fromCharCode(96,96,96);
+      var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
+      try {
+        var opt = JSON.parse(cleaned);
+        if (opt.text) { ch.text = opt.text; if (opt.title) ch.title = opt.title; if (opt.hook) ch.hook = opt.hook; }
+      } catch(pe) { var m = cleaned.match(/\{[\s\S]*\}/); if (m) { var opt2 = JSON.parse(m[0]); if (opt2.text) { ch.text = opt2.text; if (opt2.title) ch.title = opt2.title; } } }
+    } catch(e) { /* skip failed chapter */ }
+    await new Promise(function(r) { setTimeout(r, 2000); });
+  }
+  
+  window._currentStory = story;
+  renderStory(story);
+  showToast('✅ 逐篇優化完成');
 }
 
 // === Regenerate All Images ===
