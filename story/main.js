@@ -437,7 +437,7 @@ function renderStory(story) {
       '<div class="chapter-body">' +
         '<div class="chapter-num">第 ' + ch.num + ' 篇</div>' +
         '<div class="chapter-title">' + escHtml(ch.title) + '</div>' +
-        '<div class="chapter-text">' + escHtml(ch.text) + '</div>' +
+        '<div class="chapter-text">' + mdToHtml(ch.text) + '</div>' +
         (ch.hook ? '<div style="margin-top:12px;padding:10px 14px;border-radius:10px;background:rgba(240,147,251,0.08);border-left:3px solid #f093fb;font-size:14px;color:#f093fb;font-weight:600">💬 ' + escHtml(ch.hook) + '</div>' : '') +
       '</div>' +
       '<div class="chapter-actions">' +
@@ -567,6 +567,21 @@ function saveStory(topic, style, audience, story) {
 
 // === Utils ===
 function escHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+function mdToHtml(s) {
+  if (!s) return '';
+  var h = escHtml(s);
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  h = h.replace(/`(.+?)`/g, '<code style="background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px">$1</code>');
+  h = h.replace(/^### (.+)$/gm, '<div style="font-size:15px;font-weight:600;color:#f093fb;margin:12px 0 4px">$1</div>');
+  h = h.replace(/^## (.+)$/gm, '<div style="font-size:16px;font-weight:700;color:#fff;margin:14px 0 6px">$1</div>');
+  h = h.replace(/^# (.+)$/gm, '<div style="font-size:18px;font-weight:700;color:#fff;margin:16px 0 8px">$1</div>');
+  h = h.replace(/^[-•] (.+)$/gm, '<div style="padding-left:16px">• $1</div>');
+  h = h.replace(/^\d+\. (.+)$/gm, function(m, p1, offset, str) { return '<div style="padding-left:16px">' + m + '</div>'; });
+  h = h.replace(/\n/g, '<br>');
+  return h;
+}
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
