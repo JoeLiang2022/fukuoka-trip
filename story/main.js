@@ -38,6 +38,7 @@ let _selectedTopic = '';
 let _selectedCat = '';
 let _chapters = 3;
 let _generateImages = false;
+let _chapterLength = 'medium';
 
 // === Init ===
 async function init() {
@@ -204,6 +205,20 @@ function toggleImages(on) {
   if (btnOff) btnOff.classList.toggle('active', !on);
 }
 
+function setLength(len) {
+  _chapterLength = len;
+  ['Short','Medium','Long'].forEach(function(l) {
+    var b = document.getElementById('len' + l);
+    if (b) b.classList.toggle('active', l.toLowerCase() === len);
+  });
+}
+
+function getLengthText() {
+  if (_chapterLength === 'short') return '約200字';
+  if (_chapterLength === 'long') return '500-800字';
+  return '約400字';
+}
+
 function getRandomRefs(styleId, count) {
   var refs = window._references && window._references[styleId] ? window._references[styleId] : [];
   if (refs.length === 0) return '';
@@ -291,7 +306,8 @@ async function generate() {
   }
 
   // Story mode — batch for large chapter counts
-  var batchSize = _chapters <= 2 ? _chapters : 2;
+  var batchSize = _chapterLength === 'long' ? 2 : (_chapterLength === 'medium' ? 3 : 5);
+  batchSize = Math.min(batchSize, _chapters);
   var totalBatches = Math.ceil(_chapters / batchSize);
   var allChapters = [];
   var storyTitle = '';
@@ -329,7 +345,7 @@ async function generate() {
         '❌ 禁止每篇結尾說教（禁止「你是自己命運的編劇」「由你來寫」「你準備好了嗎」這類句子）\n' +
         '❌ 禁止指令用語寫進內容（自我矛盾、付出代價等）\n' +
         '❌ 禁止案例人物突然出現沒有鋪墊\n' +
-        '✅ 每篇 500-800 字，要有足夠的細節和深度\n' +
+        '✅ ' + getLengthText() + '，要有足夠的細節和深度\n' +
         '✅ 不只「點名」現象，要「拆解」背後的心理機制（為什麼這樣做有效、為什麼人會被影響）\n' +
         '✅ 每篇至少一個反直覺洞見（讓讀者說「我從來沒這樣想過」）\n' +
         '✅ 結尾用具體場景或案例收尾，不要用宣告句或勵志語錄\n' +
@@ -342,7 +358,7 @@ async function generate() {
         '{"title":"...","scores":{"scene":9,"character":9,"depth":9,"pacing":9,"foreshadow":9,"tone":9,"memorable":9,"avg":9},"chapters":[...]}\n\n' +
         (isFirst ? '【抓眼球技巧】\n' + HOOK_TECHNIQUES.join('\n') + '\n\n' : '') +
         '【輸出格式】JSON（不要 markdown）：\n' +
-        '{"title":"故事總標題","characters":[{"name":"角色名","appearance":"英文外貌"}],"chapters":[{"num":' + startNum + ',"title":"篇章標題","text":"500-800字","imagePrompt":"英文配圖含角色外貌","hook":"金句"}]}\n\n' +
+        '{"title":"故事總標題","characters":[{"name":"角色名","appearance":"英文外貌"}],"chapters":[{"num":' + startNum + ',"title":"篇章標題","text":"' + getLengthText() + '","imagePrompt":"英文配圖含角色外貌","hook":"金句"}]}\n\n' +
         '要求：' + (isFirst ? '第一篇開頭3秒抓住注意力。' : '') + (isLast ? '最後一篇要有震撼或感動的結尾。' : '每篇結尾留懸念。') + ' 人物預設台灣人長相。';
 
       var resp = await fetch(API_BASE + '/api/story-generate', {
