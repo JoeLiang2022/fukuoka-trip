@@ -715,7 +715,9 @@ async function aiScoreStory() {
   for (var round = 1; round <= maxRounds; round++) {
     // Step 1: Score
     output.innerHTML += '<div id="scoreRound' + round + '" style="margin:12px 0;padding:14px;border-radius:12px;background:rgba(240,147,251,0.06);border:1px solid rgba(240,147,251,0.15)"><div style="font-size:14px;color:#f093fb;font-weight:600">📊 第 ' + round + ' 輪評分中...</div></div>';
-    var storyText = story.chapters.map(function(ch) { return ch.title + '\n' + ch.text; }).join('\n\n');
+    var storyText = story.chapters.map(function(ch) { return '【第' + ch.num + '篇】' + ch.title + '\n' + ch.text; }).join('\n\n');
+    // Limit total length to avoid API issues
+    if (storyText.length > 8000) storyText = storyText.substring(0, 8000) + '\n\n...（後續篇章省略）';
     var scorePrompt = '評分以下文章（滿分10），用JSON回覆：{"scores":{"scene":0,"character":0,"depth":0,"pacing":0,"foreshadow":0,"tone":0,"memorable":0},"feedback":"改善建議","lowAreas":"最需改善的具體問題"}\n\n評分標準：scene=場景具體度 character=人物真實感 depth=概念深度 pacing=結構節奏 foreshadow=伏筆收尾 tone=語氣一致性 memorable=讀者記憶點\n\n' + storyText;
     try {
       var resp = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: scorePrompt }) });
