@@ -796,19 +796,21 @@ html += '</body></html>';
     if (_voiceMode !== 'off' && _voiceMode !== 'browser') {
       var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus'};
       var selectedVoice = voiceMap[_voiceMode] || 'Aoede';
-      showToast('🔊 生成語音中（' + selectedVoice + '）...');
-      try {
-        var ttsResp = await fetch(API_BASE + '/api/story/gen-audio', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
-          body: JSON.stringify({ id: id, chapterTexts: story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }), voice: selectedVoice })
-        });
-        if (ttsResp.ok) {
-          var ttsData = await ttsResp.json();
-          var ttsOk = ttsData.results ? ttsData.results.filter(function(r) { return r.ok; }).length : 0;
+      showToast('🔊 語音生成中（' + selectedVoice + '），請稍候...');
+      // Fire and forget — don't block or show error since it runs in background on server
+      fetch(API_BASE + '/api/story/gen-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
+        body: JSON.stringify({ id: id, chapterTexts: story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }), voice: selectedVoice })
+      }).then(function(ttsResp) {
+        if (ttsResp.ok) return ttsResp.json();
+        return null;
+      }).then(function(ttsData) {
+        if (ttsData && ttsData.results) {
+          var ttsOk = ttsData.results.filter(function(r) { return r.ok; }).length;
           showToast('✅ 語音已生成（' + ttsOk + '/' + story.chapters.length + ' 篇）');
-        } else { showToast('⚠️ 語音生成失敗，故事已發佈'); }
-      } catch(ttsE) { showToast('⚠️ 語音生成失敗: ' + ttsE.message); }
+        }
+      }).catch(function() { /* silent — audio gen is best-effort */ });
     }
   } catch (e) {
     showToast('❌ 發佈失敗: ' + e.message);
