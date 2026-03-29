@@ -747,17 +747,21 @@ async function publishStory() {
   });
   html += '</article>';
   html += '<div class="reader-footer"><a href="index.html">← 更多故事</a></div>';
-    // TTS Audio Player
+  // Audio Player — uses pre-generated audio files (works in background)
   html += '<div class="audio-bar" id="audioBar">';
   html += '<button id="btnTTS" onclick="toggleTTS()">🔊 朗讀</button>';
   html += '<div class="progress"><span class="current-chapter" id="ttsStatus">點擊開始朗讀</span></div>';
   html += '<button onclick="stopTTS()" style="background:#333;padding:6px 12px;font-size:12px">⏹</button>';
   html += '</div>';
+  html += '<audio id="audioEl" preload="none"></audio>';
   html += '<script>';
-  html += 'var _p=false,_i=0,_c=document.querySelectorAll(".chapter");';
-  html += 'function toggleTTS(){if(_p){speechSynthesis.pause();_p=false;document.getElementById("btnTTS").textContent="▶ 繼續"}else{if(speechSynthesis.paused){speechSynthesis.resume();_p=true;document.getElementById("btnTTS").textContent="⏸ 暫停"}else{readCh(_i)}}}';
-  html += 'function stopTTS(){speechSynthesis.cancel();_p=false;_i=0;document.getElementById("btnTTS").textContent="🔊 朗讀";document.getElementById("ttsStatus").textContent="已停止"}';
-  html += 'function readCh(i){if(i>=_c.length){document.getElementById("ttsStatus").textContent="朗讀完畢";_p=false;_i=0;return}_i=i;_p=true;document.getElementById("btnTTS").textContent="⏸ 暫停";var ch=_c[i];var t=(ch.querySelector("h2")||{}).textContent||"";var b=(ch.querySelector(".chapter-content")||{}).textContent||"";document.getElementById("ttsStatus").textContent="第"+(i+1)+"篇/"+_c.length;ch.scrollIntoView({behavior:"smooth"});var u=new SpeechSynthesisUtterance(t+"。"+b);u.lang="zh-TW";u.rate=1;u.onend=function(){readCh(i+1)};speechSynthesis.speak(u)}';
+  html += 'var _a=document.getElementById("audioEl"),_p=false,_i=0,_c=document.querySelectorAll(".chapter"),_id="' + id + '";';
+  // Try audio file first, fall back to browser TTS
+  html += 'function playAudio(i){var src="audio/"+_id+"_"+i+".mp3";_a.src=src;_a.onended=function(){playNext(i+1)};_a.onerror=function(){readChTTS(i)};_a.play().catch(function(){readChTTS(i)})}';
+  html += 'function readChTTS(i){if(typeof speechSynthesis==="undefined")return;var ch=_c[i];var t=(ch.querySelector("h2")||{}).textContent||"";var b=(ch.querySelector(".chapter-content")||{}).textContent||"";var u=new SpeechSynthesisUtterance(t+"。"+b);u.lang="zh-TW";u.rate=1;u.onend=function(){playNext(i+1)};speechSynthesis.speak(u)}';
+  html += 'function playNext(i){if(i>=_c.length){document.getElementById("ttsStatus").textContent="朗讀完畢";_p=false;_i=0;document.getElementById("btnTTS").textContent="🔊 朗讀";return}_i=i;document.getElementById("ttsStatus").textContent="第"+(i+1)+"篇/"+_c.length;_c[i].scrollIntoView({behavior:"smooth"});playAudio(i)}';
+  html += 'function toggleTTS(){if(_p){_a.pause();if(typeof speechSynthesis!=="undefined")speechSynthesis.pause();_p=false;document.getElementById("btnTTS").textContent="▶ 繼續"}else{if(_a.src&&_a.paused&&_a.currentTime>0){_a.play();_p=true;document.getElementById("btnTTS").textContent="⏸ 暫停"}else if(typeof speechSynthesis!=="undefined"&&speechSynthesis.paused){speechSynthesis.resume();_p=true;document.getElementById("btnTTS").textContent="⏸ 暫停"}else{_p=true;document.getElementById("btnTTS").textContent="⏸ 暫停";playNext(_i)}}}';
+  html += 'function stopTTS(){_a.pause();_a.src="";if(typeof speechSynthesis!=="undefined")speechSynthesis.cancel();_p=false;_i=0;document.getElementById("btnTTS").textContent="🔊 朗讀";document.getElementById("ttsStatus").textContent="已停止"}';
   html += '<\/script>';
 html += '</body></html>';
 
@@ -776,26 +780,21 @@ html += '</body></html>';
 
     var url = STORIES_BASE + filename;
     showToast('✅ 已發佈！');
-    // Show publish result
+    // Show publish result — clear and detailed
     var output = document.getElementById('output');
-    output.innerHTML += '<div style="margin:16px 0;padding:16px;border-radius:12px;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);text-align:center">' +
-      '<div style="font-size:15px;color:#2ecc71;font-weight:600;margin-bottom:8px">✅ 故事已發佈</div>' +
-      '<a href="' + url + '" target="_blank" style="color:#4ecdc4;word-break:break-all">' + url + '</a>' +
-      '<div style="margin-top:8px"><button onclick="navigator.clipboard.writeText(\'' + url + '\');showToast(\'已複製連結\')" style="padding:6px 16px;border-radius:8px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.1);color:#4ecdc4;cursor:pointer">📋 複製連結</button></div>' +
-    '</div>';
-    // Generate TTS audio after publish if voice is selected
-    if (_voiceMode.startsWith('gemini') && story.chapters) {
-      showToast('🔊 生成語音中...');
-      try {
-        var ttsResp = await fetch(API_BASE + '/api/story/gen-audio', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
-          body: JSON.stringify({ id: id, chapterTexts: story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }), voice: _voiceMode === 'gemini-m' ? 'male' : 'female' })
-        });
-        if (ttsResp.ok) { showToast('✅ 語音已生成'); }
-        else { showToast('⚠️ 語音生成失敗，故事已發佈'); }
-      } catch(ttsE) { showToast('⚠️ 語音生成失敗: ' + ttsE.message); }
-    }
+    var pubInfo = '<div style="margin:16px 0;padding:20px;border-radius:14px;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.25)">';
+    pubInfo += '<div style="text-align:center;margin-bottom:12px"><span style="font-size:32px">✅</span></div>';
+    pubInfo += '<div style="text-align:center;font-size:17px;font-weight:700;color:#2ecc71;margin-bottom:4px">發佈成功</div>';
+    pubInfo += '<div style="text-align:center;font-size:15px;color:#ddd;margin-bottom:4px">' + escHtml(story.title) + '</div>';
+    pubInfo += '<div style="text-align:center;font-size:13px;color:#888;margin-bottom:14px">' + story.chapters.length + ' 篇章</div>';
+    pubInfo += '<div style="text-align:center;margin-bottom:10px"><a href="' + url + '" target="_blank" style="color:#4ecdc4;font-size:14px;word-break:break-all">' + url + '</a></div>';
+    pubInfo += '<div style="text-align:center;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
+    pubInfo += '<button onclick="navigator.clipboard.writeText(\'' + url + '\');showToast(\'已複製連結\')" style="padding:8px 16px;border-radius:10px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.1);color:#4ecdc4;cursor:pointer;font-size:13px">📋 複製連結</button>';
+    pubInfo += '<button onclick="window.open(\'' + url + '\',\'_blank\')" style="padding:8px 16px;border-radius:10px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.1);color:#f093fb;cursor:pointer;font-size:13px">🔗 開啟故事</button>';
+    pubInfo += '</div>';
+    pubInfo += '<div style="text-align:center;font-size:11px;color:#666;margin-top:10px">⏳ GitHub Pages 部署約需 1-2 分鐘，若顯示 404 請稍後再試</div>';
+    pubInfo += '</div>';
+    output.innerHTML += pubInfo;
   } catch (e) {
     showToast('❌ 發佈失敗: ' + e.message);
   }
