@@ -691,7 +691,19 @@ async function publishStory() {
   });
   html += '</article>';
   html += '<div class="reader-footer"><a href="index.html">← 更多故事</a></div>';
-  html += '</body></html>';
+    // TTS Audio Player
+  html += '<div class="audio-bar" id="audioBar">';
+  html += '<button id="btnTTS" onclick="toggleTTS()">🔊 朗讀</button>';
+  html += '<div class="progress"><span class="current-chapter" id="ttsStatus">點擊開始朗讀</span></div>';
+  html += '<button onclick="stopTTS()" style="background:#333;padding:6px 12px;font-size:12px">⏹</button>';
+  html += '</div>';
+  html += '<script>';
+  html += 'var _p=false,_i=0,_c=document.querySelectorAll(".chapter");';
+  html += 'function toggleTTS(){if(_p){speechSynthesis.pause();_p=false;document.getElementById("btnTTS").textContent="▶ 繼續"}else{if(speechSynthesis.paused){speechSynthesis.resume();_p=true;document.getElementById("btnTTS").textContent="⏸ 暫停"}else{readCh(_i)}}}';
+  html += 'function stopTTS(){speechSynthesis.cancel();_p=false;_i=0;document.getElementById("btnTTS").textContent="🔊 朗讀";document.getElementById("ttsStatus").textContent="已停止"}';
+  html += 'function readCh(i){if(i>=_c.length){document.getElementById("ttsStatus").textContent="朗讀完畢";_p=false;_i=0;return}_i=i;_p=true;document.getElementById("btnTTS").textContent="⏸ 暫停";var ch=_c[i];var t=(ch.querySelector("h2")||{}).textContent||"";var b=(ch.querySelector(".chapter-content")||{}).textContent||"";document.getElementById("ttsStatus").textContent="第"+(i+1)+"篇/"+_c.length;ch.scrollIntoView({behavior:"smooth"});var u=new SpeechSynthesisUtterance(t+"。"+b);u.lang="zh-TW";u.rate=1;u.onend=function(){readCh(i+1)};speechSynthesis.speak(u)}';
+  html += '<\/script>';
+html += '</body></html>';
 
   try {
     // Upload via server proxy (images sent separately)
