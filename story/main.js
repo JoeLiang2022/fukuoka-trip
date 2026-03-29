@@ -42,14 +42,16 @@ let _generateImages = false;
 // === Init ===
 async function init() {
   var cacheBust = '?t=' + Date.now();
-  const [topicsRes, stylesRes, audiencesRes] = await Promise.all([
+  const [topicsRes, stylesRes, audiencesRes, refsRes] = await Promise.all([
     fetch('topics.json' + cacheBust).then(r => r.json()),
     fetch('styles.json' + cacheBust).then(r => r.json()),
-    fetch('audiences.json' + cacheBust).then(r => r.json())
+    fetch('audiences.json' + cacheBust).then(r => r.json()),
+    fetch('references.json' + cacheBust).then(r => r.json()).catch(function() { return {}; })
   ]);
   _topics = topicsRes;
   _styles = stylesRes;
   _audiences = audiencesRes;
+  window._references = refsRes;
   renderAudiences();
   renderStyles();
   renderCategories();
@@ -202,6 +204,13 @@ function toggleImages(on) {
   if (btnOff) btnOff.classList.toggle('active', !on);
 }
 
+function getRandomRefs(styleId, count) {
+  var refs = window._references && window._references[styleId] ? window._references[styleId] : [];
+  if (refs.length === 0) return '';
+  var shuffled = refs.slice().sort(function() { return Math.random() - 0.5; });
+  return shuffled.slice(0, count || 4).join('、');
+}
+
 // === Story Hook Techniques (injected into prompt) ===
 const HOOK_TECHNIQUES = [
   '開頭用一個震撼的事實或問題抓住注意力（前3秒法則）',
@@ -309,6 +318,7 @@ async function generate() {
       var prompt = prevSummary + '你是一個專業的社群媒體故事創作者。' + (isFirst ? '請根據以下設定創作一個分篇章的故事。' : '請接續前面的劇情繼續寫。') + '\n\n' +
         '【主題】' + topic + '\n' +
         '【風格】' + style.name + ' — ' + style.prompt + '\n' +
+        '【參考書籍風格】' + getRandomRefs(style.id, 4) + '\n' +
         '【目標觀眾】' + audience.name + ' — ' + audience.tone + '\n' +
         '【本批篇章】第 ' + startNum + ' 到第 ' + (startNum + thisCount - 1) + ' 篇（共 ' + thisCount + ' 篇）\n' +
         '【總篇章數】' + _chapters + ' 篇\n' +
