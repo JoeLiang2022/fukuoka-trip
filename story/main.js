@@ -767,7 +767,7 @@ html += '</body></html>';
     var pubResp = await fetch(API_BASE + '/api/story-publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id, title: story.title, chapters: story.chapters.length, html: html, imagePrompts: imagePrompts, voice: _voiceMode === 'gemini-f' ? 'female' : _voiceMode === 'gemini-m' ? 'male' : '', chapterTexts: (_voiceMode.startsWith('gemini') ? story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }) : []) })
+      body: JSON.stringify({ id: id, title: story.title, chapters: story.chapters.length, html: html, imagePrompts: imagePrompts })
     });
     if (!pubResp.ok) {
       var errData = {};
