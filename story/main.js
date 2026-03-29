@@ -548,7 +548,6 @@ function renderStory(story) {
     '<button onclick="aiScoreStory()">📊 AI 評分</button>' +
     '<button onclick="aiOptimizeStory()">✨ AI 優化</button>' +
     '<button onclick="regenAllImages()">🖼️ 重新生圖</button>' +
-    '<button onclick="startReading()">🔊 朗讀</button>' +
     '<button onclick="publishStory()">📤 發佈</button>' +
     '<button onclick="copyAll()">📋 複製全部</button>' +
     '<button onclick="downloadMD()">⬇️ 下載 MD</button>' +
