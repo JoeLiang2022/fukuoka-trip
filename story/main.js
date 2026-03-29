@@ -282,7 +282,7 @@ async function generate() {
   }
 
   // Story mode — batch for large chapter counts
-  var batchSize = _chapters <= 7 ? _chapters : 5;
+  var batchSize = _chapters <= 2 ? _chapters : 2;
   var totalBatches = Math.ceil(_chapters / batchSize);
   var allChapters = [];
   var storyTitle = '';
