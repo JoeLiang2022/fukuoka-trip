@@ -797,6 +797,20 @@ html += '</body></html>';
     pubInfo += '<div style="text-align:center;font-size:11px;color:#666;margin-top:10px">⏳ GitHub Pages 部署約需 1-2 分鐘，若顯示 404 請稍後再試</div>';
     pubInfo += '</div>';
     output.innerHTML += pubInfo;
+    // Auto-generate TTS audio after publish
+    showToast('🔊 生成語音中...');
+    try {
+      var ttsResp = await fetch(API_BASE + '/api/story/gen-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
+        body: JSON.stringify({ id: id, chapterTexts: story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }), voice: 'female' })
+      });
+      if (ttsResp.ok) {
+        var ttsData = await ttsResp.json();
+        var ttsOk = ttsData.results ? ttsData.results.filter(function(r) { return r.ok; }).length : 0;
+        showToast('✅ 語音已生成（' + ttsOk + '/' + story.chapters.length + ' 篇）');
+      } else { showToast('⚠️ 語音生成失敗，故事已發佈'); }
+    } catch(ttsE) { showToast('⚠️ 語音生成失敗: ' + ttsE.message); }
   } catch (e) {
     showToast('❌ 發佈失敗: ' + e.message);
   }
