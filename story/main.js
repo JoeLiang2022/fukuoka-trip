@@ -755,7 +755,7 @@ async function publishStory() {
   html += '</div>';
   var audioBase = 'https://joeliang2022.github.io/fukuoka-trip/stories/audio/';
   var audioFiles = [];
-  for (var ai = 0; ai < story.chapters.length; ai++) { audioFiles.push('"' + audioBase + id + '_' + ai + '.mp3"'); }
+  for (var ai = 0; ai < story.chapters.length; ai++) { audioFiles.push('"' + audioBase + id + '_' + ai + '.wav"'); }
   html += '<audio id="ap" preload="auto"></audio>';
   html += '<script>';
   html += 'var au=document.getElementById("ap");';
