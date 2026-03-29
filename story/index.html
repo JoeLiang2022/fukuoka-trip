@@ -60,6 +60,14 @@ body{background:#0a0a0f;color:#e8e8e8;font-family:'Segoe UI',sans-serif;margin:0
       <button onclick="toggleImages(true)" id="imgOn">開啟</button>
     </div>
   </div>
+  <div class="chapter-count">
+    <span>📝 篇幅</span>
+    <div class="count-btns">
+      <button onclick="setLength('short')" id="lenShort">短 200字</button>
+      <button onclick="setLength('medium')" id="lenMedium" class="active">中 400字</button>
+      <button onclick="setLength('long')" id="lenLong">長 500-800字</button>
+    </div>
+  </div>
   <button class="gen-btn" id="btnGenerate" onclick="generate()">✨ 生成故事</button>
   <button class="gen-btn" style="background:linear-gradient(135deg,#333,#555);margin-top:8px" onclick="showPublished()">📂 已發佈故事</button>
   <div id="output"></div>
