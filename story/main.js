@@ -920,17 +920,15 @@ async function aiScoreStory() {
     await new Promise(function(r) { setTimeout(r, 3000); })
   }
 
-  // Show history summary
-  if (history.length > 1) {
+  // Re-render story with updated content + export bar, then append score history
+  renderStory(window._currentStory);
+  if (history.length > 0) {
     var histHtml = '<div style="margin:12px 0;padding:12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)">';
-    histHtml += '<div style="font-size:13px;color:#f093fb;font-weight:600;margin-bottom:6px">📈 改進歷程</div>';
-    history.forEach(function(h) { histHtml += '<div style="font-size:12px;color:#aaa">第' + h.round + '輪：' + (h.low || '全部達標') + '</div>'; });
+    histHtml += '<div style="font-size:13px;color:#f093fb;font-weight:600;margin-bottom:6px">📈 評分歷程（共 ' + history.length + ' 輪）</div>';
+    history.forEach(function(h) { histHtml += '<div style="font-size:12px;color:#aaa">第' + h.round + '輪：' + (h.low || '✅ 全部達標') + '</div>'; });
     histHtml += '</div>';
     output.innerHTML += histHtml;
   }
-
-  // Don't re-render — keep score results visible
-  // renderStory(window._currentStory);
 }
 
 // === AI Optimize Low Scores (targeted) ===
