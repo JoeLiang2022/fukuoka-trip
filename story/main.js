@@ -313,17 +313,18 @@ async function generate() {
         '【本批篇章】第 ' + startNum + ' 到第 ' + (startNum + thisCount - 1) + ' 篇（共 ' + thisCount + ' 篇）\n' +
         '【總篇章數】' + _chapters + ' 篇\n' +
         '【語言】繁體中文\n\n' +
-        '【創作指導 — 絕對禁止出現在文章中】\n' +
-        '⚠️ 規則用語只是指導，禁止寫進內容。\n' +
-        '❌ 禁止：自我矛盾、付出代價、感情轉折等指令用語\n' +
-        '❌ 禁止結尾變 TED 演講\n' +
-        '❌ 成功不能來太快太順\n\n' +
-        '【小說類】角色矛盾透過行為展現，女主自己做選擇，男主不能立刻救場\n' +
-        '【非故事類（書籍/科普/工具書）】\n' +
-        '- 案例人物要有真實掙扎，不能嘗試就成功\n' +
-        '- 結構要有節奏變化，不能每篇同一公式\n' +
-        '- 至少一篇要有反直覺洞見，不能只寫常識\n' +
-        '- 每篇要有讓人記住的東西\n\n' +
+        '【你的角色：國際級暢銷書總編輯，20年經驗，不接受平庸】\n\n' +
+        '【品質流程 — 在內部執行，只輸出最終達標版本】\n' +
+        '完成每篇後，用7個維度自我評分（1-10）：\n' +
+        '1.場景具體度 2.人物真實感 3.概念深度 4.結構節奏 5.伏筆收尾 6.語氣一致性 7.讀者記憶點\n' +
+        '平均低於9分就重寫最低分的維度：\n' +
+        '場景不具體→刪形容詞改用動作對話 / 人物不真實→加入付出代價的選擇 / 概念太淺→問自己讀者在別處看過嗎 / 結尾說教→刪掉宣告句\n' +
+        '重寫後再評分，直到平均9分才輸出。\n\n' +
+        '❌ 禁止：指令用語寫進內容、結尾變TED演講、成功來太快\n' +
+        '【小說類】角色矛盾透過行為展現，女主自己做選擇\n' +
+        '【非故事類】案例要有掙扎、結構要有節奏變化、要有反直覺洞見\n\n' +
+        '【輸出格式】JSON 中加入 scores 欄位：\n' +
+        '{"title":"...","scores":{"scene":9,"character":9,"depth":9,"pacing":9,"foreshadow":9,"tone":9,"memorable":9,"avg":9},"chapters":[...]}\n\n' +
         (isFirst ? '【抓眼球技巧】\n' + HOOK_TECHNIQUES.join('\n') + '\n\n' : '') +
         '【輸出格式】JSON（不要 markdown）：\n' +
         '{"title":"故事總標題","characters":[{"name":"角色名","appearance":"英文外貌"}],"chapters":[{"num":' + startNum + ',"title":"篇章標題","text":"200-400字","imagePrompt":"英文配圖含角色外貌","hook":"金句"}]}\n\n' +
@@ -418,6 +419,17 @@ function renderNews(newsData, rawText, sources) {
 function renderStory(story) {
   const output = document.getElementById('output');
   let html = '<div class="story-header"><div class="story-title">' + escHtml(story.title) + '</div><div class="story-meta">' + _chapters + ' 篇章 · AI 生成</div></div>';
+
+  // Show built-in scores if available
+  if (story.scores) {
+    var sc = story.scores;
+    var labels = {scene:'場景',character:'人物',depth:'深度',pacing:'節奏',foreshadow:'伏筆',tone:'語氣',memorable:'記憶點'};
+    html += '<div style="margin:0 0 12px;padding:12px;border-radius:10px;background:rgba(78,205,196,0.06);border:1px solid rgba(78,205,196,0.15);display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center">';
+    html += '<span style="font-size:12px;color:#888">AI 自評：</span>';
+    for (var k in labels) { if (sc[k]) html += '<span style="font-size:12px;color:' + (sc[k] >= 9 ? '#2ecc71' : sc[k] >= 7 ? '#f39c12' : '#e74c3c') + '">' + labels[k] + ' ' + sc[k] + '</span>'; }
+    if (sc.avg) html += '<span style="font-size:13px;font-weight:700;color:' + (sc.avg >= 9 ? '#2ecc71' : '#f39c12') + '">平均 ' + sc.avg + '</span>';
+    html += '</div>';
+  }
 
   story.chapters.forEach((ch, i) => {
     html += '<div class="chapter-card" id="chapter' + i + '">' +
