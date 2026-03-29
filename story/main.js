@@ -222,13 +222,8 @@ function getLengthText() {
 
 function setVoice(mode) {
   _voiceMode = mode;
-  ['Off','Browser','GeminiF','GeminiM'].forEach(function(v) {
-    var b = document.getElementById('voice' + v);
-    if (b) b.classList.toggle('active', ('voice' + v).toLowerCase().replace('voice','') === mode.replace('-',''));
-  });
-  // Simpler: just toggle all off then set active
   document.querySelectorAll('[id^="voice"]').forEach(function(b) { b.classList.remove('active'); });
-  var map = {'off':'voiceOff','browser':'voiceBrowser','gemini-f':'voiceGeminiF','gemini-m':'voiceGeminiM'};
+  var map = {'off':'voiceOff','browser':'voiceBrowser','kore':'voiceKore','zephyr':'voiceZephyr','aoede':'voiceAoede','leda':'voiceLeda','puck':'voicePuck','orus':'voiceOrus'};
   var btn = document.getElementById(map[mode]);
   if (btn) btn.classList.add('active');
 }
@@ -251,7 +246,7 @@ function readStoryBrowser() {
 }
 
 // Read story with Gemini TTS
-async function readStoryGemini(voice) {
+async function readStoryGemini(voiceName) {
   if (!window._currentStory) return;
   var chapters = window._currentStory.chapters;
   for (var i = 0; i < chapters.length; i++) {
@@ -261,7 +256,7 @@ async function readStoryGemini(voice) {
       var resp = await fetch(API_BASE + '/api/story/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
-        body: JSON.stringify({ text: ch.title + '。' + ch.text, voice: voice })
+        body: JSON.stringify({ text: ch.title + '。' + ch.text, voice: voiceName })
       });
       if (!resp.ok) { showToast('語音生成失敗'); continue; }
       var data = await resp.json();
@@ -797,20 +792,24 @@ html += '</body></html>';
     pubInfo += '<div style="text-align:center;font-size:11px;color:#666;margin-top:10px">⏳ GitHub Pages 部署約需 1-2 分鐘，若顯示 404 請稍後再試</div>';
     pubInfo += '</div>';
     output.innerHTML += pubInfo;
-    // Auto-generate TTS audio after publish
-    showToast('🔊 生成語音中...');
-    try {
-      var ttsResp = await fetch(API_BASE + '/api/story/gen-audio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
-        body: JSON.stringify({ id: id, chapterTexts: story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }), voice: 'female' })
-      });
-      if (ttsResp.ok) {
-        var ttsData = await ttsResp.json();
-        var ttsOk = ttsData.results ? ttsData.results.filter(function(r) { return r.ok; }).length : 0;
-        showToast('✅ 語音已生成（' + ttsOk + '/' + story.chapters.length + ' 篇）');
-      } else { showToast('⚠️ 語音生成失敗，故事已發佈'); }
-    } catch(ttsE) { showToast('⚠️ 語音生成失敗: ' + ttsE.message); }
+    // Auto-generate TTS audio after publish (if voice selected)
+    if (_voiceMode !== 'off' && _voiceMode !== 'browser') {
+      var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus'};
+      var selectedVoice = voiceMap[_voiceMode] || 'Aoede';
+      showToast('🔊 生成語音中（' + selectedVoice + '）...');
+      try {
+        var ttsResp = await fetch(API_BASE + '/api/story/gen-audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
+          body: JSON.stringify({ id: id, chapterTexts: story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }), voice: selectedVoice })
+        });
+        if (ttsResp.ok) {
+          var ttsData = await ttsResp.json();
+          var ttsOk = ttsData.results ? ttsData.results.filter(function(r) { return r.ok; }).length : 0;
+          showToast('✅ 語音已生成（' + ttsOk + '/' + story.chapters.length + ' 篇）');
+        } else { showToast('⚠️ 語音生成失敗，故事已發佈'); }
+      } catch(ttsE) { showToast('⚠️ 語音生成失敗: ' + ttsE.message); }
+    }
   } catch (e) {
     showToast('❌ 發佈失敗: ' + e.message);
   }
@@ -1006,10 +1005,13 @@ async function aiOptimizeStory() {
 
 // === Regenerate All Images ===
 function startReading() {
-  if (_voiceMode === 'off') { showToast('請先選擇語音模式（🆓瀏覽器 或 🤖Gemini）'); return; }
+  if (_voiceMode === 'off') { showToast('請先選擇語音模式'); return; }
   if (_voiceMode === 'browser') { readStoryBrowser(); return; }
-  if (_voiceMode === 'gemini-f') { readStoryGemini('female'); return; }
-  if (_voiceMode === 'gemini-m') { readStoryGemini('male'); return; }
+  // Gemini TTS voices
+  var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus'};
+  var voiceName = voiceMap[_voiceMode];
+  if (voiceName) { readStoryGemini(voiceName); return; }
+  showToast('未知的語音模式');
 }
 
 function regenAllImages() {
