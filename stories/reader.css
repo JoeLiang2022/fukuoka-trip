@@ -32,3 +32,10 @@ body { font-family: 'Segoe UI','Microsoft JhengHei','Noto Sans TC',sans-serif; b
   .chapter h2 { font-size: 18px; }
   .chapter-content { font-size: 15px; }
 }
+
+/* Audio Player */
+.audio-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(20,20,40,0.95); backdrop-filter: blur(12px); border-top: 1px solid rgba(240,147,251,0.15); padding: 10px 16px; display: flex; align-items: center; gap: 12px; z-index: 100; }
+.audio-bar button { padding: 8px 16px; border-radius: 10px; border: none; background: linear-gradient(135deg, #f093fb, #f5576c); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+.audio-bar button.pause { background: #333; }
+.audio-bar .progress { flex: 1; font-size: 12px; color: #888; }
+.audio-bar .progress .current-chapter { color: #f093fb; font-weight: 600; }
