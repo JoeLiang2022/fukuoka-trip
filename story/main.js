@@ -361,7 +361,7 @@ async function generate() {
   }
 
   // Story mode — batch for large chapter counts
-  var batchSize = _chapterLength === 'long' ? 2 : (_chapterLength === 'medium' ? 3 : 5);
+  var batchSize = _chapters <= 3 ? _chapters : (_chapterLength === 'long' ? 2 : (_chapterLength === 'medium' ? 3 : 5));
   batchSize = Math.min(batchSize, _chapters);
   var totalBatches = Math.ceil(_chapters / batchSize);
   var allChapters = [];
@@ -412,8 +412,9 @@ async function generate() {
         '【輸出格式】JSON 中加入 scores 欄位：\n' +
         '{"title":"...","scores":{"scene":9,"character":9,"depth":9,"pacing":9,"foreshadow":9,"tone":9,"memorable":9,"avg":9},"chapters":[...]}\n\n' +
         (isFirst ? '【抓眼球技巧】\n' + HOOK_TECHNIQUES.join('\n') + '\n\n' : '') +
-        '【輸出格式】JSON（不要 markdown）：\n' +
-        '{"title":"故事總標題","characters":[{"name":"角色名","appearance":"英文外貌"}],"chapters":[{"num":' + startNum + ',"title":"篇章標題","text":"' + getLengthText() + '","imagePrompt":"英文配圖含角色外貌","hook":"金句"}]}\n\n' +
+        '【輸出格式】JSON（不要 markdown），必須包含 ' + thisCount + ' 篇：\n' +
+        '{"title":"故事總標題","characters":[{"name":"角色名","appearance":"英文外貌"}],"chapters":[{"num":' + startNum + ',"title":"第一篇標題","text":"' + getLengthText() + '內容","imagePrompt":"英文配圖","hook":"金句"},{"num":' + (startNum+1) + ',"title":"第二篇標題","text":"...","imagePrompt":"...","hook":"..."}]}\n' +
+        '⚠️ chapters 陣列必須包含 ' + thisCount + ' 個元素，不能少於 ' + thisCount + ' 篇\n\n' +
         '要求：' + (isFirst ? '第一篇開頭3秒抓住注意力。' : '') + (isLast ? '最後一篇要有震撼或感動的結尾。' : '每篇結尾留懸念。') + ' 人物預設台灣人長相。';
 
       var resp = await fetch(API_BASE + '/api/story-generate', {
