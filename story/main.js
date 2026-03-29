@@ -39,6 +39,7 @@ let _selectedCat = '';
 let _chapters = 3;
 let _generateImages = false;
 let _chapterLength = 'medium';
+let _voiceMode = 'off'; // off, browser, gemini-f, gemini-m
 
 // === Init ===
 async function init() {
@@ -217,6 +218,60 @@ function getLengthText() {
   if (_chapterLength === 'short') return '約200字';
   if (_chapterLength === 'long') return '500-800字';
   return '約400字';
+}
+
+function setVoice(mode) {
+  _voiceMode = mode;
+  ['Off','Browser','GeminiF','GeminiM'].forEach(function(v) {
+    var b = document.getElementById('voice' + v);
+    if (b) b.classList.toggle('active', ('voice' + v).toLowerCase().replace('voice','') === mode.replace('-',''));
+  });
+  // Simpler: just toggle all off then set active
+  document.querySelectorAll('[id^="voice"]').forEach(function(b) { b.classList.remove('active'); });
+  var map = {'off':'voiceOff','browser':'voiceBrowser','gemini-f':'voiceGeminiF','gemini-m':'voiceGeminiM'};
+  var btn = document.getElementById(map[mode]);
+  if (btn) btn.classList.add('active');
+}
+
+// Read story aloud (browser TTS)
+function readStoryBrowser() {
+  if (!window._currentStory) return;
+  var chapters = window._currentStory.chapters;
+  var idx = 0;
+  function readNext() {
+    if (idx >= chapters.length) { showToast('朗讀完畢'); return; }
+    var ch = chapters[idx];
+    showToast('🔊 朗讀第 ' + ch.num + ' 篇...');
+    var u = new SpeechSynthesisUtterance(ch.title + '。' + ch.text);
+    u.lang = 'zh-TW'; u.rate = 1;
+    u.onend = function() { idx++; readNext(); };
+    speechSynthesis.speak(u);
+  }
+  readNext();
+}
+
+// Read story with Gemini TTS
+async function readStoryGemini(voice) {
+  if (!window._currentStory) return;
+  var chapters = window._currentStory.chapters;
+  for (var i = 0; i < chapters.length; i++) {
+    var ch = chapters[i];
+    showToast('🤖 生成語音第 ' + ch.num + ' 篇...');
+    try {
+      var resp = await fetch(API_BASE + '/api/story/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
+        body: JSON.stringify({ text: ch.title + '。' + ch.text, voice: voice })
+      });
+      if (!resp.ok) { showToast('語音生成失敗'); continue; }
+      var data = await resp.json();
+      if (data.audio) {
+        var audio = new Audio('data:' + (data.mimeType || 'audio/mp3') + ';base64,' + data.audio);
+        await new Promise(function(resolve) { audio.onended = resolve; audio.onerror = resolve; audio.play(); });
+      }
+    } catch(e) { showToast('語音錯誤: ' + e.message); }
+  }
+  showToast('朗讀完畢');
 }
 
 function getRandomRefs(styleId, count) {
@@ -492,6 +547,7 @@ function renderStory(story) {
     '<button onclick="aiScoreStory()">📊 AI 評分</button>' +
     '<button onclick="aiOptimizeStory()">✨ AI 優化</button>' +
     '<button onclick="regenAllImages()">🖼️ 重新生圖</button>' +
+    '<button onclick="startReading()">🔊 朗讀</button>' +
     '<button onclick="publishStory()">📤 發佈</button>' +
     '<button onclick="copyAll()">📋 複製全部</button>' +
     '<button onclick="downloadMD()">⬇️ 下載 MD</button>' +
@@ -923,6 +979,13 @@ async function aiOptimizeStory() {
 }
 
 // === Regenerate All Images ===
+function startReading() {
+  if (_voiceMode === 'off') { showToast('請先選擇語音模式（🆓瀏覽器 或 🤖Gemini）'); return; }
+  if (_voiceMode === 'browser') { readStoryBrowser(); return; }
+  if (_voiceMode === 'gemini-f') { readStoryGemini('female'); return; }
+  if (_voiceMode === 'gemini-m') { readStoryGemini('male'); return; }
+}
+
 function regenAllImages() {
   if (!window._currentStory) { showToast('沒有故事'); return; }
   showToast('🖼️ 重新生成所有圖片...');
