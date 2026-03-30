@@ -1,5 +1,12 @@
 [
   {
+    "id": "quicktest",
+    "title": "Quick",
+    "chapters": 1,
+    "date": "2026-03-30",
+    "file": "quicktest.html"
+  },
+  {
     "id": "testwaf",
     "title": "WAF Test",
     "chapters": 1,
