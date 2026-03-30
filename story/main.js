@@ -705,73 +705,19 @@ async function publishNews() {
   } catch(e) { showToast('❌ 發佈失敗: ' + e.message); }
 }
 
-// === Publish Confirmation Dialog ===
-function showPublishDialog() {
-  if (!window._currentStory) { showToast('沒有故事可發佈'); return; }
-  var output = document.getElementById('output');
-  var story = window._currentStory;
-  var isRepublish = !!window._editPublishedId;
-
-  var html = '<div style="margin:20px 0;padding:24px;border-radius:16px;background:rgba(240,147,251,0.06);border:1px solid rgba(240,147,251,0.2)">';
-  html += '<div style="text-align:center;font-size:20px;margin-bottom:4px">📤 ' + (isRepublish ? '重新發佈' : '發佈故事') + '</div>';
-  html += '<div style="text-align:center;font-size:15px;color:#ddd;margin-bottom:16px">' + escHtml(story.title || '故事') + ' · ' + story.chapters.length + ' 篇</div>';
-
-  // Image option
-  html += '<div style="margin-bottom:12px;padding:12px;border-radius:10px;background:rgba(255,255,255,0.03)">';
-  html += '<label style="display:flex;align-items:center;gap:10px;cursor:pointer">';
-  html += '<input type="checkbox" id="pubImages" ' + (_generateImages ? 'checked' : '') + '>';
-  html += '<div><div style="font-size:14px;color:#eee">🖼️ 生成配圖</div><div style="font-size:11px;color:#666">為每篇生成 AI 配圖（需要較長時間）</div></div>';
-  html += '</label></div>';
-
-  // Voice option
-  html += '<div style="margin-bottom:12px;padding:12px;border-radius:10px;background:rgba(255,255,255,0.03)">';
-  html += '<label style="display:flex;align-items:center;gap:10px;cursor:pointer">';
-  html += '<input type="checkbox" id="pubVoice" checked>';
-  html += '<div><div style="font-size:14px;color:#eee">🔊 生成語音</div><div style="font-size:11px;color:#666">發佈後自動生成朗讀語音</div></div>';
-  html += '</label></div>';
-
-  // Voice selection
-  html += '<div id="pubVoiceSelect" style="margin-bottom:16px;padding:0 12px">';
-  html += '<div style="font-size:12px;color:#888;margin-bottom:6px">選擇聲音</div>';
-  html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
-  var voices = [['Kore','Kore♀'],['Zephyr','Zephyr♀'],['Aoede','Aoede♀'],['Leda','Leda♀'],['Puck','Puck♂'],['Orus','Orus♂']];
-  voices.forEach(function(v) {
-    var isDefault = v[0] === 'Aoede';
-    html += '<button onclick="document.querySelectorAll(\'.pub-voice-btn\').forEach(function(b){b.style.borderColor=\'rgba(255,255,255,0.1)\';b.style.color=\'#888\'});this.style.borderColor=\'#f093fb\';this.style.color=\'#f093fb\';window._pubVoice=\'' + v[0] + '\'" class="pub-voice-btn" style="padding:5px 12px;border-radius:8px;border:1px solid ' + (isDefault ? '#f093fb' : 'rgba(255,255,255,0.1)') + ';background:transparent;color:' + (isDefault ? '#f093fb' : '#888') + ';font-size:12px;cursor:pointer">' + v[1] + '</button>';
-  });
-  html += '</div></div>';
-
-  // Buttons
-  html += '<div style="display:flex;gap:10px;justify-content:center">';
-  html += '<button onclick="doPublish()" style="padding:12px 28px;border-radius:12px;border:none;background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;font-size:15px;font-weight:600;cursor:pointer">✅ 確認發佈</button>';
-  html += '<button onclick="renderStory(window._currentStory)" style="padding:12px 28px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#888;font-size:15px;cursor:pointer">取消</button>';
-  html += '</div></div>';
-
-  output.innerHTML += html;
-  window._pubVoice = 'Aoede';
-  output.scrollTop = output.scrollHeight;
-
-  // Toggle voice select visibility
-  document.getElementById('pubVoice').addEventListener('change', function() {
-    document.getElementById('pubVoiceSelect').style.display = this.checked ? '' : 'none';
-  });
-}
-
-// === Do Publish (called from dialog) ===
-async function doPublish() {
-  var wantImages = document.getElementById('pubImages') && document.getElementById('pubImages').checked;
-  var wantVoice = document.getElementById('pubVoice') && document.getElementById('pubVoice').checked;
-  var voiceName = window._pubVoice || 'Aoede';
-  await publishStoryWithOptions(wantImages, wantVoice, voiceName);
-}
-
 // === Publish Story to GitHub Pages ===
 async function publishStory() {
-  // Show confirmation dialog instead of publishing directly
-  showPublishDialog();
+  if (!window._currentStory) { showToast('沒有故事可發佈'); return; }
+  // Simple confirmation with voice/image options
+  var wantVoice = confirm('要生成語音嗎？（Aoede 女聲）');
+  var wantImages = false;
+  if (window._currentStory.chapters.some(function(ch) { return ch.imagePrompt; })) {
+    wantImages = confirm('要生成配圖嗎？');
+  }
+  await publishStoryDirect(wantImages, wantVoice, 'Aoede');
 }
 
-async function publishStoryWithOptions(wantImages, wantVoice, voiceName) {
+async function publishStoryDirect(wantImages, wantVoice, voiceName) {
   if (!window._currentStory) { showToast('沒有故事可發佈'); return; }
   const story = window._currentStory;
   showToast('📤 發佈中...');
