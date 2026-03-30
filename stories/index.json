@@ -1,5 +1,12 @@
 [
   {
+    "id": "spa_test_mnd9ulzs",
+    "title": "SPA 架構測試",
+    "chapters": 5,
+    "date": "2026-03-30",
+    "file": "spa_test_mnd9ulzs.html"
+  },
+  {
     "id": "mnd8ey28",
     "title": "伺服器基石：BIOS、BMC與智慧化轉型之路",
     "chapters": 7,
