@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>載入中...</title>
+<link rel="stylesheet" href="https://joeliang2022.github.io/fukuoka-trip/stories/reader.css?v=3">
+<style>
+.loading{text-align:center;padding:60px 20px;color:#888;font-size:16px}
+.error{text-align:center;padding:60px 20px;color:#f5576c;font-size:16px}
+</style>
+</head>
+<body>
+<div class="reader-header"><a href="https://joeliang2022.github.io/fukuoka-trip/stories/index.html" class="back-link">← 所有故事</a></div>
+<div id="content"><div class="loading">📖 載入中...</div></div>
+<div class="reader-footer"><a href="https://joeliang2022.github.io/fukuoka-trip/stories/index.html">← 更多故事</a></div>
+<div class="audio-bar" id="audioBar">
+<button id="btnTTS" onclick="toggleTTS()">🔊 朗讀</button>
+<div class="progress"><span class="current-chapter" id="ttsStatus">點擊開始朗讀</span></div>
+<button onclick="stopTTS()" style="background:#333;padding:6px 12px;font-size:12px">⏹</button>
+</div>
+<audio id="ap" preload="auto"></audio>
+<script>
+var AUDIO_BASE = 'https://joeliang2022.github.io/fukuoka-trip/stories/audio/';
+var RAW_BASE = 'https://raw.githubusercontent.com/JoeLiang2022/fukuoka-trip/main/stories/data/';
+var IMG_BASE = 'https://joeliang2022.github.io/fukuoka-trip/stories/img/';
+var au = document.getElementById('ap');
+var audioFiles = [], ci = 0, playing = false;
+
+// Simple markdown to HTML
+function md(text) {
+  if (!text) return '';
+  var s = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  s = s.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+  s = s.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
+  s = s.replace(/^\*   (.+)$/gm, '<li>$1</li>');
+  s = s.replace(/^- (.+)$/gm, '<li>$1</li>');
+  s = s.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+  s = s.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  s = s.replace(/\n/g, '<br>');
+  s = s.replace(/<br><(h[34]|ul|li)/g, '<$1');
+  s = s.replace(/<\/(h[34]|ul|li)><br>/g, '</$1>');
+  return s;
+}
+
+// Load story
+var params = new URLSearchParams(window.location.search);
+var storyId = params.get('id');
+if (!storyId) {
+  document.getElementById('content').innerHTML = '<div class="error">缺少故事 ID</div>';
+} else {
+  var url = RAW_BASE + storyId + '.json?t=' + Date.now();
+  fetch(url).then(function(r) {
+    if (!r.ok) throw new Error('找不到故事 (' + r.status + ')');
+    return r.json();
+  }).then(function(story) {
+    document.title = story.title || '故事';
+    var html = '<article class="story">';
+    html += '<h1 class="story-title">' + (story.title || '').replace(/</g,'&lt;') + '</h1>';
+    var chapters = story.chapters || [];
+    chapters.forEach(function(ch, i) {
+      html += '<section class="chapter">';
+      html += '<div class="chapter-cover" id="cover' + i + '"><img src="' + IMG_BASE + storyId + '_' + i + '.png" alt="" onerror="this.parentElement.style.display=\'none\'"></div>';
+      html += '<div class="chapter-num">第 ' + ch.num + ' 篇</div>';
+      html += '<h2>' + (ch.title || '').replace(/</g,'&lt;') + '</h2>';
+      html += '<div class="chapter-content">' + md(ch.text) + '</div>';
+      if (ch.hook) html += '<blockquote class="hook">💬 ' + (ch.hook || '').replace(/</g,'&lt;') + '</blockquote>';
+      html += '</section>';
+      audioFiles.push(AUDIO_BASE + storyId + '_' + i + '.wav');
+    });
+    html += '</article>';
+    document.getElementById('content').innerHTML = html;
+  }).catch(function(e) {
+    document.getElementById('content').innerHTML = '<div class="error">❌ ' + e.message + '</div>';
+  });
+}
+
+// Audio player
+function playChapter(i) {
+  if (i >= audioFiles.length) { document.getElementById('ttsStatus').textContent = '朗讀完畢'; playing = false; ci = 0; document.getElementById('btnTTS').textContent = '🔊 朗讀'; return; }
+  ci = i; document.getElementById('ttsStatus').textContent = '第' + (i+1) + '篇/' + audioFiles.length;
+  au.src = audioFiles[i]; au.onended = function() { playChapter(i+1); }; au.play();
+}
+function toggleTTS() {
+  if (playing) { au.pause(); playing = false; document.getElementById('btnTTS').textContent = '▶ 繼續'; }
+  else { playing = true; document.getElementById('btnTTS').textContent = '⏸ 暫停'; if (au.src && au.paused && au.currentTime > 0) { au.play(); } else { playChapter(ci); } }
+}
+function stopTTS() { au.pause(); au.removeAttribute('src'); playing = false; ci = 0; document.getElementById('btnTTS').textContent = '🔊 朗讀'; document.getElementById('ttsStatus').textContent = '已停止'; }
+</script>
+</body>
+</html>
