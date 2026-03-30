@@ -70,6 +70,7 @@ if (!storyId) {
       if (ch.hook) html += '<blockquote class="hook">💬 ' + (ch.hook || '').replace(/</g,'&lt;') + '</blockquote>';
       html += '</section>';
       audioFiles.push(AUDIO_BASE + storyId + '_' + i + '.wav');
+      chapterTexts.push((ch.title || '') + '。' + (ch.text || '').replace(/[#*`_\-]/g, ''));
     });
     html += '</article>';
     document.getElementById('content').innerHTML = html;
@@ -78,17 +79,44 @@ if (!storyId) {
   });
 }
 
-// Audio player
+// Audio player — with Web Speech API fallback
+var chapterTexts = []; // filled during story load
+var useBrowserTTS = false;
+
 function playChapter(i) {
   if (i >= audioFiles.length) { document.getElementById('ttsStatus').textContent = '朗讀完畢'; playing = false; ci = 0; document.getElementById('btnTTS').textContent = '🔊 朗讀'; return; }
   ci = i; document.getElementById('ttsStatus').textContent = '第' + (i+1) + '篇/' + audioFiles.length;
-  au.src = audioFiles[i]; au.onended = function() { playChapter(i+1); }; au.play();
+  if (useBrowserTTS) { playBrowserTTS(i); return; }
+  au.src = audioFiles[i];
+  au.onerror = function() { useBrowserTTS = true; playBrowserTTS(i); };
+  au.onended = function() { playChapter(i+1); };
+  au.play().catch(function() { useBrowserTTS = true; playBrowserTTS(i); });
+}
+function playBrowserTTS(i) {
+  if (i >= chapterTexts.length) { playChapter(audioFiles.length); return; }
+  window.speechSynthesis.cancel();
+  var utt = new SpeechSynthesisUtterance(chapterTexts[i]);
+  utt.lang = 'zh-TW'; utt.rate = 1.0;
+  utt.onend = function() { playChapter(i+1); };
+  window.speechSynthesis.speak(utt);
 }
 function toggleTTS() {
-  if (playing) { au.pause(); playing = false; document.getElementById('btnTTS').textContent = '▶ 繼續'; }
-  else { playing = true; document.getElementById('btnTTS').textContent = '⏸ 暫停'; if (au.src && au.paused && au.currentTime > 0) { au.play(); } else { playChapter(ci); } }
+  if (playing) {
+    if (useBrowserTTS) { window.speechSynthesis.pause(); } else { au.pause(); }
+    playing = false; document.getElementById('btnTTS').textContent = '▶ 繼續';
+  } else {
+    playing = true; document.getElementById('btnTTS').textContent = '⏸ 暫停';
+    if (useBrowserTTS) { if (window.speechSynthesis.paused) { window.speechSynthesis.resume(); } else { playChapter(ci); } }
+    else { if (au.src && au.paused && au.currentTime > 0) { au.play(); } else { playChapter(ci); } }
+  }
 }
-function stopTTS() { au.pause(); au.removeAttribute('src'); playing = false; ci = 0; document.getElementById('btnTTS').textContent = '🔊 朗讀'; document.getElementById('ttsStatus').textContent = '已停止'; }
+function stopTTS() {
+  au.pause(); au.removeAttribute('src');
+  window.speechSynthesis.cancel();
+  playing = false; ci = 0; useBrowserTTS = false;
+  document.getElementById('btnTTS').textContent = '🔊 朗讀';
+  document.getElementById('ttsStatus').textContent = '已停止';
+}
 </script>
 </body>
 </html>
