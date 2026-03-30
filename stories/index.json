@@ -1,5 +1,12 @@
 [
   {
+    "id": "test_large_mnd7cbn0",
+    "title": "大型測試故事",
+    "chapters": 30,
+    "date": "2026-03-30",
+    "file": "test_large_mnd7cbn0.html"
+  },
+  {
     "id": "test_ping_mnd78nfi",
     "title": "Test",
     "chapters": 1,
