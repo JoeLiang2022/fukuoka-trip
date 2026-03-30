@@ -1,0 +1,13 @@
+{
+  "id": "errtest1",
+  "title": "Error Test",
+  "chapters": [
+    {
+      "num": 1,
+      "title": "Ch1",
+      "text": "Hello",
+      "hook": "test",
+      "imagePrompt": ""
+    }
+  ]
+}
