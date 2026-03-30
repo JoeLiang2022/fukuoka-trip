@@ -27,6 +27,16 @@ body { font-family: 'Segoe UI','Microsoft JhengHei','Noto Sans TC',sans-serif; b
 .reader-footer { max-width: 680px; margin: 0 auto; padding: 20px 16px 40px; text-align: center; }
 .reader-footer a { color: #f093fb; text-decoration: none; }
 
+
+/* Markdown content styles */
+.chapter-content h3 { font-size: 18px; font-weight: 700; color: #fff; margin: 20px 0 8px; line-height: 1.4; }
+.chapter-content h4 { font-size: 16px; font-weight: 700; color: #eee; margin: 16px 0 6px; line-height: 1.4; }
+.chapter-content strong { color: #fff; font-weight: 700; }
+.chapter-content em { font-style: italic; color: #ddd; }
+.chapter-content ul { margin: 10px 0; padding-left: 20px; list-style: disc; }
+.chapter-content li { margin-bottom: 6px; line-height: 1.7; }
+.chapter-content code { background: rgba(240,147,251,0.1); padding: 2px 6px; border-radius: 4px; font-family: 'Consolas','Monaco',monospace; font-size: 14px; color: #f093fb; }
+
 @media (max-width: 480px) {
   .story-title { font-size: 22px; }
   .chapter h2 { font-size: 18px; }
