@@ -632,11 +632,11 @@ function downloadMD() {
 }
 
 // === Storage ===
-function saveStory(topic, style, audience, story) {
+function saveStory(topic, style, audience, story, publishedId) {
   try {
     const list = JSON.parse(localStorage.getItem('storyHistory') || '[]');
-    list.unshift({ topic, style, audience, story, date: new Date().toISOString() });
-    if (list.length > 20) list.length = 20;
+    list.unshift({ topic, style, audience, story, date: new Date().toISOString(), publishedId: publishedId || null });
+    if (list.length > 50) list.length = 50;
     localStorage.setItem('storyHistory', JSON.stringify(list));
   } catch (_) {}
 }
@@ -779,6 +779,15 @@ html += '</body></html>';
 
     var url = STORIES_BASE + filename;
     showToast('✅ 已發佈！');
+    // Save publishedId to localStorage backup
+    try {
+      var list = JSON.parse(localStorage.getItem('storyHistory') || '[]');
+      var found = list.find(function(l) { return l.story && l.story.title === story.title; });
+      if (found) { found.publishedId = id; }
+      else { list.unshift({ topic: story.title, style: _selectedStyle, audience: '', story: story, date: new Date().toISOString(), publishedId: id }); }
+      if (list.length > 50) list.length = 50;
+      localStorage.setItem('storyHistory', JSON.stringify(list));
+    } catch(_) {}
     // Show publish result — clear and detailed
     var output = document.getElementById('output');
     var pubInfo = '<div style="margin:16px 0;padding:20px;border-radius:14px;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.25)">';
@@ -1037,20 +1046,40 @@ async function showPublished() {
     if (!resp.ok) throw new Error('API ' + resp.status);
     var data = await resp.json();
     var stories = data.stories || [];
-    if (stories.length === 0) {
+    // Also load local backups
+    var localList = [];
+    try { localList = JSON.parse(localStorage.getItem('storyHistory') || '[]'); } catch(_) {}
+    if (stories.length === 0 && localList.length === 0) {
       output.innerHTML = '<div style="text-align:center;padding:40px;color:#888">還沒有發佈的故事</div>';
       return;
     }
     var html = '<div style="margin:20px 0 12px"><div style="font-size:18px;font-weight:700;color:#fff">📂 已發佈故事（' + stories.length + '）</div></div>';
     stories.forEach(function(s, i) {
+      // Check if we have a local backup for this story
+      var hasBackup = localList.some(function(l) { return l.publishedId === s.id; });
       html += '<div style="margin:8px 0;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between">';
       html += '<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600;color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(s.title) + '</div>';
-      html += '<div style="font-size:12px;color:#666;margin-top:2px">' + (s.chapters || 0) + ' 篇 · ' + (s.date || '') + '</div></div>';
+      html += '<div style="font-size:12px;color:#666;margin-top:2px">' + (s.chapters || 0) + ' 篇 · ' + (s.date || '') + (hasBackup ? ' · 📝 有備份' : '') + '</div></div>';
       html += '<div style="display:flex;gap:6px;flex-shrink:0;margin-left:12px">';
+      if (hasBackup) {
+        html += '<button onclick="editPublished(\'' + escHtml(s.id) + '\')" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.08);color:#f093fb;font-size:12px;cursor:pointer">✏️ 編輯</button>';
+      }
       html += '<a href="https://joeliang2022.github.io/fukuoka-trip/stories/' + escHtml(s.file) + '" target="_blank" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.08);color:#4ecdc4;font-size:12px;text-decoration:none">查看</a>';
       html += '<button onclick="deletePublished(\'' + escHtml(s.id) + '\',\'' + escHtml(s.file) + '\')" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(245,87,108,0.3);background:rgba(245,87,108,0.08);color:#f5576c;font-size:12px;cursor:pointer">刪除</button>';
       html += '</div></div>';
     });
+    // Show local-only stories (not yet published or backup without remote)
+    var localOnly = localList.filter(function(l) { return l.story && l.story.title; });
+    if (localOnly.length > 0) {
+      html += '<div style="margin:20px 0 8px;font-size:14px;color:#888">📝 本機備份（' + localOnly.length + '）</div>';
+      localOnly.slice(0, 10).forEach(function(l, i) {
+        html += '<div style="margin:6px 0;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:space-between">';
+        html += '<div style="flex:1;min-width:0"><div style="font-size:14px;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(l.story.title) + '</div>';
+        html += '<div style="font-size:11px;color:#555">' + (l.story.chapters ? l.story.chapters.length : 0) + ' 篇 · ' + (l.date || '').split('T')[0] + '</div></div>';
+        html += '<button onclick="loadLocalStory(' + i + ')" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.08);color:#f093fb;font-size:11px;cursor:pointer;flex-shrink:0;margin-left:8px">開啟</button>';
+        html += '</div>';
+      });
+    }
     output.innerHTML = html;
   } catch(e) {
     output.innerHTML = '<div style="text-align:center;padding:40px;color:#888">載入失敗: ' + escHtml(e.message) + '</div>';
@@ -1080,4 +1109,133 @@ if (sessionStorage.getItem('storyAuth') !== '1') {
   // Show auth gate, don't init
 } else {
   // Already handled by auto-login block above
+}
+
+// === Load Local Story Backup ===
+function loadLocalStory(index) {
+  try {
+    var list = JSON.parse(localStorage.getItem('storyHistory') || '[]');
+    var item = list[index];
+    if (!item || !item.story) { showToast('找不到備份'); return; }
+    window._currentStory = item.story;
+    window._editPublishedId = item.publishedId || null;
+    renderStory(item.story);
+    showToast('已載入：' + (item.story.title || ''));
+  } catch(e) { showToast('載入失敗'); }
+}
+
+// === Edit Published Story ===
+function editPublished(publishedId) {
+  try {
+    var list = JSON.parse(localStorage.getItem('storyHistory') || '[]');
+    var item = list.find(function(l) { return l.publishedId === publishedId; });
+    if (!item || !item.story) { showToast('找不到備份資料'); return; }
+    window._currentStory = item.story;
+    window._editPublishedId = publishedId;
+    showEditUI(item.story, publishedId);
+  } catch(e) { showToast('載入失敗'); }
+}
+
+// === Show Edit UI with chapter checkboxes ===
+function showEditUI(story, publishedId) {
+  var output = document.getElementById('output');
+  var html = '<div style="margin:16px 0">';
+  html += '<div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:8px">✏️ 編輯故事</div>';
+  html += '<div style="font-size:15px;color:#ddd;margin-bottom:12px">' + escHtml(story.title) + '</div>';
+
+  // Chapter selection
+  html += '<div style="margin-bottom:12px">';
+  html += '<div style="display:flex;gap:8px;margin-bottom:8px">';
+  html += '<button onclick="toggleAllChapters(true)" style="padding:5px 12px;border-radius:8px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.08);color:#4ecdc4;font-size:12px;cursor:pointer">全選</button>';
+  html += '<button onclick="toggleAllChapters(false)" style="padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#888;font-size:12px;cursor:pointer">取消全選</button>';
+  html += '</div>';
+
+  story.chapters.forEach(function(ch, i) {
+    html += '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin:4px 0;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);cursor:pointer">';
+    html += '<input type="checkbox" class="ch-select" value="' + i + '" style="margin-top:3px;flex-shrink:0">';
+    html += '<div style="flex:1;min-width:0"><div style="font-size:13px;color:#f093fb;font-weight:600">第 ' + ch.num + ' 篇</div>';
+    html += '<div style="font-size:14px;color:#ddd;margin-top:2px">' + escHtml(ch.title) + '</div>';
+    html += '<div style="font-size:12px;color:#777;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + escHtml((ch.text || '').substring(0, 100)) + '...</div>';
+    html += '</div></label>';
+  });
+  html += '</div>';
+
+  // Edit prompt
+  html += '<div style="margin-bottom:12px">';
+  html += '<div style="font-size:13px;color:#888;margin-bottom:6px">修改指令（告訴 AI 要怎麼改）</div>';
+  html += '<textarea id="editPrompt" rows="4" placeholder="例如：把第3篇的結尾改成更有懸念的、加強角色之間的衝突、把說教的部分改成用場景展現..." style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#fff;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box"></textarea>';
+  html += '</div>';
+
+  // Action buttons
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+  html += '<button onclick="executeEdit(\'' + escHtml(publishedId) + '\')" style="padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;font-size:14px;font-weight:600;cursor:pointer">✨ 修改選中章節</button>';
+  html += '<button onclick="renderStory(window._currentStory)" style="padding:10px 20px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#ccc;font-size:14px;cursor:pointer">👁 預覽全文</button>';
+  html += '<button onclick="showPublished()" style="padding:10px 20px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#888;font-size:14px;cursor:pointer">← 返回</button>';
+  html += '</div></div>';
+
+  output.innerHTML = html;
+}
+
+function toggleAllChapters(checked) {
+  document.querySelectorAll('.ch-select').forEach(function(cb) { cb.checked = checked; });
+}
+
+// === Execute Edit: regenerate selected chapters with prompt ===
+async function executeEdit(publishedId) {
+  var story = window._currentStory;
+  if (!story) { showToast('沒有故事'); return; }
+
+  var editPrompt = document.getElementById('editPrompt').value.trim();
+  if (!editPrompt) { showToast('請輸入修改指令'); return; }
+
+  var selected = [];
+  document.querySelectorAll('.ch-select:checked').forEach(function(cb) {
+    selected.push(parseInt(cb.value));
+  });
+  if (selected.length === 0) { showToast('請選擇要修改的章節'); return; }
+
+  var output = document.getElementById('output');
+  showToast('✨ 修改中...');
+
+  for (var si = 0; si < selected.length; si++) {
+    var idx = selected[si];
+    var ch = story.chapters[idx];
+    if (!ch) continue;
+
+    output.innerHTML = '<div class="loading"><div class="spinner"></div><p>修改第 ' + ch.num + ' 篇... (' + (si + 1) + '/' + selected.length + ')</p></div>';
+
+    var prompt = '你是一位資深編輯。請根據以下指令修改這篇文章。\n\n' +
+      '【修改指令】' + editPrompt + '\n\n' +
+      '【原文】\n標題：' + ch.title + '\n內容：' + ch.text + '\n金句：' + (ch.hook || '') + '\n\n' +
+      '【規則】\n- 保留原文好的部分，只改需要改的\n- 修改後的篇幅要和原文相近\n- 用 JSON 回覆（不要 markdown）：{"num":' + ch.num + ',"title":"修改後標題","text":"修改後內容","imagePrompt":"英文配圖描述","hook":"金句"}';
+
+    try {
+      var resp = await fetch(API_BASE + '/api/story-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt, style: _selectedStyle })
+      });
+      if (!resp.ok) continue;
+      var data = await resp.json();
+      var raw = data.text || '';
+      var tick3 = String.fromCharCode(96,96,96);
+      var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
+      var edited = JSON.parse(cleaned);
+      if (edited.text) {
+        story.chapters[idx] = { num: ch.num, title: edited.title || ch.title, text: edited.text, imagePrompt: edited.imagePrompt || ch.imagePrompt, hook: edited.hook || ch.hook };
+      }
+    } catch(e) { showToast('第 ' + ch.num + ' 篇修改失敗'); }
+  }
+
+  // Update local backup
+  window._currentStory = story;
+  try {
+    var list = JSON.parse(localStorage.getItem('storyHistory') || '[]');
+    var found = list.find(function(l) { return l.publishedId === publishedId; });
+    if (found) { found.story = story; found.date = new Date().toISOString(); }
+    localStorage.setItem('storyHistory', JSON.stringify(list));
+  } catch(_) {}
+
+  showToast('✅ 修改完成');
+  renderStory(story);
 }
