@@ -710,13 +710,15 @@ async function publishStory() {
   const story = window._currentStory;
   showToast('📤 發佈中...');
 
-  // Generate story ID (timestamp-based)
-  const id = Date.now().toString(36);
+  // Reuse existing ID if republishing an edited story, otherwise generate new
+  const id = window._editPublishedId || Date.now().toString(36);
   const filename = id + '.html';
+  // Clear edit state after using it
+  window._editPublishedId = null;
 
   // Build standalone HTML — images will be generated server-side
   var html = '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">';
-  html += '<title>' + escHtml(story.title) + '</title>';
+  html += '<title>' + escHtml(story.title || '故事') + '</title>';
   html += '<link rel="stylesheet" href="reader.css?v=1">';
   html += '</head><body>';
   html += '<div class="reader-header"><a href="index.html" class="back-link">\u2190 所有故事</a></div>';
@@ -769,7 +771,7 @@ html += '</body></html>';
     var pubResp = await fetch(API_BASE + '/api/story-publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id, title: story.title, chapters: story.chapters.length, html: html, imagePrompts: imagePrompts })
+      body: JSON.stringify({ id: id, title: story.title || '故事', chapters: story.chapters.length, html: html, imagePrompts: imagePrompts })
     });
     if (!pubResp.ok) {
       var errData = {};
@@ -793,7 +795,7 @@ html += '</body></html>';
     var pubInfo = '<div style="margin:16px 0;padding:20px;border-radius:14px;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.25)">';
     pubInfo += '<div style="text-align:center;margin-bottom:12px"><span style="font-size:32px">✅</span></div>';
     pubInfo += '<div style="text-align:center;font-size:17px;font-weight:700;color:#2ecc71;margin-bottom:4px">發佈成功</div>';
-    pubInfo += '<div style="text-align:center;font-size:15px;color:#ddd;margin-bottom:4px">' + escHtml(story.title) + '</div>';
+    pubInfo += '<div style="text-align:center;font-size:15px;color:#ddd;margin-bottom:4px">' + escHtml(story.title || '故事') + '</div>';
     pubInfo += '<div style="text-align:center;font-size:13px;color:#888;margin-bottom:14px">' + story.chapters.length + ' 篇章</div>';
     pubInfo += '<div style="text-align:center;margin-bottom:10px"><a href="' + url + '" target="_blank" style="color:#4ecdc4;font-size:14px;word-break:break-all">' + url + '</a></div>';
     pubInfo += '<div style="text-align:center;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
