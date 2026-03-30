@@ -1061,9 +1061,7 @@ async function showPublished() {
       html += '<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600;color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(s.title) + '</div>';
       html += '<div style="font-size:12px;color:#666;margin-top:2px">' + (s.chapters || 0) + ' 篇 · ' + (s.date || '') + (hasBackup ? ' · 📝 有備份' : '') + '</div></div>';
       html += '<div style="display:flex;gap:6px;flex-shrink:0;margin-left:12px">';
-      if (hasBackup) {
-        html += '<button onclick="editPublished(\'' + escHtml(s.id) + '\')" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.08);color:#f093fb;font-size:12px;cursor:pointer">✏️ 編輯</button>';
-      }
+      html += '<button onclick="editPublished(\'' + escHtml(s.id) + '\',\'' + escHtml(s.file) + '\')" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.08);color:#f093fb;font-size:12px;cursor:pointer">✏️ 編輯</button>';
       html += '<a href="https://joeliang2022.github.io/fukuoka-trip/stories/' + escHtml(s.file) + '" target="_blank" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.08);color:#4ecdc4;font-size:12px;text-decoration:none">查看</a>';
       html += '<button onclick="deletePublished(\'' + escHtml(s.id) + '\',\'' + escHtml(s.file) + '\')" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(245,87,108,0.3);background:rgba(245,87,108,0.08);color:#f5576c;font-size:12px;cursor:pointer">刪除</button>';
       html += '</div></div>';
@@ -1125,15 +1123,66 @@ function loadLocalStory(index) {
 }
 
 // === Edit Published Story ===
-function editPublished(publishedId) {
+async function editPublished(publishedId, file) {
+  // Try local backup first
   try {
     var list = JSON.parse(localStorage.getItem('storyHistory') || '[]');
     var item = list.find(function(l) { return l.publishedId === publishedId; });
-    if (!item || !item.story) { showToast('找不到備份資料'); return; }
-    window._currentStory = item.story;
+    if (item && item.story && item.story.chapters) {
+      window._currentStory = item.story;
+      window._editPublishedId = publishedId;
+      showEditUI(item.story, publishedId);
+      return;
+    }
+  } catch(_) {}
+
+  // No local backup — fetch from GitHub Pages and parse HTML
+  var output = document.getElementById('output');
+  output.innerHTML = '<div class="loading"><div class="spinner"></div><p>載入故事內容...</p></div>';
+  try {
+    var url = 'https://joeliang2022.github.io/fukuoka-trip/stories/' + (file || publishedId + '.html');
+    var resp = await fetch(url);
+    if (!resp.ok) throw new Error('無法載入故事');
+    var html = await resp.text();
+
+    // Parse HTML back to story object
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(html, 'text/html');
+    var title = (doc.querySelector('.story-title') || doc.querySelector('h1') || {}).textContent || '';
+    var chapterEls = doc.querySelectorAll('.chapter, section');
+    var chapters = [];
+    for (var i = 0; i < chapterEls.length; i++) {
+      var el = chapterEls[i];
+      var h2 = el.querySelector('h2');
+      var content = el.querySelector('.chapter-content');
+      var hook = el.querySelector('.hook, blockquote');
+      if (h2 && content) {
+        chapters.push({
+          num: i + 1,
+          title: h2.textContent || '',
+          text: content.textContent || '',
+          imagePrompt: '',
+          hook: hook ? hook.textContent.replace(/^💬\s*/, '') : ''
+        });
+      }
+    }
+    if (chapters.length === 0) throw new Error('無法解析故事章節');
+
+    var story = { title: title, characters: [], chapters: chapters };
+    window._currentStory = story;
     window._editPublishedId = publishedId;
-    showEditUI(item.story, publishedId);
-  } catch(e) { showToast('載入失敗'); }
+
+    // Save to local backup
+    var list2 = [];
+    try { list2 = JSON.parse(localStorage.getItem('storyHistory') || '[]'); } catch(_) {}
+    list2.unshift({ topic: title, style: '', audience: '', story: story, date: new Date().toISOString(), publishedId: publishedId });
+    if (list2.length > 50) list2.length = 50;
+    localStorage.setItem('storyHistory', JSON.stringify(list2));
+
+    showEditUI(story, publishedId);
+  } catch(e) {
+    output.innerHTML = '<div style="text-align:center;padding:40px;color:#f5576c">載入失敗: ' + escHtml(e.message) + '</div>';
+  }
 }
 
 // === Show Edit UI with chapter checkboxes ===
