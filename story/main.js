@@ -534,6 +534,7 @@ function renderStory(story) {
   }
 
   html += '<div class="export-bar">' +
+    '<button onclick="showEditUI(window._currentStory, window._editPublishedId || \'\')">✏️ 編輯章節</button>' +
     '<button onclick="aiScoreStory()">📊 AI 評分</button>' +
     '<button onclick="aiOptimizeStory()">✨ AI 優化</button>' +
     '<button onclick="regenAllImages()">🖼️ 重新生圖</button>' +
