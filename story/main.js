@@ -747,59 +747,23 @@ async function publishStoryDirect(wantImages, wantVoice, voiceName) {
   // Clear edit state after using it
   window._editPublishedId = null;
 
-  // Build standalone HTML — images will be generated server-side
-  var html = '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">';
-  html += '<title>' + escHtml(story.title || '故事') + '</title>';
-  html += '<link rel="stylesheet" href="reader.css?v=1">';
-  html += '</head><body>';
-  html += '<div class="reader-header"><a href="index.html" class="back-link">\u2190 所有故事</a></div>';
-  html += '<article class="story">';
-  html += '<h1 class="story-title">' + escHtml(story.title) + '</h1>';
-
+  // Collect imagePrompts if user wants images
   var imagePrompts = [];
-  story.chapters.forEach(function(ch, i) {
-    if (wantImages && ch.imagePrompt) imagePrompts.push({ idx: i, prompt: ch.imagePrompt });
-    html += '<section class="chapter">';
-    html += '<div class="chapter-cover" id="cover' + i + '"><img src="img/' + id + '_' + i + '.png" alt="" onerror="this.parentElement.style.display=\'none\'"></div>';
-    html += '<div class="chapter-num">\u7B2C ' + ch.num + ' \u7BC7</div>';
-    html += '<h2>' + escHtml(ch.title) + '</h2>';
-    html += '<div class="chapter-content">' + escHtml(ch.text).replace(/\n/g, '<br>') + '</div>';
-    if (ch.hook) html += '<blockquote class="hook">\uD83D\uDCAC ' + escHtml(ch.hook) + '</blockquote>';
-    html += '</section>';
-  });
-  html += '</article>';
-  html += '<div class="reader-footer"><a href="index.html">← 更多故事</a></div>';
-  // Audio Player — simple, uses absolute URLs for reliability
-  html += '<div class="audio-bar" id="audioBar">';
-  html += '<button id="btnTTS" onclick="toggleTTS()">🔊 朗讀</button>';
-  html += '<div class="progress"><span class="current-chapter" id="ttsStatus">點擊開始朗讀</span></div>';
-  html += '<button onclick="stopTTS()" style="background:#333;padding:6px 12px;font-size:12px">⏹</button>';
-  html += '</div>';
-  var audioBase = 'https://joeliang2022.github.io/fukuoka-trip/stories/audio/';
-  var audioFiles = [];
-  for (var ai = 0; ai < story.chapters.length; ai++) { audioFiles.push('"' + audioBase + id + '_' + ai + '.wav"'); }
-  html += '<audio id="ap" preload="auto" crossorigin="anonymous"></audio>';
-  html += '<script>';
-  html += 'var au=document.getElementById("ap");';
-  html += 'var files=[' + audioFiles.join(',') + '];';
-  html += 'var ci=0,playing=false,actx=null,src=null,rev=null;';
-  // Setup Web Audio with reverb
-  html += 'function setupAudio(){if(actx)return;try{actx=new(window.AudioContext||window.webkitAudioContext)();src=actx.createMediaElementSource(au);';
-  // Create reverb using IIR filter (simple room reverb simulation)
-  html += 'var conv=actx.createConvolver();var rate=actx.sampleRate;var len=rate*1.5;var buf=actx.createBuffer(2,len,rate);';
-  html += 'for(var ch=0;ch<2;ch++){var d=buf.getChannelData(ch);for(var j=0;j<len;j++){d[j]=(Math.random()*2-1)*Math.pow(1-j/len,2.5);}}';
-  html += 'conv.buffer=buf;var dry=actx.createGain();dry.gain.value=0.85;var wet=actx.createGain();wet.gain.value=0.15;';
-  html += 'src.connect(dry);src.connect(conv);conv.connect(wet);dry.connect(actx.destination);wet.connect(actx.destination);';
-  html += '}catch(e){src=null;actx=null;}}';
-  html += 'function playChapter(i){if(i>=files.length){document.getElementById("ttsStatus").textContent="朗讀完畢";playing=false;ci=0;document.getElementById("btnTTS").textContent="🔊 朗讀";return;}ci=i;document.getElementById("ttsStatus").textContent="第"+(i+1)+"篇/"+files.length;setupAudio();au.src=files[i];au.onended=function(){playChapter(i+1);};au.play();}';
-  html += 'function toggleTTS(){if(playing){au.pause();playing=false;document.getElementById("btnTTS").textContent="▶ 繼續";}else{playing=true;document.getElementById("btnTTS").textContent="⏸ 暫停";if(au.src&&au.paused&&au.currentTime>0){au.play();}else{playChapter(ci);}}}';
-  html += 'function stopTTS(){au.pause();au.removeAttribute("src");playing=false;ci=0;document.getElementById("btnTTS").textContent="🔊 朗讀";document.getElementById("ttsStatus").textContent="已停止";}';
-  html += '<\/script>';
-html += '</body></html>';
+  if (wantImages) {
+    story.chapters.forEach(function(ch, i) {
+      if (ch.imagePrompt) imagePrompts.push({ idx: i, prompt: ch.imagePrompt });
+    });
+  }
 
   try {
-    // Upload via server proxy (skip images if republishing edited story)
-    var pubBody = { id: id, title: story.title || '故事', chapters: story.chapters.length, html: html };
+    // Send only chapter data — server builds HTML (much smaller payload)
+    var pubBody = {
+      id: id,
+      title: story.title || '故事',
+      chapters: story.chapters.map(function(ch) {
+        return { num: ch.num, title: ch.title, text: ch.text, hook: ch.hook || '', imagePrompt: ch.imagePrompt || '' };
+      })
+    };
     if (imagePrompts.length > 0) pubBody.imagePrompts = imagePrompts;
     var pubResp = await fetch(API_BASE + '/api/story-publish', {
       method: 'POST',
@@ -823,7 +787,7 @@ html += '</body></html>';
       if (list.length > 50) list.length = 50;
       localStorage.setItem('storyHistory', JSON.stringify(list));
     } catch(_) {}
-    // Show publish result — clear and detailed
+    // Show publish result
     var output = document.getElementById('output');
     var pubInfo = '<div style="margin:16px 0;padding:20px;border-radius:14px;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.25)">';
     pubInfo += '<div style="text-align:center;margin-bottom:12px"><span style="font-size:32px">✅</span></div>';
@@ -838,7 +802,7 @@ html += '</body></html>';
     pubInfo += '<div style="text-align:center;font-size:11px;color:#666;margin-top:10px">⏳ GitHub Pages 部署約需 1-2 分鐘，若顯示 404 請稍後再試</div>';
     pubInfo += '</div>';
     output.innerHTML += pubInfo;
-    // Auto-generate TTS audio after publish (based on dialog selection)
+    // Auto-generate TTS audio after publish
     if (wantVoice) {
       showToast('🔊 語音生成中（' + voiceName + '），請稍候...');
       fetch(API_BASE + '/api/story/gen-audio', {
@@ -859,6 +823,7 @@ html += '</body></html>';
     showToast('❌ 發佈失敗: ' + e.message);
   }
 }
+
 
 // === AI Score + Auto-Optimize Loop ===
 async function aiScoreStory() {
