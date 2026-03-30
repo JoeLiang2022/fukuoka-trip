@@ -93,11 +93,13 @@ function selectStyle(id) {
   if (topicGrid) topicGrid.style.display = isNews ? 'none' : '';
   if (customInput) customInput.style.display = isNews ? 'none' : '';
   topicEls.forEach(function(el) {
-    if (el.textContent.includes('熱門主題')) {
+    if (el.textContent.includes('熱門主題') || el.textContent.includes('選擇')) {
       el.style.display = isNews ? 'none' : '';
       if (!isNews) {
+        var curStyle = _styles.find(function(s) { return s.id === id; });
+        var curType = curStyle ? (curStyle.type || 'story') : 'story';
         var sectionLabel = {'book':'📚 選擇書籍名稱','article':'📝 選擇文章標題','story':'📝 選擇故事名稱','copy':'📝 選擇文案標題'};
-        el.textContent = sectionLabel[style ? (style.type || 'story') : 'story'] || '📝 選擇標題';
+        el.textContent = sectionLabel[curType] || '📝 選擇標題';
       }
     }
   });
@@ -115,23 +117,23 @@ function selectStyle(id) {
   // For non-news styles: generate AI story title suggestions
   if (!isNews) {
     var style = _styles.find(function(s) { return s.id === id; });
+    var styleType = style ? (style.type || 'story') : 'story';
+    var titleTypeMap = {
+      'news': '新聞標題', 'book': '書籍名稱', 'article': '文章標題',
+      'story': '故事名稱', 'copy': '文案標題'
+    };
+    var titleType = titleTypeMap[styleType] || '標題';
     // Hide static topics, show loading
     var topicGrid = document.getElementById('topicGrid');
     var catRow = document.getElementById('catRow');
     if (catRow) catRow.style.display = 'none';
     if (topicGrid) {
       topicGrid.style.display = '';
-      topicGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#888"><div class="spinner" style="width:24px;height:24px;border:2px solid rgba(240,147,251,0.2);border-top-color:#f093fb;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 8px"></div>AI 正在構思故事名稱...</div>';
+      topicGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#888"><div class="spinner" style="width:24px;height:24px;border:2px solid rgba(240,147,251,0.2);border-top-color:#f093fb;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 8px"></div>AI 正在構思' + titleType + '...</div>';
     }
     _selectedTopic = '';
     // Call AI to generate titles
     try {
-      var styleType = style ? (style.type || 'story') : 'story';
-      var titleTypeMap = {
-        'news': '新聞標題', 'book': '書籍名稱', 'article': '文章標題',
-        'story': '故事名稱', 'copy': '文案標題'
-      };
-      var titleType = titleTypeMap[styleType] || '標題';
       var titleStyleMap = {
         'book': '請生成像暢銷書一樣的書名，例如《原子習慣》《快思慢想》《刻意練習》風格。書名要專業、有深度、讓人想買來看。不要生成故事名稱。',
         'article': '請生成像熱門專欄文章的標題，有觀點、有深度、讓人想點進去看。',
