@@ -1,5 +1,12 @@
 [
   {
+    "id": "test_speed_mnd8wt04",
+    "title": "速度測試 30 章",
+    "chapters": 30,
+    "date": "2026-03-30",
+    "file": "test_speed_mnd8wt04.html"
+  },
+  {
     "id": "mnd85x16",
     "title": "SONiC：開放網路作業系統的崛起與其結構化基礎",
     "chapters": 30,
