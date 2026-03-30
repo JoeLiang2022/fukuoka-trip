@@ -17,7 +17,7 @@ var STYLE_CATEGORIES = {
   },
   opinion: {
     name: '觀點文章',
-    styles: ['column','emotional','inspirational','history','food','travel'],
+    styles: ['column','emotional','inspirational','history','food','travel','videocopy','printcopy'],
     requiredDNA: ['voiceRules','argumentRules','narrativeRules','closingRules'],
     optionalDNA: ['sensoryRules','researchRules']
   },
