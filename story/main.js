@@ -705,8 +705,73 @@ async function publishNews() {
   } catch(e) { showToast('❌ 發佈失敗: ' + e.message); }
 }
 
+// === Publish Confirmation Dialog ===
+function showPublishDialog() {
+  if (!window._currentStory) { showToast('沒有故事可發佈'); return; }
+  var output = document.getElementById('output');
+  var story = window._currentStory;
+  var isRepublish = !!window._editPublishedId;
+
+  var html = '<div style="margin:20px 0;padding:24px;border-radius:16px;background:rgba(240,147,251,0.06);border:1px solid rgba(240,147,251,0.2)">';
+  html += '<div style="text-align:center;font-size:20px;margin-bottom:4px">📤 ' + (isRepublish ? '重新發佈' : '發佈故事') + '</div>';
+  html += '<div style="text-align:center;font-size:15px;color:#ddd;margin-bottom:16px">' + escHtml(story.title || '故事') + ' · ' + story.chapters.length + ' 篇</div>';
+
+  // Image option
+  html += '<div style="margin-bottom:12px;padding:12px;border-radius:10px;background:rgba(255,255,255,0.03)">';
+  html += '<label style="display:flex;align-items:center;gap:10px;cursor:pointer">';
+  html += '<input type="checkbox" id="pubImages" ' + (_generateImages ? 'checked' : '') + '>';
+  html += '<div><div style="font-size:14px;color:#eee">🖼️ 生成配圖</div><div style="font-size:11px;color:#666">為每篇生成 AI 配圖（需要較長時間）</div></div>';
+  html += '</label></div>';
+
+  // Voice option
+  html += '<div style="margin-bottom:12px;padding:12px;border-radius:10px;background:rgba(255,255,255,0.03)">';
+  html += '<label style="display:flex;align-items:center;gap:10px;cursor:pointer">';
+  html += '<input type="checkbox" id="pubVoice" checked>';
+  html += '<div><div style="font-size:14px;color:#eee">🔊 生成語音</div><div style="font-size:11px;color:#666">發佈後自動生成朗讀語音</div></div>';
+  html += '</label></div>';
+
+  // Voice selection
+  html += '<div id="pubVoiceSelect" style="margin-bottom:16px;padding:0 12px">';
+  html += '<div style="font-size:12px;color:#888;margin-bottom:6px">選擇聲音</div>';
+  html += '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+  var voices = [['Kore','Kore♀'],['Zephyr','Zephyr♀'],['Aoede','Aoede♀'],['Leda','Leda♀'],['Puck','Puck♂'],['Orus','Orus♂']];
+  voices.forEach(function(v) {
+    var isDefault = v[0] === 'Aoede';
+    html += '<button onclick="document.querySelectorAll(\'.pub-voice-btn\').forEach(function(b){b.style.borderColor=\'rgba(255,255,255,0.1)\';b.style.color=\'#888\'});this.style.borderColor=\'#f093fb\';this.style.color=\'#f093fb\';window._pubVoice=\'' + v[0] + '\'" class="pub-voice-btn" style="padding:5px 12px;border-radius:8px;border:1px solid ' + (isDefault ? '#f093fb' : 'rgba(255,255,255,0.1)') + ';background:transparent;color:' + (isDefault ? '#f093fb' : '#888') + ';font-size:12px;cursor:pointer">' + v[1] + '</button>';
+  });
+  html += '</div></div>';
+
+  // Buttons
+  html += '<div style="display:flex;gap:10px;justify-content:center">';
+  html += '<button onclick="doPublish()" style="padding:12px 28px;border-radius:12px;border:none;background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;font-size:15px;font-weight:600;cursor:pointer">✅ 確認發佈</button>';
+  html += '<button onclick="renderStory(window._currentStory)" style="padding:12px 28px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#888;font-size:15px;cursor:pointer">取消</button>';
+  html += '</div></div>';
+
+  output.innerHTML += html;
+  window._pubVoice = 'Aoede';
+  output.scrollTop = output.scrollHeight;
+
+  // Toggle voice select visibility
+  document.getElementById('pubVoice').addEventListener('change', function() {
+    document.getElementById('pubVoiceSelect').style.display = this.checked ? '' : 'none';
+  });
+}
+
+// === Do Publish (called from dialog) ===
+async function doPublish() {
+  var wantImages = document.getElementById('pubImages') && document.getElementById('pubImages').checked;
+  var wantVoice = document.getElementById('pubVoice') && document.getElementById('pubVoice').checked;
+  var voiceName = window._pubVoice || 'Aoede';
+  await publishStoryWithOptions(wantImages, wantVoice, voiceName);
+}
+
 // === Publish Story to GitHub Pages ===
 async function publishStory() {
+  // Show confirmation dialog instead of publishing directly
+  showPublishDialog();
+}
+
+async function publishStoryWithOptions(wantImages, wantVoice, voiceName) {
   if (!window._currentStory) { showToast('沒有故事可發佈'); return; }
   const story = window._currentStory;
   showToast('📤 發佈中...');
@@ -728,7 +793,7 @@ async function publishStory() {
 
   var imagePrompts = [];
   story.chapters.forEach(function(ch, i) {
-    if (ch.imagePrompt) imagePrompts.push({ idx: i, prompt: ch.imagePrompt });
+    if (wantImages && ch.imagePrompt) imagePrompts.push({ idx: i, prompt: ch.imagePrompt });
     html += '<section class="chapter">';
     html += '<div class="chapter-cover" id="cover' + i + '"><img src="img/' + id + '_' + i + '.png" alt="" onerror="this.parentElement.style.display=\'none\'"></div>';
     html += '<div class="chapter-num">\u7B2C ' + ch.num + ' \u7BC7</div>';
@@ -808,24 +873,23 @@ html += '</body></html>';
     pubInfo += '<div style="text-align:center;font-size:11px;color:#666;margin-top:10px">⏳ GitHub Pages 部署約需 1-2 分鐘，若顯示 404 請稍後再試</div>';
     pubInfo += '</div>';
     output.innerHTML += pubInfo;
-    // Auto-generate TTS audio after publish
-    // Always generate voice (default Aoede) — user shouldn't need to manually select
-    var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus'};
-    var selectedVoice = (_voiceMode !== 'off' && _voiceMode !== 'browser' && voiceMap[_voiceMode]) ? voiceMap[_voiceMode] : 'Aoede';
-    showToast('🔊 語音生成中（' + selectedVoice + '），請稍候...');
-    fetch(API_BASE + '/api/story/gen-audio', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
-      body: JSON.stringify({ id: id, chapterTexts: story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }), voice: selectedVoice })
-    }).then(function(ttsResp) {
-      if (ttsResp.ok) return ttsResp.json();
-      return null;
-    }).then(function(ttsData) {
-      if (ttsData && ttsData.results) {
-        var ttsOk = ttsData.results.filter(function(r) { return r.ok; }).length;
-        showToast('✅ 語音已生成（' + ttsOk + '/' + story.chapters.length + ' 篇）');
-      }
-    }).catch(function() {});
+    // Auto-generate TTS audio after publish (based on dialog selection)
+    if (wantVoice) {
+      showToast('🔊 語音生成中（' + voiceName + '），請稍候...');
+      fetch(API_BASE + '/api/story/gen-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
+        body: JSON.stringify({ id: id, chapterTexts: story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }), voice: voiceName })
+      }).then(function(ttsResp) {
+        if (ttsResp.ok) return ttsResp.json();
+        return null;
+      }).then(function(ttsData) {
+        if (ttsData && ttsData.results) {
+          var ttsOk = ttsData.results.filter(function(r) { return r.ok; }).length;
+          showToast('✅ 語音已生成（' + ttsOk + '/' + story.chapters.length + ' 篇）');
+        }
+      }).catch(function() {});
+    }
   } catch (e) {
     showToast('❌ 發佈失敗: ' + e.message);
   }
