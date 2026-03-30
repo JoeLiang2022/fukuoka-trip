@@ -1286,6 +1286,7 @@ function showEditUI(story, publishedId) {
   html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
   html += '<button onclick="executeEdit(\'' + escHtml(publishedId) + '\')" style="padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;font-size:14px;font-weight:600;cursor:pointer">✨ 修改選中章節</button>';
   html += '<button onclick="renderStory(window._currentStory)" style="padding:10px 20px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#ccc;font-size:14px;cursor:pointer">👁 預覽全文</button>';
+  html += '<button onclick="publishStory()" style="padding:10px 20px;border-radius:10px;border:1px solid rgba(46,204,113,0.3);background:rgba(46,204,113,0.08);color:#2ecc71;font-size:14px;cursor:pointer">📤 發佈</button>';
   html += '<button onclick="showPublished()" style="padding:10px 20px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#888;font-size:14px;cursor:pointer">← 返回</button>';
   html += '</div></div>';
 
