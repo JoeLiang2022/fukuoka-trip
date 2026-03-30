@@ -1,5 +1,12 @@
 [
   {
+    "id": "testwaf",
+    "title": "WAF Test",
+    "chapters": 1,
+    "date": "2026-03-30",
+    "file": "testwaf.html"
+  },
+  {
     "id": "t1",
     "title": "T",
     "chapters": 1,
