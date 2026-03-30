@@ -95,7 +95,10 @@ function selectStyle(id) {
   topicEls.forEach(function(el) {
     if (el.textContent.includes('熱門主題')) {
       el.style.display = isNews ? 'none' : '';
-      if (!isNews) el.textContent = '📝 選擇故事名稱';
+      if (!isNews) {
+        var sectionLabel = {'book':'📚 選擇書籍名稱','article':'📝 選擇文章標題','story':'📝 選擇故事名稱','copy':'📝 選擇文案標題'};
+        el.textContent = sectionLabel[style ? (style.type || 'story') : 'story'] || '📝 選擇標題';
+      }
     }
   });
   // Switch chapter count buttons for news mode
@@ -123,7 +126,21 @@ function selectStyle(id) {
     _selectedTopic = '';
     // Call AI to generate titles
     try {
-      var titlePrompt = '你是社群媒體故事創作專家，熟悉網路上最熱門、最高流量的故事題材。請根據「' + (style ? style.name : id) + '」風格，生成 20 個目前最熱門、最容易爆紅的故事名稱。\n\n用 JSON 回覆（不要 markdown）：{"titles":["故事名稱1","故事名稱2",...]}\n\n要求：\n- 參考抖音、小紅書、IG 上最火的故事類型\n- 名稱要有懸念感、讓人忍不住想點\n- 要符合當下流行趨勢\n- 繁體中文\n- 20 個，從最熱門排到次熱門';
+      var styleType = style ? (style.type || 'story') : 'story';
+      var titleTypeMap = {
+        'news': '新聞標題', 'book': '書籍名稱', 'article': '文章標題',
+        'story': '故事名稱', 'copy': '文案標題'
+      };
+      var titleType = titleTypeMap[styleType] || '標題';
+      var titleStyleMap = {
+        'book': '請生成像暢銷書一樣的書名，例如《原子習慣》《快思慢想》《刻意練習》風格。書名要專業、有深度、讓人想買來看。不要生成故事名稱。',
+        'article': '請生成像熱門專欄文章的標題，有觀點、有深度、讓人想點進去看。',
+        'story': '參考抖音、小紅書、IG 上最火的故事類型。名稱要有懸念感、讓人忍不住想點。',
+        'copy': '請生成像廣告金句或影片標題，簡短有力、一秒抓住眼球。',
+        'news': '請生成今日熱門新聞主題。'
+      };
+      var titleStyle = titleStyleMap[styleType] || titleStyleMap['story'];
+      var titlePrompt = '你是「' + (style ? style.name : id) + '」領域的專家。請生成 20 個目前最熱門的' + titleType + '。\n\n用 JSON 回覆（不要 markdown）：{"titles":["' + titleType + '1","' + titleType + '2",...]}\n\n要求：\n- ' + titleStyle + '\n- 要符合當下流行趨勢\n- 繁體中文\n- 20 個，從最熱門排到次熱門';
       fetch(API_BASE + '/api/story-generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
