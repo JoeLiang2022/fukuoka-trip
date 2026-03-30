@@ -1,5 +1,12 @@
 [
   {
+    "id": "testpub3",
+    "title": "Test Large 30ch",
+    "chapters": 30,
+    "date": "2026-03-30",
+    "file": "testpub3.html"
+  },
+  {
     "id": "testpub1",
     "title": "Test 30ch",
     "chapters": 30,
