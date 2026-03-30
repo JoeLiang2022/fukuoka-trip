@@ -768,11 +768,13 @@ async function publishStory() {
 html += '</body></html>';
 
   try {
-    // Upload via server proxy (images sent separately)
+    // Upload via server proxy (skip images if republishing edited story)
+    var pubBody = { id: id, title: story.title || '故事', chapters: story.chapters.length, html: html };
+    if (imagePrompts.length > 0) pubBody.imagePrompts = imagePrompts;
     var pubResp = await fetch(API_BASE + '/api/story-publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id, title: story.title || '故事', chapters: story.chapters.length, html: html, imagePrompts: imagePrompts })
+      body: JSON.stringify(pubBody)
     });
     if (!pubResp.ok) {
       var errData = {};
@@ -806,26 +808,24 @@ html += '</body></html>';
     pubInfo += '<div style="text-align:center;font-size:11px;color:#666;margin-top:10px">⏳ GitHub Pages 部署約需 1-2 分鐘，若顯示 404 請稍後再試</div>';
     pubInfo += '</div>';
     output.innerHTML += pubInfo;
-    // Auto-generate TTS audio after publish (if voice selected)
-    if (_voiceMode !== 'off' && _voiceMode !== 'browser') {
-      var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus'};
-      var selectedVoice = voiceMap[_voiceMode] || 'Aoede';
-      showToast('🔊 語音生成中（' + selectedVoice + '），請稍候...');
-      // Fire and forget — don't block or show error since it runs in background on server
-      fetch(API_BASE + '/api/story/gen-audio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
-        body: JSON.stringify({ id: id, chapterTexts: story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }), voice: selectedVoice })
-      }).then(function(ttsResp) {
-        if (ttsResp.ok) return ttsResp.json();
-        return null;
-      }).then(function(ttsData) {
-        if (ttsData && ttsData.results) {
-          var ttsOk = ttsData.results.filter(function(r) { return r.ok; }).length;
-          showToast('✅ 語音已生成（' + ttsOk + '/' + story.chapters.length + ' 篇）');
-        }
-      }).catch(function() { /* silent — audio gen is best-effort */ });
-    }
+    // Auto-generate TTS audio after publish
+    // Always generate voice (default Aoede) — user shouldn't need to manually select
+    var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus'};
+    var selectedVoice = (_voiceMode !== 'off' && _voiceMode !== 'browser' && voiceMap[_voiceMode]) ? voiceMap[_voiceMode] : 'Aoede';
+    showToast('🔊 語音生成中（' + selectedVoice + '），請稍候...');
+    fetch(API_BASE + '/api/story/gen-audio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
+      body: JSON.stringify({ id: id, chapterTexts: story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }), voice: selectedVoice })
+    }).then(function(ttsResp) {
+      if (ttsResp.ok) return ttsResp.json();
+      return null;
+    }).then(function(ttsData) {
+      if (ttsData && ttsData.results) {
+        var ttsOk = ttsData.results.filter(function(r) { return r.ok; }).length;
+        showToast('✅ 語音已生成（' + ttsOk + '/' + story.chapters.length + ' 篇）');
+      }
+    }).catch(function() {});
   } catch (e) {
     showToast('❌ 發佈失敗: ' + e.message);
   }
