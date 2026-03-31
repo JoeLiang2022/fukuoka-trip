@@ -803,16 +803,10 @@ async function publishNews() {
 async function publishStory() {
   if (!window._currentStory) { showToast('沒有故事可發佈'); return; }
   var story = window._currentStory;
-  var isRepublish = !!window._editPublishedId;
   var hasImages = story.chapters.some(function(ch) { return ch.imagePrompt; });
-  var wantImages = false;
-  
-  if (isRepublish) {
-    if (hasImages) wantImages = confirm('要重新生成配圖嗎？');
-  } else {
-    wantImages = hasImages;
-  }
-  await publishStoryDirect(wantImages);
+  // First publish: auto-include images if they exist, no questions asked
+  // Republish: also auto-include, no questions
+  await publishStoryDirect(hasImages);
 }
 
 async function publishStoryDirect(wantImages) {
