@@ -182,17 +182,20 @@ function assemblePrompt(input) {
 
   // [10] Output Format — single chapter or batch JSON
   if (input.batchOutlines && input.batchSize > 1) {
-    // Batch mode: multiple chapters in one response
+    // Batch mode: replace single chapter contract with batch contracts
+    // Remove the single chapter contract that was added in section [5]
+    sections = sections.filter(function(s) { return s.indexOf('【本篇合約') < 0; });
+    
     var batchContracts = '';
     for (var bi = 0; bi < input.batchOutlines.length; bi++) {
       var bo = input.batchOutlines[bi];
-      batchContracts += '第' + bo.num + '篇 [' + bo.arcPosition + ']：' + bo.purpose + '（必做：' + bo.coreTasks.join('；') + '）\n';
+      batchContracts += '第' + bo.num + '篇 [' + bo.arcPosition + ']：' + bo.purpose + '\n  必做：' + bo.coreTasks.join('；') + '\n  禁止：' + bo.prohibitions.join('；') + '\n\n';
     }
-    sections.push('【批次章節合約】\n' + batchContracts);
+    sections.push('【批次章節合約 — 請生成以下 ' + input.batchSize + ' 篇】\n' + batchContracts);
     sections.push(
-      '【輸出格式】JSON（不要 markdown），一次輸出 ' + input.batchSize + ' 篇：\n' +
-      '{"title":"系列總標題","chapters":[{"num":N,"title":"篇章標題","text":"' + getLengthTextDNA(chapterLength) + '內容","imagePrompt":"英文寫實攝影風格配圖描述","hook":"金句"}]}\n' +
-      '每篇的開頭必須不同，禁止重複相同的開場方式。'
+      '【輸出格式】嚴格 JSON（不要 markdown 標記），必須包含 ' + input.batchSize + ' 篇章節：\n' +
+      '{"title":"系列總標題","chapters":[{"num":' + (chapterNum) + ',"title":"第1篇標題","text":"' + getLengthTextDNA(chapterLength) + '內容","imagePrompt":"英文配圖描述","hook":"金句"},{"num":' + (chapterNum+1) + ',...}]}\n' +
+      '⚠️ chapters 陣列必須有 ' + input.batchSize + ' 個元素，每篇的開頭必須不同。'
     );
   } else {
     sections.push(
@@ -202,13 +205,23 @@ function assemblePrompt(input) {
   }
 
   // [11] Chapter Instructions
-  sections.push(
-    '【本篇資訊】第' + chapterNum + '篇（共' + totalChapters + '篇）\n' +
-    '【篇幅】' + getLengthTextDNA(chapterLength) + '\n' +
-    '【語言】繁體中文\n' +
-    (isFirstChapter ? '第一篇開頭3秒抓住注意力。' : '') +
-    (isLastChapter ? '最後一篇要有震撼或感動的結尾。' : '結尾留懸念。')
-  );
+  if (input.batchOutlines && input.batchSize > 1) {
+    sections.push(
+      '【批次資訊】第' + chapterNum + '~' + (chapterNum + input.batchSize - 1) + '篇（共' + totalChapters + '篇）\n' +
+      '【每篇篇幅】' + getLengthTextDNA(chapterLength) + '\n' +
+      '【語言】繁體中文\n' +
+      (isFirstChapter ? '第一篇開頭3秒抓住注意力。' : '') +
+      (isLastChapter ? '最後一篇要有震撼或感動的結尾。' : '每篇結尾留懸念。')
+    );
+  } else {
+    sections.push(
+      '【本篇資訊】第' + chapterNum + '篇（共' + totalChapters + '篇）\n' +
+      '【篇幅】' + getLengthTextDNA(chapterLength) + '\n' +
+      '【語言】繁體中文\n' +
+      (isFirstChapter ? '第一篇開頭3秒抓住注意力。' : '') +
+      (isLastChapter ? '最後一篇要有震撼或感動的結尾。' : '結尾留懸念。')
+    );
+  }
 
   return sections.join('\n\n');
 }
