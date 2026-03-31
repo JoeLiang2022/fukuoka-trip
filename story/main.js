@@ -239,6 +239,15 @@ function getLengthText() {
   return '約400字';
 }
 
+var _quality = 'normal'; // 'normal' = 5 chapters per batch, 'high' = per-chapter
+function setQuality(q) {
+  _quality = q;
+  var bn = document.getElementById('qualNormal');
+  var bh = document.getElementById('qualHigh');
+  if (bn) bn.classList.toggle('active', q === 'normal');
+  if (bh) bh.classList.toggle('active', q === 'high');
+}
+
 function setVoice(mode) {
   _voiceMode = mode;
   document.querySelectorAll('[id^="voice"]').forEach(function(b) { if (b.tagName === 'BUTTON') b.classList.remove('active'); });
@@ -389,60 +398,70 @@ async function generate() {
     // Step 3: Initialize session memory
     var memory = createEmptyMemory();
 
-    // Step 4: Per-chapter generation
-    for (var chIdx = 0; chIdx < _chapters; chIdx++) {
+    // Step 4: Generate chapters (per-chapter or batch based on quality setting)
+    var batchSize = (_quality === 'high') ? 1 : 5;
+    for (var chIdx = 0; chIdx < _chapters; chIdx += batchSize) {
+      var batchEnd = Math.min(chIdx + batchSize, _chapters);
       var chapterNum = chIdx + 1;
-      output.innerHTML = '<div class="loading"><div class="spinner"></div><p>AI 正在創作第 ' + chapterNum + '/' + _chapters + ' 篇...</p></div>';
+      output.innerHTML = '<div class="loading"><div class="spinner"></div><p>AI 正在創作第 ' + chapterNum + (batchSize > 1 ? '-' + batchEnd : '') + '/' + _chapters + ' 篇...</p></div>';
 
-      // Assemble prompt for THIS single chapter
-      var prompt = assemblePrompt({
-        dna: dna,
-        chapterOutline: outline[chIdx],
-        memory: memory,
-        chapterNum: chapterNum,
-        totalChapters: _chapters,
-        topic: topic,
-        audience: audience,
-        chapterLength: _chapterLength,
-        isFirstChapter: chapterNum === 1,
-        isLastChapter: chapterNum === _chapters
-      });
-
-      // Call API — generates exactly ONE chapter
-      var resp = await fetch(API_BASE + '/api/story-generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: prompt, style: _selectedStyle })
-      });
-      if (!resp.ok) continue;
-      var data = await resp.json();
-      var raw = data.text || '';
-      var tick3 = String.fromCharCode(96,96,96);
-      var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
-
-      try {
-        var chapter = JSON.parse(cleaned);
-        // Handle case where API returns wrapped object
-        if (chapter.chapters && Array.isArray(chapter.chapters)) {
-          chapter = chapter.chapters[0];
-        }
-        if (!chapter.num) chapter.num = chapterNum;
-
-        // First chapter: extract title and characters
-        if (chapterNum === 1) {
-          memory.title = chapter.title || topic;
-          if (chapter.characters) {
-            for (var ci = 0; ci < chapter.characters.length; ci++) {
-              memory.characters.push(chapter.characters[ci]);
-            }
+      if (batchSize === 1) {
+        // High quality: one chapter per API call
+        var prompt = assemblePrompt({
+          dna: dna, chapterOutline: outline[chIdx], memory: memory,
+          chapterNum: chapterNum, totalChapters: _chapters, topic: topic,
+          audience: audience, chapterLength: _chapterLength,
+          isFirstChapter: chapterNum === 1, isLastChapter: chapterNum === _chapters
+        });
+        var resp = await fetch(API_BASE + '/api/story-generate', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: prompt, style: _selectedStyle })
+        });
+        if (!resp.ok) continue;
+        var data = await resp.json();
+        var raw = data.text || '';
+        var tick3 = String.fromCharCode(96,96,96);
+        var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
+        try {
+          var chapter = JSON.parse(cleaned);
+          if (chapter.chapters && Array.isArray(chapter.chapters)) chapter = chapter.chapters[0];
+          if (!chapter.num) chapter.num = chapterNum;
+          if (chapterNum === 1) { memory.title = chapter.title || topic; if (chapter.characters) memory.characters = memory.characters.concat(chapter.characters); }
+          allChapters.push(chapter);
+          updateSessionMemory(memory, [chapter], outline);
+        } catch(pe) {}
+      } else {
+        // Normal quality: batch of 5 chapters per API call
+        var batchOutlines = [];
+        for (var bi = chIdx; bi < batchEnd; bi++) batchOutlines.push(outline[bi]);
+        var batchPrompt = assemblePrompt({
+          dna: dna, chapterOutline: batchOutlines[0], memory: memory,
+          chapterNum: chapterNum, totalChapters: _chapters, topic: topic,
+          audience: audience, chapterLength: _chapterLength,
+          isFirstChapter: chapterNum === 1, isLastChapter: batchEnd === _chapters,
+          batchOutlines: batchOutlines, batchSize: batchEnd - chIdx
+        });
+        var resp = await fetch(API_BASE + '/api/story-generate', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: batchPrompt, style: _selectedStyle })
+        });
+        if (!resp.ok) continue;
+        var data = await resp.json();
+        var raw = data.text || '';
+        var tick3 = String.fromCharCode(96,96,96);
+        var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
+        try {
+          var parsed = JSON.parse(cleaned);
+          var batchChapters = parsed.chapters || (Array.isArray(parsed) ? parsed : [parsed]);
+          for (var bci = 0; bci < batchChapters.length; bci++) {
+            var ch = batchChapters[bci];
+            if (!ch.num) ch.num = chIdx + bci + 1;
+            if (chIdx === 0 && bci === 0) { memory.title = ch.title || topic; if (ch.characters) memory.characters = memory.characters.concat(ch.characters); }
+            allChapters.push(ch);
           }
-        }
-
-        allChapters.push(chapter);
-
-        // Update session memory
-        updateSessionMemory(memory, [chapter], outline);
-      } catch(pe) { /* skip bad chapter */ }
+          updateSessionMemory(memory, batchChapters, outline);
+        } catch(pe) {}
+      }
     }
 
     if (allChapters.length === 0) throw new Error('生成失敗');
