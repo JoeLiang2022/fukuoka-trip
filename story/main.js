@@ -241,8 +241,8 @@ function getLengthText() {
 
 function setVoice(mode) {
   _voiceMode = mode;
-  document.querySelectorAll('[id^="voice"]').forEach(function(b) { b.classList.remove('active'); });
-  var map = {'off':'voiceOff','browser':'voiceBrowser','kore':'voiceKore','zephyr':'voiceZephyr','aoede':'voiceAoede','leda':'voiceLeda','puck':'voicePuck','orus':'voiceOrus'};
+  document.querySelectorAll('[id^="voice"]').forEach(function(b) { if (b.tagName === 'BUTTON') b.classList.remove('active'); });
+  var map = {'off':'voiceOff','browser':'voiceBrowser','kore':'voiceKore','zephyr':'voiceZephyr','aoede':'voiceAoede','leda':'voiceLeda','puck':'voicePuck','orus':'voiceOrus','charon':'voiceCharon','fenrir':'voiceFenrir'};
   var btn = document.getElementById(map[mode]);
   if (btn) btn.classList.add('active');
 }
@@ -727,13 +727,33 @@ async function publishNews() {
 // === Publish Story to GitHub Pages ===
 async function publishStory() {
   if (!window._currentStory) { showToast('沒有故事可發佈'); return; }
-  // Simple confirmation with voice/image options
-  var wantVoice = confirm('要生成語音嗎？（Aoede 女聲）');
-  var wantImages = false;
-  if (window._currentStory.chapters.some(function(ch) { return ch.imagePrompt; })) {
-    wantImages = confirm('要生成配圖嗎？');
+  var story = window._currentStory;
+  var isRepublish = !!window._editPublishedId;
+  
+  if (isRepublish) {
+    // Republish from edit — ask about regenerating voice/images
+    var wantVoice = confirm('要重新生成語音嗎？');
+    var wantImages = false;
+    if (story.chapters.some(function(ch) { return ch.imagePrompt; })) {
+      wantImages = confirm('要重新生成配圖嗎？');
+    }
+    var voiceName = story._voiceName || _voiceMode || 'Aoede';
+    var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus','charon':'Charon','fenrir':'Fenrir','callirrhoe':'Callirrhoe','autonoe':'Autonoe','enceladus':'Enceladus','iapetus':'Iapetus','umbriel':'Umbriel'};
+    voiceName = voiceMap[voiceName] || voiceName;
+    if (voiceName.charAt(0) === voiceName.charAt(0).toLowerCase()) voiceName = voiceName.charAt(0).toUpperCase() + voiceName.slice(1);
+    await publishStoryDirect(wantImages, wantVoice, voiceName);
+  } else {
+    // First publish — use current voice/image settings from generation
+    var hasImages = story.chapters.some(function(ch) { return ch.imagePrompt; });
+    var voiceName = 'Aoede';
+    var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus','charon':'Charon','fenrir':'Fenrir','callirrhoe':'Callirrhoe','autonoe':'Autonoe','enceladus':'Enceladus','iapetus':'Iapetus','umbriel':'Umbriel'};
+    if (_voiceMode && _voiceMode !== 'off' && _voiceMode !== 'browser') {
+      voiceName = voiceMap[_voiceMode] || _voiceMode;
+    }
+    // Use voice setting from UI, generate images if prompts exist
+    var wantVoice = _voiceMode && _voiceMode !== 'off';
+    await publishStoryDirect(hasImages, wantVoice, voiceName);
   }
-  await publishStoryDirect(wantImages, wantVoice, 'Aoede');
 }
 
 async function publishStoryDirect(wantImages, wantVoice, voiceName) {
@@ -808,7 +828,7 @@ async function publishStoryDirect(wantImages, wantVoice, voiceName) {
       fetch(API_BASE + '/api/story/gen-audio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
-        body: JSON.stringify({ id: id, chapterTexts: story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }), voice: voiceName })
+        body: JSON.stringify({ id: id, chapterTexts: story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }), voice: voiceName, speed: window._voiceSpeed || 'normal', style: window._voiceStyle || 'podcast' })
       }).then(function(ttsResp) {
         if (ttsResp.ok) return ttsResp.json();
         return null;
@@ -1018,7 +1038,7 @@ function startReading() {
   if (_voiceMode === 'off') { showToast('請先選擇語音模式'); return; }
   if (_voiceMode === 'browser') { readStoryBrowser(); return; }
   // Gemini TTS voices
-  var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus'};
+  var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus','charon':'Charon','fenrir':'Fenrir'};
   var voiceName = voiceMap[_voiceMode];
   if (voiceName) { readStoryGemini(voiceName); return; }
   showToast('未知的語音模式');
