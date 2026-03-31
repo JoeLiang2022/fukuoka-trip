@@ -399,7 +399,7 @@ async function generate() {
     var memory = createEmptyMemory();
 
     // Step 4: Generate chapters (per-chapter or batch based on quality setting)
-    var batchSize = (_quality === 'high') ? 1 : 5;
+    var batchSize = (_quality === 'high') ? 1 : 3;
     for (var chIdx = 0; chIdx < _chapters; chIdx += batchSize) {
       var batchEnd = Math.min(chIdx + batchSize, _chapters);
       var chapterNum = chIdx + 1;
@@ -460,6 +460,34 @@ async function generate() {
             allChapters.push(ch);
           }
           updateSessionMemory(memory, batchChapters, outline);
+          // If batch returned fewer chapters than expected, fill remaining one-by-one
+          var got = batchChapters.length;
+          if (got < (batchEnd - chIdx)) {
+            for (var fi = chIdx + got; fi < batchEnd; fi++) {
+              output.innerHTML = '<div class="loading"><div class="spinner"></div><p>補生成第 ' + (fi+1) + '/' + _chapters + ' 篇...</p></div>';
+              var fallbackPrompt = assemblePrompt({
+                dna: dna, chapterOutline: outline[fi], memory: memory,
+                chapterNum: fi + 1, totalChapters: _chapters, topic: topic,
+                audience: audience, chapterLength: _chapterLength,
+                isFirstChapter: false, isLastChapter: (fi + 1) === _chapters
+              });
+              var fbResp = await fetch(API_BASE + '/api/story-generate', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: fallbackPrompt, style: _selectedStyle })
+              });
+              if (!fbResp.ok) continue;
+              var fbData = await fbResp.json();
+              var fbRaw = fbData.text || '';
+              var fbCleaned = fbRaw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
+              try {
+                var fbCh = JSON.parse(fbCleaned);
+                if (fbCh.chapters && Array.isArray(fbCh.chapters)) fbCh = fbCh.chapters[0];
+                if (!fbCh.num) fbCh.num = fi + 1;
+                allChapters.push(fbCh);
+                updateSessionMemory(memory, [fbCh], outline);
+              } catch(fpe) {}
+            }
+          }
         } catch(pe) {}
       }
     }
