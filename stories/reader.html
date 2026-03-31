@@ -22,7 +22,7 @@
 <audio id="ap" preload="auto"></audio>
 <script>
 var AUDIO_BASE = 'https://joeliang2022.github.io/fukuoka-trip/stories/audio/';
-var RAW_BASE = 'https://raw.githubusercontent.com/JoeLiang2022/fukuoka-trip/main/stories/data/';
+var RAW_BASE = 'https://api.github.com/repos/JoeLiang2022/fukuoka-trip/contents/stories/data/';
 var IMG_BASE = 'https://joeliang2022.github.io/fukuoka-trip/stories/img/';
 var au = document.getElementById('ap');
 var audioFiles = [], ci = 0, playing = false;
@@ -52,8 +52,8 @@ var storyId = params.get('id');
 if (!storyId) {
   document.getElementById('content').innerHTML = '<div class="error">缺少故事 ID</div>';
 } else {
-  var url = RAW_BASE + storyId + '.json?t=' + Date.now();
-  fetch(url).then(function(r) {
+  var url = RAW_BASE + storyId + '.json?ref=main';
+  fetch(url, { headers: { 'Accept': 'application/vnd.github.v3.raw' } }).then(function(r) {
     if (!r.ok) throw new Error('找不到故事 (' + r.status + ')');
     return r.json();
   }).then(function(story) {
