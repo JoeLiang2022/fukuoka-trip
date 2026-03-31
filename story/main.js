@@ -857,7 +857,7 @@ async function publishStoryDirect(wantImages, wantVoice, voiceName) {
       throw new Error(errData.error || 'Publish API ' + pubResp.status);
     }
 
-    var url = STORIES_BASE + 'reader.html?id=' + id;
+    var url = API_BASE + '/reader?id=' + id;
     showToast('✅ 發佈成功');
     // Save to localStorage
     try {
