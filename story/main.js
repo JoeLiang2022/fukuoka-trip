@@ -678,11 +678,12 @@ function mdToHtml(s) {
   h = h.replace(/\n/g, '<br>');
   return h;
 }
-function showToast(msg) {
+function showToast(msg, persistent) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
+  if (t._timer) clearTimeout(t._timer);
+  if (!persistent) t._timer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 // === Publish News to GitHub Pages ===
@@ -759,15 +760,11 @@ async function publishStory() {
 async function publishStoryDirect(wantImages, wantVoice, voiceName) {
   if (!window._currentStory) { showToast('沒有故事可發佈'); return; }
   const story = window._currentStory;
-  showToast('📤 發佈中...');
+  showToast('📤 發佈中...', true);
 
-  // Reuse existing ID if republishing an edited story, otherwise generate new
   const id = window._editPublishedId || Date.now().toString(36);
-  const filename = id + '.html';
-  // Clear edit state after using it
   window._editPublishedId = null;
 
-  // Collect imagePrompts if user wants images
   var imagePrompts = [];
   if (wantImages) {
     story.chapters.forEach(function(ch, i) {
@@ -776,7 +773,6 @@ async function publishStoryDirect(wantImages, wantVoice, voiceName) {
   }
 
   try {
-    // Send only chapter data — server builds HTML (much smaller payload)
     var pubBody = {
       id: id,
       title: story.title || '故事',
@@ -785,6 +781,13 @@ async function publishStoryDirect(wantImages, wantVoice, voiceName) {
       })
     };
     if (imagePrompts.length > 0) pubBody.imagePrompts = imagePrompts;
+    // Tell server to generate TTS in background
+    if (wantVoice) {
+      pubBody.wantVoice = true;
+      pubBody.voiceName = voiceName;
+      pubBody.voiceSpeed = window._voiceSpeed || 'normal';
+      pubBody.voiceStyle = window._voiceStyle || 'podcast';
+    }
     var pubResp = await fetch(API_BASE + '/api/story-publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -797,8 +800,8 @@ async function publishStoryDirect(wantImages, wantVoice, voiceName) {
     }
 
     var url = STORIES_BASE + 'reader.html?id=' + id;
-    showToast('✅ 已發佈！');
-    // Save publishedId to localStorage backup
+    showToast('✅ 發佈成功');
+    // Save to localStorage
     try {
       var list = JSON.parse(localStorage.getItem('storyHistory') || '[]');
       var found = list.find(function(l) { return l.story && l.story.title === story.title; });
@@ -807,38 +810,20 @@ async function publishStoryDirect(wantImages, wantVoice, voiceName) {
       if (list.length > 50) list.length = 50;
       localStorage.setItem('storyHistory', JSON.stringify(list));
     } catch(_) {}
-    // Show publish result
+    // Show persistent publish result panel
     var output = document.getElementById('output');
     var pubInfo = '<div style="margin:16px 0;padding:20px;border-radius:14px;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.25)">';
     pubInfo += '<div style="text-align:center;margin-bottom:12px"><span style="font-size:32px">✅</span></div>';
     pubInfo += '<div style="text-align:center;font-size:17px;font-weight:700;color:#2ecc71;margin-bottom:4px">發佈成功</div>';
     pubInfo += '<div style="text-align:center;font-size:15px;color:#ddd;margin-bottom:4px">' + escHtml(story.title || '故事') + '</div>';
-    pubInfo += '<div style="text-align:center;font-size:13px;color:#888;margin-bottom:14px">' + story.chapters.length + ' 篇章</div>';
+    pubInfo += '<div style="text-align:center;font-size:13px;color:#888;margin-bottom:8px">' + story.chapters.length + ' 篇章</div>';
+    if (wantVoice) pubInfo += '<div style="text-align:center;font-size:12px;color:#f093fb;margin-bottom:8px">🔊 語音（' + voiceName + '）由 server 背景生成中，可以關閉頁面</div>';
     pubInfo += '<div style="text-align:center;margin-bottom:10px"><a href="' + url + '" target="_blank" style="color:#4ecdc4;font-size:14px;word-break:break-all">' + url + '</a></div>';
     pubInfo += '<div style="text-align:center;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
     pubInfo += '<button onclick="navigator.clipboard.writeText(\'' + url + '\');showToast(\'已複製連結\')" style="padding:8px 16px;border-radius:10px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.1);color:#4ecdc4;cursor:pointer;font-size:13px">📋 複製連結</button>';
     pubInfo += '<button onclick="window.open(\'' + url + '\',\'_blank\')" style="padding:8px 16px;border-radius:10px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.1);color:#f093fb;cursor:pointer;font-size:13px">🔗 開啟故事</button>';
-    pubInfo += '</div>';
-    pubInfo += '<div style="text-align:center;font-size:11px;color:#666;margin-top:10px">⏳ GitHub Pages 部署約需 1-2 分鐘，若顯示 404 請稍後再試</div>';
-    pubInfo += '</div>';
+    pubInfo += '</div></div>';
     output.innerHTML += pubInfo;
-    // Auto-generate TTS audio after publish
-    if (wantVoice) {
-      showToast('🔊 語音生成中（' + voiceName + '），請稍候...');
-      fetch(API_BASE + '/api/story/gen-audio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
-        body: JSON.stringify({ id: id, chapterTexts: story.chapters.map(function(ch) { return ch.title + '。' + ch.text; }), voice: voiceName, speed: window._voiceSpeed || 'normal', style: window._voiceStyle || 'podcast' })
-      }).then(function(ttsResp) {
-        if (ttsResp.ok) return ttsResp.json();
-        return null;
-      }).then(function(ttsData) {
-        if (ttsData && ttsData.results) {
-          var ttsOk = ttsData.results.filter(function(r) { return r.ok; }).length;
-          showToast('✅ 語音已生成（' + ttsOk + '/' + story.chapters.length + ' 篇）');
-        }
-      }).catch(function() {});
-    }
   } catch (e) {
     showToast('❌ 發佈失敗: ' + e.message);
   }
