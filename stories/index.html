@@ -4,16 +4,16 @@
 <div class="stories-header"><h1>📚 故事集</h1><p>AI 生成的精彩故事</p></div>
 <div class="stories-list" id="list"><div style="text-align:center;padding:40px;color:#888">載入中...</div></div>
 <script>
-var RAW="https://raw.githubusercontent.com/JoeLiang2022/fukuoka-trip/main/stories/";
-fetch(RAW+"index.json?t="+Date.now()).then(function(r){return r.json()}).then(function(stories){
-  var el=document.getElementById("list");
+// Use GitHub API for index.json (no caching issues)
+fetch('https://api.github.com/repos/JoeLiang2022/fukuoka-trip/contents/stories/index.json?ref=main',{headers:{'Accept':'application/vnd.github.v3.raw'}}).then(function(r){return r.json()}).then(function(stories){
+  var el=document.getElementById('list');
   if(!stories||stories.length===0){el.innerHTML='<div style="text-align:center;padding:40px;color:#888">還沒有故事</div>';return;}
   el.innerHTML=stories.map(function(s){
-    var href=s.file?s.file:"reader.html?id="+s.id;
-    return '<a href="'+href+'" class="story-card"><div class="sc-title">'+((s.title||"").replace(/</g,"&lt;"))+'</div><div class="sc-meta">'+((s.chapters||0))+' 篇 · '+s.date+'</div></a>';
-  }).join("");
-}).catch(function(){
-  document.getElementById("list").innerHTML='<div style="text-align:center;padding:40px;color:#888">載入失敗</div>';
+    var href=s.file?s.file:'reader.html?id='+s.id;
+    return '<a href="'+href+'" class="story-card"><div class="sc-title">'+((s.title||'').replace(/</g,'&lt;'))+'</div><div class="sc-meta">'+((s.chapters||0))+' 篇 · '+s.date+'</div></a>';
+  }).join('');
+}).catch(function(e){
+  document.getElementById('list').innerHTML='<div style="text-align:center;padding:40px;color:#888">載入失敗: '+e.message+'</div>';
 });
 </script>
 </body></html>
