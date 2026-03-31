@@ -1247,6 +1247,23 @@ async function editPublished(publishedId, file) {
 
 // === Show Edit UI with chapter checkboxes ===
 function showEditUI(story, publishedId) {
+  // Fill missing chapters with placeholders
+  if (story.chapters && story.chapters.length > 0) {
+    var maxNum = 0;
+    story.chapters.forEach(function(ch) { if (ch.num > maxNum) maxNum = ch.num; });
+    var chapterMap = {};
+    story.chapters.forEach(function(ch) { chapterMap[ch.num] = ch; });
+    var filled = [];
+    for (var cn = 1; cn <= maxNum; cn++) {
+      if (chapterMap[cn]) {
+        filled.push(chapterMap[cn]);
+      } else {
+        filled.push({ num: cn, title: '第 ' + cn + ' 篇（待生成）', text: '⚠️ 此章節生成失敗，請選擇此章節並輸入修改指令重新生成。', hook: '', imagePrompt: '', _missing: true });
+      }
+    }
+    story.chapters = filled;
+    window._currentStory = story;
+  }
   var output = document.getElementById('output');
   var html = '<div style="margin:16px 0">';
   html += '<div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:8px">✏️ 編輯故事</div>';
@@ -1260,9 +1277,12 @@ function showEditUI(story, publishedId) {
   html += '</div>';
 
   story.chapters.forEach(function(ch, i) {
-    html += '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin:4px 0;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);cursor:pointer">';
-    html += '<input type="checkbox" class="ch-select" value="' + i + '" style="margin-top:3px;flex-shrink:0">';
-    html += '<div style="flex:1;min-width:0"><div style="font-size:13px;color:#f093fb;font-weight:600">第 ' + ch.num + ' 篇</div>';
+    var isMissing = ch._missing || (ch.text && ch.text.indexOf('⚠️') === 0);
+    var bgColor = isMissing ? 'rgba(245,87,108,0.08)' : 'rgba(255,255,255,0.02)';
+    var borderColor = isMissing ? 'rgba(245,87,108,0.25)' : 'rgba(255,255,255,0.05)';
+    html += '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin:4px 0;border-radius:10px;background:' + bgColor + ';border:1px solid ' + borderColor + ';cursor:pointer">';
+    html += '<input type="checkbox" class="ch-select" value="' + i + '" style="margin-top:3px;flex-shrink:0"' + (isMissing ? ' checked' : '') + '>';
+    html += '<div style="flex:1;min-width:0"><div style="font-size:13px;color:' + (isMissing ? '#f5576c' : '#f093fb') + ';font-weight:600">第 ' + ch.num + ' 篇' + (isMissing ? ' ⚠️ 待生成' : '') + '</div>';
     html += '<div style="font-size:14px;color:#ddd;margin-top:2px">' + escHtml(ch.title) + '</div>';
     html += '<div style="font-size:12px;color:#777;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + escHtml((ch.text || '').substring(0, 100)) + '...</div>';
     html += '</div></label>';
