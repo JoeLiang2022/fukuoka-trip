@@ -124,8 +124,8 @@ window.onerror = function(msg, url, line) {
 <script src="session-memory.js?v=3"></script>
 <script src="outline-generator.js?v=3"></script>
 <script>
-// Dynamic cache busting for main.js
-var s=document.createElement('script');s.src='main.js?v='+Date.now();document.body.appendChild(s);
+// Load main.js from GitHub raw (bypasses Pages build delay)
+var s=document.createElement('script');s.src='https://raw.githubusercontent.com/JoeLiang2022/fukuoka-trip/main/story/main.js?t='+Date.now();s.onerror=function(){var s2=document.createElement('script');s2.src='main.js?v=4';document.body.appendChild(s2);};document.body.appendChild(s);
 </script>
 </body>
 </html>
