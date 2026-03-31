@@ -507,6 +507,22 @@ async function generate() {
     var story = { title: memory.title || topic, characters: memory.characters, chapters: filledChapters };
     saveStory(topic, style.name, audience.name, story);
     renderStory(story);
+    
+    // Generate TTS audio in background if voice is selected (one-time, uploaded to GitHub)
+    if (_voiceMode && _voiceMode !== 'off' && _voiceMode !== 'browser') {
+      var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus','charon':'Charon','fenrir':'Fenrir'};
+      var vName = voiceMap[_voiceMode] || 'Aoede';
+      var storyId = Date.now().toString(36);
+      window._lastGeneratedStoryId = storyId;
+      showToast('🔊 語音生成中（' + vName + '），背景處理...', true);
+      fetch(API_BASE + '/api/story/gen-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
+        body: JSON.stringify({ id: storyId, chapterTexts: filledChapters.filter(function(ch){return !ch._missing;}).map(function(ch) { return ch.title + '。' + ch.text; }), voice: vName, speed: window._voiceSpeed || 'normal', style: window._voiceStyle || 'podcast' })
+      }).then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
+        if (d && d.results) { var ok = d.results.filter(function(r){return r.ok;}).length; showToast('✅ 語音已生成（' + ok + '/' + filledChapters.length + '）'); }
+      }).catch(function() {});
+    }
   } catch (e) {
     output.innerHTML = '<div class="loading"><p>❌ ' + escHtml(e.message) + '</p></div>';
   }
@@ -788,34 +804,18 @@ async function publishStory() {
   if (!window._currentStory) { showToast('沒有故事可發佈'); return; }
   var story = window._currentStory;
   var isRepublish = !!window._editPublishedId;
+  var hasImages = story.chapters.some(function(ch) { return ch.imagePrompt; });
+  var wantImages = false;
   
   if (isRepublish) {
-    // Republish from edit — ask about regenerating voice/images
-    var wantVoice = confirm('要重新生成語音嗎？');
-    var wantImages = false;
-    if (story.chapters.some(function(ch) { return ch.imagePrompt; })) {
-      wantImages = confirm('要重新生成配圖嗎？');
-    }
-    var voiceName = story._voiceName || _voiceMode || 'Aoede';
-    var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus','charon':'Charon','fenrir':'Fenrir','callirrhoe':'Callirrhoe','autonoe':'Autonoe','enceladus':'Enceladus','iapetus':'Iapetus','umbriel':'Umbriel'};
-    voiceName = voiceMap[voiceName] || voiceName;
-    if (voiceName.charAt(0) === voiceName.charAt(0).toLowerCase()) voiceName = voiceName.charAt(0).toUpperCase() + voiceName.slice(1);
-    await publishStoryDirect(wantImages, wantVoice, voiceName);
+    if (hasImages) wantImages = confirm('要重新生成配圖嗎？');
   } else {
-    // First publish — use current voice/image settings from generation
-    var hasImages = story.chapters.some(function(ch) { return ch.imagePrompt; });
-    var voiceName = 'Aoede';
-    var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus','charon':'Charon','fenrir':'Fenrir','callirrhoe':'Callirrhoe','autonoe':'Autonoe','enceladus':'Enceladus','iapetus':'Iapetus','umbriel':'Umbriel'};
-    if (_voiceMode && _voiceMode !== 'off' && _voiceMode !== 'browser') {
-      voiceName = voiceMap[_voiceMode] || _voiceMode;
-    }
-    // Use voice setting from UI, generate images if prompts exist
-    var wantVoice = _voiceMode && _voiceMode !== 'off';
-    await publishStoryDirect(hasImages, wantVoice, voiceName);
+    wantImages = hasImages;
   }
+  await publishStoryDirect(wantImages);
 }
 
-async function publishStoryDirect(wantImages, wantVoice, voiceName) {
+async function publishStoryDirect(wantImages) {
   if (!window._currentStory) { showToast('沒有故事可發佈'); return; }
   const story = window._currentStory;
   showToast('📤 發佈中...', true);
@@ -839,13 +839,6 @@ async function publishStoryDirect(wantImages, wantVoice, voiceName) {
       })
     };
     if (imagePrompts.length > 0) pubBody.imagePrompts = imagePrompts;
-    // Tell server to generate TTS in background
-    if (wantVoice) {
-      pubBody.wantVoice = true;
-      pubBody.voiceName = voiceName;
-      pubBody.voiceSpeed = window._voiceSpeed || 'normal';
-      pubBody.voiceStyle = window._voiceStyle || 'podcast';
-    }
     var pubResp = await fetch(API_BASE + '/api/story-publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -875,7 +868,6 @@ async function publishStoryDirect(wantImages, wantVoice, voiceName) {
     pubInfo += '<div style="text-align:center;font-size:17px;font-weight:700;color:#2ecc71;margin-bottom:4px">發佈成功</div>';
     pubInfo += '<div style="text-align:center;font-size:15px;color:#ddd;margin-bottom:4px">' + escHtml(story.title || '故事') + '</div>';
     pubInfo += '<div style="text-align:center;font-size:13px;color:#888;margin-bottom:8px">' + story.chapters.length + ' 篇章</div>';
-    if (wantVoice) pubInfo += '<div style="text-align:center;font-size:12px;color:#f093fb;margin-bottom:8px">🔊 語音（' + voiceName + '）由 server 背景生成中，可以關閉頁面</div>';
     pubInfo += '<div style="text-align:center;margin-bottom:10px"><a href="' + url + '" target="_blank" style="color:#4ecdc4;font-size:14px;word-break:break-all">' + url + '</a></div>';
     pubInfo += '<div style="text-align:center;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
     pubInfo += '<button onclick="navigator.clipboard.writeText(\'' + url + '\');showToast(\'已複製連結\')" style="padding:8px 16px;border-radius:10px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.1);color:#4ecdc4;cursor:pointer;font-size:13px">📋 複製連結</button>';
