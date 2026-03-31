@@ -79,22 +79,52 @@ if (!storyId) {
   });
 }
 
-// Audio player — with Web Speech API fallback
+// Audio player — lazy TTS generation
 var chapterTexts = []; // filled during story load
 var useBrowserTTS = false;
+var TTS_API = 'https://live-subtitle.onrender.com/api/story/tts';
+var TTS_CODE = '0910164482';
 
 function playChapter(i) {
   if (i >= audioFiles.length) { document.getElementById('ttsStatus').textContent = '朗讀完畢'; playing = false; ci = 0; document.getElementById('btnTTS').textContent = '🔊 朗讀'; return; }
-  ci = i; document.getElementById('ttsStatus').textContent = '第' + (i+1) + '篇/' + audioFiles.length;
+  ci = i; document.getElementById('ttsStatus').textContent = '第' + (i+1) + '篇/' + audioFiles.length + ' 載入中...';
   if (useBrowserTTS) { playBrowserTTS(i); return; }
-  au.src = audioFiles[i];
-  au.onerror = function() { useBrowserTTS = true; playBrowserTTS(i); };
-  au.onended = function() { playChapter(i+1); };
-  au.play().catch(function() { useBrowserTTS = true; playBrowserTTS(i); });
+  // Try pre-generated WAV first
+  var testAu = new Audio();
+  testAu.src = audioFiles[i];
+  testAu.oncanplaythrough = function() {
+    au.src = audioFiles[i];
+    au.onended = function() { playChapter(i+1); };
+    document.getElementById('ttsStatus').textContent = '第' + (i+1) + '篇/' + audioFiles.length;
+    au.play().catch(function() { generateAndPlay(i); });
+  };
+  testAu.onerror = function() { generateAndPlay(i); };
+}
+function generateAndPlay(i) {
+  document.getElementById('ttsStatus').textContent = '第' + (i+1) + '篇 🔊 生成中...';
+  fetch(TTS_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Passcode': TTS_CODE },
+    body: JSON.stringify({ text: chapterTexts[i], voice: 'Aoede' })
+  }).then(function(r) {
+    if (!r.ok) throw new Error('TTS failed');
+    return r.json();
+  }).then(function(data) {
+    if (data.audio) {
+      au.src = 'data:audio/wav;base64,' + data.audio;
+      au.onended = function() { playChapter(i+1); };
+      document.getElementById('ttsStatus').textContent = '第' + (i+1) + '篇/' + audioFiles.length;
+      au.play();
+    } else { throw new Error('no audio'); }
+  }).catch(function() {
+    useBrowserTTS = true;
+    playBrowserTTS(i);
+  });
 }
 function playBrowserTTS(i) {
   if (i >= chapterTexts.length) { playChapter(audioFiles.length); return; }
   window.speechSynthesis.cancel();
+  document.getElementById('ttsStatus').textContent = '第' + (i+1) + '篇/' + audioFiles.length + ' (瀏覽器語音)';
   var utt = new SpeechSynthesisUtterance(chapterTexts[i]);
   utt.lang = 'zh-TW'; utt.rate = 1.0;
   utt.onend = function() { playChapter(i+1); };
