@@ -1,0 +1,18 @@
+{
+  "id": "pubtest_mne1tyfl",
+  "title": "Publish Test",
+  "chapters": [
+    {
+      "num": 1,
+      "title": "Ch1",
+      "text": "Test content here",
+      "hook": "hook1"
+    },
+    {
+      "num": 2,
+      "title": "Ch2",
+      "text": "More content",
+      "hook": "hook2"
+    }
+  ]
+}
