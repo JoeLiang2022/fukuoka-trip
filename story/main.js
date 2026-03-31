@@ -493,7 +493,18 @@ async function generate() {
     }
 
     if (allChapters.length === 0) throw new Error('生成失敗');
-    var story = { title: memory.title || topic, characters: memory.characters, chapters: allChapters };
+    // Fill in missing chapters with placeholders
+    var chapterMap = {};
+    allChapters.forEach(function(ch) { chapterMap[ch.num] = ch; });
+    var filledChapters = [];
+    for (var cn = 1; cn <= _chapters; cn++) {
+      if (chapterMap[cn]) {
+        filledChapters.push(chapterMap[cn]);
+      } else {
+        filledChapters.push({ num: cn, title: '第 ' + cn + ' 篇（待生成）', text: '⚠️ 此章節生成失敗，請使用編輯功能選擇此章節重新生成。', hook: '', imagePrompt: '', _missing: true });
+      }
+    }
+    var story = { title: memory.title || topic, characters: memory.characters, chapters: filledChapters };
     saveStory(topic, style.name, audience.name, story);
     renderStory(story);
   } catch (e) {
