@@ -399,7 +399,7 @@ async function generate() {
     var memory = createEmptyMemory();
 
     // Step 4: Generate chapters (per-chapter or batch based on quality setting)
-    var batchSize = (_quality === 'high') ? 1 : 3;
+    var batchSize = (_quality === 'high') ? 1 : 2;
     for (var chIdx = 0; chIdx < _chapters; chIdx += batchSize) {
       var batchEnd = Math.min(chIdx + batchSize, _chapters);
       var chapterNum = chIdx + 1;
