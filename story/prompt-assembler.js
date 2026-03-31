@@ -180,11 +180,26 @@ function assemblePrompt(input) {
     sections.push('【抓眼球技巧】\n' + dna.hookTechniques.join('\n'));
   }
 
-  // [10] Output Format — single chapter JSON
-  sections.push(
-    '【輸出格式】JSON（不要 markdown），只輸出這一篇：\n' +
-    '{"num":' + chapterNum + ',"title":"篇章標題","text":"' + getLengthTextDNA(chapterLength) + '內容","imagePrompt":"英文寫實攝影風格配圖描述","hook":"金句"}'
-  );
+  // [10] Output Format — single chapter or batch JSON
+  if (input.batchOutlines && input.batchSize > 1) {
+    // Batch mode: multiple chapters in one response
+    var batchContracts = '';
+    for (var bi = 0; bi < input.batchOutlines.length; bi++) {
+      var bo = input.batchOutlines[bi];
+      batchContracts += '第' + bo.num + '篇 [' + bo.arcPosition + ']：' + bo.purpose + '（必做：' + bo.coreTasks.join('；') + '）\n';
+    }
+    sections.push('【批次章節合約】\n' + batchContracts);
+    sections.push(
+      '【輸出格式】JSON（不要 markdown），一次輸出 ' + input.batchSize + ' 篇：\n' +
+      '{"title":"系列總標題","chapters":[{"num":N,"title":"篇章標題","text":"' + getLengthTextDNA(chapterLength) + '內容","imagePrompt":"英文寫實攝影風格配圖描述","hook":"金句"}]}\n' +
+      '每篇的開頭必須不同，禁止重複相同的開場方式。'
+    );
+  } else {
+    sections.push(
+      '【輸出格式】JSON（不要 markdown），只輸出這一篇：\n' +
+      '{"num":' + chapterNum + ',"title":"篇章標題","text":"' + getLengthTextDNA(chapterLength) + '內容","imagePrompt":"英文寫實攝影風格配圖描述","hook":"金句"}'
+    );
+  }
 
   // [11] Chapter Instructions
   sections.push(
