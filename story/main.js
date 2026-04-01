@@ -511,8 +511,9 @@ async function generate() {
     if (_voiceMode && _voiceMode !== 'off' && _voiceMode !== 'browser') {
       var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus','charon':'Charon','fenrir':'Fenrir'};
       var vName = voiceMap[_voiceMode] || 'Aoede';
+      // Use a consistent ID that will be reused during publish
       var storyId = Date.now().toString(36);
-      window._lastGeneratedStoryId = storyId;
+      window._preGeneratedStoryId = storyId;
       showToast('🔊 語音生成中（' + vName + '），背景處理...', true);
       fetch(API_BASE + '/api/story/gen-audio', {
         method: 'POST',
@@ -813,8 +814,9 @@ async function publishStoryDirect(wantImages) {
   const story = window._currentStory;
   showToast('📤 發佈中...', true);
 
-  const id = window._editPublishedId || Date.now().toString(36);
+  const id = window._editPublishedId || window._preGeneratedStoryId || Date.now().toString(36);
   window._editPublishedId = null;
+  window._preGeneratedStoryId = null;
 
   var imagePrompts = [];
   if (wantImages) {
