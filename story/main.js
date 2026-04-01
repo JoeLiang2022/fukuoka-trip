@@ -250,10 +250,8 @@ function setQuality(q) {
 
 function setVoice(mode) {
   _voiceMode = mode;
-  document.querySelectorAll('[id^="voice"]').forEach(function(b) { if (b.tagName === 'BUTTON') b.classList.remove('active'); });
-  var map = {'off':'voiceOff','browser':'voiceBrowser','kore':'voiceKore','zephyr':'voiceZephyr','aoede':'voiceAoede','leda':'voiceLeda','puck':'voicePuck','orus':'voiceOrus','charon':'voiceCharon','fenrir':'voiceFenrir'};
-  var btn = document.getElementById(map[mode]);
-  if (btn) btn.classList.add('active');
+  var sel = document.getElementById('voiceSelect');
+  if (sel) sel.value = mode;
 }
 
 // Read story aloud (browser TTS)
