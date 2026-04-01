@@ -79,19 +79,19 @@ body{background:#0a0a0f;color:#e8e8e8;font-family:'Segoe UI',sans-serif;margin:0
     <span>🔊 語音</span>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <select id="voiceSelect" onchange="setVoice(this.value)" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#ccc;font-size:13px;min-width:140px">
-        <option value="off">🔇 關閉</option>
-        <option value="browser">🆓 瀏覽器語音</option>
-        <optgroup label="♀ 女聲">
-          <option value="kore">Kore ♀</option>
-          <option value="zephyr">Zephyr ♀</option>
-          <option value="aoede">Aoede ♀ ⭐</option>
-          <option value="leda">Leda ♀</option>
+        <option value="off" style="color:#333;background:#fff">🔇 關閉</option>
+        <option value="browser" style="color:#333;background:#fff">🆓 瀏覽器語音</option>
+        <optgroup label="♀ 女聲" style="color:#333;background:#fff">
+          <option value="kore" style="color:#333">Kore ♀</option>
+          <option value="zephyr" style="color:#333">Zephyr ♀</option>
+          <option value="aoede" style="color:#333">Aoede ♀ ⭐</option>
+          <option value="leda" style="color:#333">Leda ♀</option>
         </optgroup>
-        <optgroup label="♂ 男聲">
-          <option value="puck">Puck ♂</option>
-          <option value="orus">Orus ♂</option>
-          <option value="charon">Charon ♂</option>
-          <option value="fenrir">Fenrir ♂</option>
+        <optgroup label="♂ 男聲" style="color:#333;background:#fff">
+          <option value="puck" style="color:#333">Puck ♂</option>
+          <option value="orus" style="color:#333">Orus ♂</option>
+          <option value="charon" style="color:#333">Charon ♂</option>
+          <option value="fenrir" style="color:#333">Fenrir ♂</option>
         </optgroup>
       </select>
       <select id="voiceSpeed" onchange="window._voiceSpeed=this.value" style="padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#ccc;font-size:12px">
