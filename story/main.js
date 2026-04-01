@@ -834,6 +834,9 @@ async function publishStoryDirect(wantImages) {
       })
     };
     if (imagePrompts.length > 0) pubBody.imagePrompts = imagePrompts;
+    // Password protection
+    var pwInput = document.getElementById('storyPassword');
+    if (pwInput && pwInput.value.trim()) pubBody.password = pwInput.value.trim();
     var pubResp = await fetch(API_BASE + '/api/story-publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
