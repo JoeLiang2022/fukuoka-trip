@@ -43,12 +43,13 @@ let _voiceMode = 'off'; // off, browser, gemini-f, gemini-m
 
 // === Init ===
 async function init() {
+  var dataBase = window.location.hostname.includes('render.com') ? 'https://cdn.jsdelivr.net/gh/JoeLiang2022/fukuoka-trip@main/story/' : '';
   var cacheBust = '?t=' + Date.now();
   const [topicsRes, stylesRes, audiencesRes, refsRes] = await Promise.all([
-    fetch('topics.json' + cacheBust).then(r => r.json()),
-    fetch('styles.json' + cacheBust).then(r => r.json()),
-    fetch('audiences.json' + cacheBust).then(r => r.json()),
-    fetch('references.json' + cacheBust).then(r => r.json()).catch(function() { return {}; })
+    fetch(dataBase + 'topics.json' + cacheBust).then(r => r.json()),
+    fetch(dataBase + 'styles.json' + cacheBust).then(r => r.json()),
+    fetch(dataBase + 'audiences.json' + cacheBust).then(r => r.json()),
+    fetch(dataBase + 'references.json' + cacheBust).then(r => r.json()).catch(function() { return {}; })
   ]);
   _topics = topicsRes;
   _styles = stylesRes;
