@@ -77,27 +77,29 @@ body{background:#0a0a0f;color:#e8e8e8;font-family:'Segoe UI',sans-serif;margin:0
   </div>
   <div class="chapter-count">
     <span>🔊 語音</span>
-    <div class="count-btns">
-      <button onclick="setVoice('off')" id="voiceOff" class="active">關閉</button>
-      <button onclick="setVoice('browser')" id="voiceBrowser">🆓瀏覽器</button>
-      <button onclick="setVoice('kore')" id="voiceKore">Kore♀</button>
-      <button onclick="setVoice('zephyr')" id="voiceZephyr">Zephyr♀</button>
-      <button onclick="setVoice('aoede')" id="voiceAoede" style="border-color:rgba(240,147,251,0.4)">Aoede♀</button>
-      <button onclick="setVoice('leda')" id="voiceLeda">Leda♀</button>
-      <button onclick="setVoice('puck')" id="voicePuck">Puck♂</button>
-      <button onclick="setVoice('orus')" id="voiceOrus">Orus♂</button>
-      <button onclick="setVoice('charon')" id="voiceCharon">Charon♂</button>
-      <button onclick="setVoice('fenrir')" id="voiceFenrir">Fenrir♂</button>
-    </div>
-    <div style="margin-top:6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <label style="font-size:12px;color:#888">語速</label>
-      <select id="voiceSpeed" onchange="window._voiceSpeed=this.value" style="padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#ccc;font-size:12px">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <select id="voiceSelect" onchange="setVoice(this.value)" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#ccc;font-size:13px;min-width:140px">
+        <option value="off">🔇 關閉</option>
+        <option value="browser">🆓 瀏覽器語音</option>
+        <optgroup label="♀ 女聲">
+          <option value="kore">Kore ♀</option>
+          <option value="zephyr">Zephyr ♀</option>
+          <option value="aoede">Aoede ♀ ⭐</option>
+          <option value="leda">Leda ♀</option>
+        </optgroup>
+        <optgroup label="♂ 男聲">
+          <option value="puck">Puck ♂</option>
+          <option value="orus">Orus ♂</option>
+          <option value="charon">Charon ♂</option>
+          <option value="fenrir">Fenrir ♂</option>
+        </optgroup>
+      </select>
+      <select id="voiceSpeed" onchange="window._voiceSpeed=this.value" style="padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#ccc;font-size:12px">
         <option value="slow">慢速</option>
         <option value="normal" selected>正常</option>
         <option value="fast">快速</option>
       </select>
-      <label style="font-size:12px;color:#888">風格</label>
-      <select id="voiceStyle" onchange="window._voiceStyle=this.value" style="padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#ccc;font-size:12px">
+      <select id="voiceStyle" onchange="window._voiceStyle=this.value" style="padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#ccc;font-size:12px">
         <option value="natural" selected>自然</option>
         <option value="warm">溫暖</option>
         <option value="energetic">活力</option>
