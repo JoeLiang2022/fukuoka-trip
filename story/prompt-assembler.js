@@ -85,7 +85,8 @@ function validateDNA(dna) {
 
 // === Load Style DNA ===
 async function loadStyleDNA(styleId) {
-  var resp = await fetch('dna/' + styleId + '.json?t=' + Date.now());
+  var dnaBase = window.location.hostname.includes('render.com') ? 'https://cdn.jsdelivr.net/gh/JoeLiang2022/fukuoka-trip@main/story/dna/' : 'dna/';
+  var resp = await fetch(dnaBase + styleId + '.json?t=' + Date.now());
   if (!resp.ok) throw new Error('DNA file not found: dna/' + styleId + '.json');
   var dna = await resp.json();
   var errors = validateDNA(dna);
