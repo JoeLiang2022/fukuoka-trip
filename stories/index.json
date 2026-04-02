@@ -10,103 +10,120 @@
     "id": "mng3zcab",
     "title": "黃金羅盤的低語",
     "chapters": 5,
-    "date": "2026-04-01"
+    "date": "2026-04-01",
+    "locked": true
   },
   {
     "id": "mnfh54ms",
     "title": "時間的裂痕：阿蒙霍特普的低語",
     "chapters": 3,
-    "date": "2026-04-01"
+    "date": "2026-04-01",
+    "locked": false
   },
   {
     "id": "mnetl61y",
     "title": "洞察新藍海：表後大型儲能的收益驅動與實踐",
     "chapters": 30,
-    "date": "2026-03-31"
+    "date": "2026-03-31",
+    "locked": false
   },
   {
     "id": "mnet5wrg",
     "title": "大型儲能系統：現代能源基礎設施的基石",
     "chapters": 30,
-    "date": "2026-03-31"
+    "date": "2026-03-31",
+    "locked": false
   },
   {
     "id": "mnesy7w8",
     "title": "大型儲能系統：現代能源基礎設施的基石",
     "chapters": 30,
-    "date": "2026-03-31"
+    "date": "2026-03-31",
+    "locked": false
   },
   {
     "id": "mneswps8",
     "title": "大型儲能系統：現代能源基礎設施的基石",
     "chapters": 30,
-    "date": "2026-03-31"
+    "date": "2026-03-31",
+    "locked": false
   },
   {
     "id": "test_mnet07om",
     "title": "Test",
     "chapters": 1,
-    "date": "2026-03-31"
+    "date": "2026-03-31",
+    "locked": false
   },
   {
     "id": "mnerxoxn",
     "title": "碳盤查：淨零轉型之基石與法規驅動",
     "chapters": 30,
-    "date": "2026-03-31"
+    "date": "2026-03-31",
+    "locked": false
   },
   {
     "id": "mnes1ydo",
     "title": "碳盤查：淨零轉型之基石與法規驅動",
     "chapters": 30,
-    "date": "2026-03-31"
+    "date": "2026-03-31",
+    "locked": false
   },
   {
     "id": "mner245v",
     "title": "ESG永續報告書：從概念到演進",
     "chapters": 6,
-    "date": "2026-03-31"
+    "date": "2026-03-31",
+    "locked": false
   },
   {
     "id": "mnepo3wv",
     "title": "晴天霹靂還是主管的薛丁格指令？我的專案，主管說了算！",
     "chapters": 3,
-    "date": "2026-03-31"
+    "date": "2026-03-31",
+    "locked": false
   },
   {
     "id": "mneiyhtq",
     "title": "伊甸園的入場券：一張假臉與一堆假人",
     "chapters": 3,
-    "date": "2026-03-31"
+    "date": "2026-03-31",
+    "locked": false
   },
   {
     "id": "mne7zfmb",
     "title": "SONiC QA 測試哲學：Testbed 作為生態核心",
     "chapters": 30,
-    "date": "2026-03-31"
+    "date": "2026-03-31",
+    "locked": false
   },
   {
     "id": "ftest1",
     "title": "Test",
     "chapters": 1,
-    "date": "2026-03-31"
+    "date": "2026-03-31",
+    "locked": false
   },
   {
     "id": "mne28qtt",
     "title": "中國象棋：起源、棋盤結構與基礎棋理概覽",
     "chapters": 5,
-    "date": "2026-03-31"
+    "date": "2026-03-31",
+    "locked": false
   },
   {
     "id": "mndckgv5",
     "title": "綠色迷宮：當企業想買綠電，卻只買到一頭霧水",
     "chapters": 4,
-    "date": "2026-03-30"
+    "date": "2026-03-30",
+    "locked": false
   },
   {
     "id": "mndc6uxv",
     "title": "完美數據下的暗流：第一次心跳停止",
     "chapters": 3,
-    "date": "2026-03-30"
+    "date": "2026-03-30",
+    "locked": false
   },
   {
     "id": "mnd8ey28",
