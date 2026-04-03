@@ -39,10 +39,15 @@ let _selectedCat = '';
 let _chapters = 3;
 let _generateImages = false;
 let _chapterLength = 'medium';
+let _quality = 'normal';
 let _voiceMode = 'off'; // off, browser, gemini-f, gemini-m
 
 // === Init ===
 async function init() {
+  // Initialize i18n
+  if (typeof initI18n === 'function') {
+    try { await initI18n(); var sel = document.getElementById('langSelect'); if (sel && typeof getLanguage === 'function') sel.value = getLanguage(); } catch(e) { console.warn('i18n init:', e); }
+  }
   var dataBase = window.location.hostname.includes('render.com') ? 'https://cdn.jsdelivr.net/gh/JoeLiang2022/fukuoka-trip@main/story/' : '';
   var cacheBust = '?t=' + Date.now();
   const [topicsRes, stylesRes, audiencesRes, refsRes] = await Promise.all([
@@ -397,6 +402,17 @@ async function generate() {
     // Step 3: Initialize session memory
     var memory = createEmptyMemory();
 
+    // Step 3.5: Load Story Bible (if available)
+    var bible = null;
+    var bibleContext = '';
+    var currentLang = (typeof getLanguage === 'function') ? getLanguage() : 'zh-TW';
+    if (typeof loadBible === 'function') {
+      try { bible = loadBible('current'); } catch(e) {}
+    }
+    if (bible && typeof compressBibleForPrompt === 'function') {
+      try { bibleContext = compressBibleForPrompt(bible, 1500); } catch(e) {}
+    }
+
     // Step 4: Generate chapters (per-chapter or batch based on quality setting)
     var batchSize = (_quality === 'high') ? 1 : 2;
     for (var chIdx = 0; chIdx < _chapters; chIdx += batchSize) {
@@ -410,7 +426,8 @@ async function generate() {
           dna: dna, chapterOutline: outline[chIdx], memory: memory,
           chapterNum: chapterNum, totalChapters: _chapters, topic: topic,
           audience: audience, chapterLength: _chapterLength,
-          isFirstChapter: chapterNum === 1, isLastChapter: chapterNum === _chapters
+          isFirstChapter: chapterNum === 1, isLastChapter: chapterNum === _chapters,
+          bible: bibleContext, language: currentLang
         });
         var resp = await fetch(API_BASE + '/api/story-generate', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -438,7 +455,8 @@ async function generate() {
           chapterNum: chapterNum, totalChapters: _chapters, topic: topic,
           audience: audience, chapterLength: _chapterLength,
           isFirstChapter: chapterNum === 1, isLastChapter: batchEnd === _chapters,
-          batchOutlines: batchOutlines, batchSize: batchEnd - chIdx
+          batchOutlines: batchOutlines, batchSize: batchEnd - chIdx,
+          bible: bibleContext, language: currentLang
         });
         var resp = await fetch(API_BASE + '/api/story-generate', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -468,7 +486,8 @@ async function generate() {
                 dna: dna, chapterOutline: outline[fi], memory: memory,
                 chapterNum: fi + 1, totalChapters: _chapters, topic: topic,
                 audience: audience, chapterLength: _chapterLength,
-                isFirstChapter: false, isLastChapter: (fi + 1) === _chapters
+                isFirstChapter: false, isLastChapter: (fi + 1) === _chapters,
+                bible: bibleContext, language: currentLang
               });
               var fbResp = await fetch(API_BASE + '/api/story-generate', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -506,6 +525,21 @@ async function generate() {
     var story = { title: memory.title || topic, characters: memory.characters, chapters: filledChapters };
     saveStory(topic, style.name, audience.name, story);
     renderStory(story);
+
+    // Extract Story Bible in background after generation
+    if (typeof extractBibleFromStory === 'function') {
+      (async function() {
+        try {
+          var storyData = { title: story.title, chapters: filledChapters.filter(function(ch) { return !ch._missing; }), storyId: 'current' };
+          var extracted = await extractBibleFromStory(storyData, bible || createEmptyBible('current'));
+          if (extracted && typeof mergeBible === 'function') {
+            bible = mergeBible(bible || createEmptyBible('current'), extracted);
+            if (typeof saveBible === 'function') saveBible(bible);
+            renderBiblePanel(bible);
+          }
+        } catch(e) { console.warn('Bible extraction:', e); }
+      })();
+    }
     
     // Generate TTS audio in background if voice is selected (one-time, uploaded to GitHub)
     if (_voiceMode && _voiceMode !== 'off' && _voiceMode !== 'browser') {
@@ -632,6 +666,8 @@ function renderStory(story) {
     '<button onclick="aiOptimizeStory()">✨ AI 優化</button>' +
     '<button onclick="regenAllImages()">🖼️ 重新生圖</button>' +
     '<button onclick="publishStory()">📤 發佈</button>' +
+    '<button onclick="exportEPUB()">📕 EPUB</button>' +
+    '<button onclick="exportPDF()">📄 PDF</button>' +
     '<button onclick="copyAll()">📋 複製全部</button>' +
     '<button onclick="downloadMD()">⬇️ 下載 MD</button>' +
   '</div>';
@@ -733,6 +769,121 @@ function saveStory(topic, style, audience, story, publishedId) {
     if (list.length > 50) list.length = 50;
     localStorage.setItem('storyHistory', JSON.stringify(list));
   } catch (_) {}
+}
+
+// === Language Switcher ===
+function switchLanguage(langCode) {
+  if (typeof setLanguage === 'function') {
+    setLanguage(langCode);
+  }
+}
+
+// === Story Bible Panel ===
+function toggleBiblePanel() {
+  var panel = document.getElementById('biblePanel');
+  if (!panel) return;
+  panel.style.display = panel.style.display === 'none' ? '' : 'none';
+}
+
+function renderBiblePanel(bible) {
+  var existing = document.getElementById('biblePanel');
+  if (existing) existing.remove();
+  if (!bible || (!bible.characters.length && !bible.world.length && !bible.relationships.length && !bible.plotThreads.length)) return;
+
+  var html = '<div id="biblePanel" class="bible-panel">';
+  html += '<div class="bible-header" onclick="toggleBiblePanel()"><span>📖 Story Bible</span><span class="bible-toggle">▼</span></div>';
+  html += '<div class="bible-content">';
+
+  if (bible.characters.length) {
+    html += '<div class="bible-section"><div class="bible-section-title">👤 角色 (' + bible.characters.length + ')</div>';
+    bible.characters.forEach(function(ch) {
+      html += '<div class="bible-card"><div class="bible-card-name">' + escHtml(ch.name) + '</div>';
+      if (ch.personality) html += '<div class="bible-card-detail">' + escHtml(ch.personality) + '</div>';
+      if (ch.arc) html += '<div class="bible-card-detail" style="color:#f093fb">弧線: ' + escHtml(ch.arc) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  if (bible.relationships.length) {
+    html += '<div class="bible-section"><div class="bible-section-title">💕 關係 (' + bible.relationships.length + ')</div>';
+    bible.relationships.forEach(function(r) {
+      var c1 = r.char1 || r.char1Id || '?', c2 = r.char2 || r.char2Id || '?';
+      html += '<div class="bible-card"><div class="bible-card-name">' + escHtml(c1) + ' ↔ ' + escHtml(c2) + '</div>';
+      if (r.description) html += '<div class="bible-card-detail">' + escHtml(r.description) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  if (bible.world.length) {
+    html += '<div class="bible-section"><div class="bible-section-title">🌍 世界觀 (' + bible.world.length + ')</div>';
+    bible.world.forEach(function(w) {
+      html += '<div class="bible-card"><div class="bible-card-name">' + escHtml(w.name) + '</div>';
+      if (w.description) html += '<div class="bible-card-detail">' + escHtml(w.description) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  if (bible.plotThreads.length) {
+    html += '<div class="bible-section"><div class="bible-section-title">🧵 劇情線 (' + bible.plotThreads.length + ')</div>';
+    bible.plotThreads.forEach(function(pt) {
+      var statusIcon = pt.status === 'active' ? '🟢' : pt.status === 'resolved' ? '✅' : '💤';
+      html += '<div class="bible-card"><div class="bible-card-name">' + statusIcon + ' ' + escHtml(pt.name) + '</div>';
+      if (pt.description) html += '<div class="bible-card-detail">' + escHtml(pt.description) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  html += '</div></div>';
+  var output = document.getElementById('output');
+  if (output) output.insertAdjacentHTML('afterbegin', html);
+}
+
+// === Export Handlers ===
+async function exportEPUB() {
+  if (!window._currentStory) { showToast('沒有故事可匯出'); return; }
+  if (typeof generateEPUB !== 'function') { showToast('EPUB 模組未載入'); return; }
+  showToast('📦 生成 EPUB 中...', true);
+  try {
+    var lang = (typeof getLanguage === 'function') ? getLanguage() : 'zh-TW';
+    var blob = await generateEPUB(window._currentStory, { format: 'epub', includeImages: true, language: lang, author: 'AI Story Creator' });
+    if (typeof downloadBlob === 'function') {
+      downloadBlob(blob, (window._currentStory.title || 'story') + '.epub');
+    }
+    showToast('✅ EPUB 已下載');
+  } catch(e) { showToast('❌ EPUB 失敗: ' + e.message); }
+}
+
+async function exportPDF() {
+  if (!window._currentStory) { showToast('沒有故事可匯出'); return; }
+  if (typeof exportPDFFromServer !== 'function' && typeof window.exportPDF !== 'function') {
+    // Fallback: call server directly
+    showToast('📄 生成 PDF 中...', true);
+    try {
+      var resp = await fetch(API_BASE + '/api/story/export-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
+        body: JSON.stringify({ story: window._currentStory })
+      });
+      if (!resp.ok) { var e = await resp.json(); throw new Error(e.error || 'PDF ' + resp.status); }
+      var blob = await resp.blob();
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (window._currentStory.title || 'story') + '.pdf';
+      a.click();
+      showToast('✅ PDF 已下載');
+    } catch(e) { showToast('❌ PDF 失敗: ' + e.message); }
+    return;
+  }
+  showToast('📄 生成 PDF 中...', true);
+  try {
+    var fn = typeof exportPDFFromServer === 'function' ? exportPDFFromServer : window.exportPDF;
+    await fn(window._currentStory, { format: 'pdf' });
+    showToast('✅ PDF 已下載');
+  } catch(e) { showToast('❌ PDF 失敗: ' + e.message); }
 }
 
 // === Utils ===
