@@ -95,3 +95,87 @@ body { font-family: 'Segoe UI','Microsoft JhengHei','Noto Sans TC',sans-serif; b
 .auth-box input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); color: #fff; font-size: 16px; text-align: center; letter-spacing: 2px; margin-bottom: 12px; }
 .auth-box input:focus { border-color: #f093fb; outline: none; }
 .auth-box button { width: 100%; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, #f093fb, #f5576c); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+
+
+/* === Language Selector === */
+.lang-selector {
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: #ccc;
+  font-size: 12px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 60px;
+  text-align: center;
+}
+.lang-selector:focus { border-color: #f093fb; outline: none; }
+.lang-selector option { color: #333; background: #fff; }
+
+/* === Story Bible Panel === */
+.bible-panel {
+  margin: 16px 0;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+.bible-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  color: #f093fb;
+  background: rgba(240,147,251,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.bible-header:hover { background: rgba(240,147,251,0.1); }
+.bible-toggle { font-size: 12px; color: #888; transition: transform 0.2s; }
+.bible-content { padding: 12px 16px; }
+.bible-section { margin-bottom: 14px; }
+.bible-section:last-child { margin-bottom: 0; }
+.bible-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #aaa;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.bible-card {
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.bible-card:last-child { margin-bottom: 0; }
+.bible-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ddd;
+  margin-bottom: 2px;
+}
+.bible-card-detail {
+  font-size: 12px;
+  color: #888;
+  line-height: 1.5;
+}
+
+/* === Export Buttons (EPUB/PDF) === */
+.export-bar button[onclick*="EPUB"],
+.export-bar button[onclick*="PDF"] {
+  background: rgba(78,205,196,0.08);
+  border-color: rgba(78,205,196,0.2);
+  color: #4ecdc4;
+}
+.export-bar button[onclick*="EPUB"]:hover,
+.export-bar button[onclick*="PDF"]:hover {
+  border-color: #4ecdc4;
+  background: rgba(78,205,196,0.15);
+}
