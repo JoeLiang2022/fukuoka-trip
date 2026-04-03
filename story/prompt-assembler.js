@@ -156,6 +156,11 @@ function assemblePrompt(input) {
     );
   }
 
+  // [5.5] Bible Context (between chapter contract and session memory)
+  if (input.bible) {
+    sections.push('【故事聖經】\n' + input.bible);
+  }
+
   // [6] Session Memory (chapters 2+)
   if (!isFirstChapter && memory) {
     var memBlock = compressMemoryForPrompt(memory, chapterNum);
@@ -205,22 +210,39 @@ function assemblePrompt(input) {
     );
   }
 
-  // [11] Chapter Instructions
+  // [11] Chapter Instructions — language-aware (uses i18n if available)
+  var _langCode = input.language || 'zh-TW';
+  var _langInstruction = (typeof getPromptLanguageInstruction === 'function')
+    ? getPromptLanguageInstruction(_langCode)
+    : '用繁體中文寫作';
+  var _hookText = (typeof getPromptString === 'function')
+    ? getPromptString('hookInstruction', _langCode)
+    : '第一篇開頭3秒抓住注意力。';
+  var _endingText = (typeof getPromptString === 'function')
+    ? getPromptString('endingInstruction', _langCode)
+    : '最後一篇要有震撼或感動的結尾。';
+  var _cliffText = (typeof getPromptString === 'function')
+    ? getPromptString('cliffhangerInstruction', _langCode)
+    : '結尾留懸念。';
+  var _batchCliffText = (typeof getPromptString === 'function')
+    ? getPromptString('batchCliffhanger', _langCode)
+    : '每篇結尾留懸念。';
+
   if (input.batchOutlines && input.batchSize > 1) {
     sections.push(
       '【批次資訊】第' + chapterNum + '~' + (chapterNum + input.batchSize - 1) + '篇（共' + totalChapters + '篇）\n' +
       '【每篇篇幅】' + getLengthTextDNA(chapterLength) + '\n' +
-      '【語言】繁體中文\n' +
-      (isFirstChapter ? '第一篇開頭3秒抓住注意力。' : '') +
-      (isLastChapter ? '最後一篇要有震撼或感動的結尾。' : '每篇結尾留懸念。')
+      '【語言】' + _langInstruction + '\n' +
+      (isFirstChapter ? _hookText : '') +
+      (isLastChapter ? _endingText : _batchCliffText)
     );
   } else {
     sections.push(
       '【本篇資訊】第' + chapterNum + '篇（共' + totalChapters + '篇）\n' +
       '【篇幅】' + getLengthTextDNA(chapterLength) + '\n' +
-      '【語言】繁體中文\n' +
-      (isFirstChapter ? '第一篇開頭3秒抓住注意力。' : '') +
-      (isLastChapter ? '最後一篇要有震撼或感動的結尾。' : '結尾留懸念。')
+      '【語言】' + _langInstruction + '\n' +
+      (isFirstChapter ? _hookText : '') +
+      (isLastChapter ? _endingText : _cliffText)
     );
   }
 
