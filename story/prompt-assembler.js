@@ -11,7 +11,7 @@ var STYLE_CATEGORIES = {
   },
   knowledge: {
     name: '知識內容',
-    styles: ['book','toolkit','invest','knowledge','workplace'],
+    styles: ['book','toolkit','invest','knowledge','workplace','academic'],
     requiredDNA: ['structureRules','evidenceRules','insightRules','actionRules'],
     optionalDNA: ['dataRules','caseStudyRules']
   },
