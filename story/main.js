@@ -391,6 +391,9 @@ async function generate() {
   var allChapters = [];
 
   try {
+    // Step 0: AI Style Tuning Dialog
+    var tuningResult = await showTuningDialog(topic, style, audience);
+
     // Step 1: Load Style DNA
     output.innerHTML = '<div class="loading"><div class="spinner"></div><p>載入風格設定...</p></div>';
     var dna = await loadStyleDNA(_selectedStyle);
@@ -427,7 +430,7 @@ async function generate() {
           chapterNum: chapterNum, totalChapters: _chapters, topic: topic,
           audience: audience, chapterLength: _chapterLength,
           isFirstChapter: chapterNum === 1, isLastChapter: chapterNum === _chapters,
-          bible: bibleContext, language: currentLang
+          bible: bibleContext, language: currentLang, tuning: tuningResult
         });
         var resp = await fetch(API_BASE + '/api/story-generate', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -456,7 +459,7 @@ async function generate() {
           audience: audience, chapterLength: _chapterLength,
           isFirstChapter: chapterNum === 1, isLastChapter: batchEnd === _chapters,
           batchOutlines: batchOutlines, batchSize: batchEnd - chIdx,
-          bible: bibleContext, language: currentLang
+          bible: bibleContext, language: currentLang, tuning: tuningResult
         });
         var resp = await fetch(API_BASE + '/api/story-generate', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -487,7 +490,7 @@ async function generate() {
                 chapterNum: fi + 1, totalChapters: _chapters, topic: topic,
                 audience: audience, chapterLength: _chapterLength,
                 isFirstChapter: false, isLastChapter: (fi + 1) === _chapters,
-                bible: bibleContext, language: currentLang
+                bible: bibleContext, language: currentLang, tuning: tuningResult
               });
               var fbResp = await fetch(API_BASE + '/api/story-generate', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -888,6 +891,140 @@ async function exportPDF() {
 
 // === Utils ===
 function escHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+// === AI Style Tuning Dialog ===
+var _styleTuning = null; // stores tuning result for current generation
+
+async function showTuningDialog(topic, style, audience) {
+  return new Promise(function(resolve) {
+    // Build tuning questions based on style category
+    var questions = _getTuningQuestions(style);
+    var answers = {};
+    var currentQ = 0;
+
+    // Create dialog overlay
+    var overlay = document.createElement('div');
+    overlay.className = 'tuning-overlay';
+    overlay.innerHTML = '<div class="tuning-dialog">' +
+      '<div class="tuning-header">🎨 風格微調</div>' +
+      '<div class="tuning-topic">主題：' + escHtml(topic) + ' · 風格：' + escHtml(style.name) + '</div>' +
+      '<div class="tuning-chat" id="tuningChat"></div>' +
+      '<div class="tuning-input-row">' +
+        '<div class="tuning-options" id="tuningOptions"></div>' +
+        '<div class="tuning-custom-row" style="display:flex;gap:8px;margin-top:8px">' +
+          '<input type="text" id="tuningInput" placeholder="或輸入自訂回答..." class="tuning-input" onkeydown="if(event.key===\'Enter\')submitTuning()">' +
+          '<button onclick="submitTuning()" class="tuning-send">→</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="tuning-actions">' +
+        '<button onclick="skipTuning()" class="tuning-skip">跳過微調，直接生成</button>' +
+      '</div>' +
+    '</div>';
+    document.body.appendChild(overlay);
+
+    // Show first question
+    _showTuningQuestion(questions, currentQ);
+
+    // Submit answer
+    window.submitTuning = function(optionValue) {
+      var input = document.getElementById('tuningInput');
+      var answer = optionValue || (input ? input.value.trim() : '');
+      if (!answer) return;
+
+      // Show user answer in chat
+      var chat = document.getElementById('tuningChat');
+      chat.innerHTML += '<div class="tuning-msg tuning-user">' + escHtml(answer) + '</div>';
+      answers[questions[currentQ].key] = answer;
+      if (input) input.value = '';
+
+      currentQ++;
+      if (currentQ < questions.length) {
+        setTimeout(function() { _showTuningQuestion(questions, currentQ); }, 300);
+      } else {
+        // All questions answered — build tuning prompt
+        chat.innerHTML += '<div class="tuning-msg tuning-ai">✅ 了解！開始生成...</div>';
+        setTimeout(function() {
+          overlay.remove();
+          _styleTuning = _buildTuningPrompt(answers, topic, style);
+          resolve(_styleTuning);
+        }, 800);
+      }
+      chat.scrollTop = chat.scrollHeight;
+    };
+
+    // Skip tuning
+    window.skipTuning = function() {
+      overlay.remove();
+      _styleTuning = null;
+      resolve(null);
+    };
+  });
+}
+
+function _showTuningQuestion(questions, idx) {
+  var q = questions[idx];
+  var chat = document.getElementById('tuningChat');
+  var options = document.getElementById('tuningOptions');
+
+  chat.innerHTML += '<div class="tuning-msg tuning-ai">' + q.question + '</div>';
+  chat.scrollTop = chat.scrollHeight;
+
+  // Show option buttons
+  options.innerHTML = q.options.map(function(opt) {
+    return '<button class="tuning-opt" onclick="submitTuning(\'' + opt.replace(/'/g, "\\'") + '\')">' + escHtml(opt) + '</button>';
+  }).join('');
+}
+
+function _getTuningQuestions(style) {
+  var base = [
+    {
+      key: 'tone',
+      question: '📝 你希望什麼語氣？',
+      options: ['輕鬆易讀', '專業嚴謹', '幽默風趣', '溫暖感性', '犀利直白']
+    },
+    {
+      key: 'depth',
+      question: '📊 內容深度？',
+      options: ['入門科普', '中等深度', '專家級深入']
+    },
+    {
+      key: 'local',
+      question: '🌏 要加入在地元素嗎？',
+      options: ['台灣案例為主', '國際案例為主', '混合都要']
+    }
+  ];
+
+  // Add style-specific questions
+  if (style.type === 'book' || style.type === 'article') {
+    base.push({
+      key: 'structure',
+      question: '🏗️ 偏好什麼結構？',
+      options: ['故事案例驅動', '理論框架驅動', '問題解決驅動']
+    });
+  }
+  if (style.type === 'story') {
+    base = [
+      { key: 'mood', question: '🎭 故事氛圍？', options: ['輕鬆溫馨', '緊張刺激', '黑暗沉重', '浪漫甜蜜'] },
+      { key: 'pacing', question: '⚡ 節奏偏好？', options: ['快節奏', '慢慢鋪陳', '張弛有度'] },
+      { key: 'ending', question: '🎬 結局風格？', options: ['大團圓', '開放式', '反轉震撼', '餘韻悠長'] }
+    ];
+  }
+
+  return base;
+}
+
+function _buildTuningPrompt(answers, topic, style) {
+  var parts = [];
+  if (answers.tone) parts.push('語氣風格：' + answers.tone);
+  if (answers.depth) parts.push('內容深度：' + answers.depth);
+  if (answers.local) parts.push('案例來源：' + answers.local);
+  if (answers.structure) parts.push('結構偏好：' + answers.structure);
+  if (answers.mood) parts.push('故事氛圍：' + answers.mood);
+  if (answers.pacing) parts.push('節奏偏好：' + answers.pacing);
+  if (answers.ending) parts.push('結局風格：' + answers.ending);
+  if (parts.length === 0) return null;
+  return '【使用者風格微調】\n' + parts.join('\n');
+}
 
 function mdToHtml(s) {
   if (!s) return '';
