@@ -161,6 +161,11 @@ function assemblePrompt(input) {
     sections.push('【故事聖經】\n' + input.bible);
   }
 
+  // [5.6] User Style Tuning (from AI tuning dialog)
+  if (input.tuning) {
+    sections.push(input.tuning);
+  }
+
   // [6] Session Memory (chapters 2+)
   if (!isFirstChapter && memory) {
     var memBlock = compressMemoryForPrompt(memory, chapterNum);
