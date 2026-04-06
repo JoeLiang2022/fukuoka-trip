@@ -245,7 +245,7 @@ function getLengthText() {
   return '約400字';
 }
 
-var _quality = 'normal'; // 'normal' = 5 chapters per batch, 'high' = per-chapter
+// quality setter (variable declared at top)
 function setQuality(q) {
   _quality = q;
   var bn = document.getElementById('qualNormal');
