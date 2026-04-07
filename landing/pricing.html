@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing — AI Story Creator</title>
+<link rel="stylesheet" href="/landing/style.css">
+<style>
+.pricing-page{padding:120px 24px 80px;max-width:1000px;margin:0 auto}
+.pricing-table{width:100%;border-collapse:collapse;margin:32px 0}
+.pricing-table th,.pricing-table td{padding:12px 16px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.04);font-size:14px}
+.pricing-table th{color:#888;font-weight:500;font-size:13px}
+.pricing-table td:first-child{text-align:left;color:#ccc;font-weight:500}
+.pricing-table .check{color:#2ecc71}
+.pricing-table .dash{color:#444}
+.plan-header{padding:20px 16px !important;vertical-align:top}
+.plan-header .name{font-size:18px;font-weight:700;color:#fff}
+.plan-header .price{font-size:28px;font-weight:800;color:#f093fb;margin:4px 0}
+.plan-header .price small{font-size:13px;font-weight:400;color:#888}
+.plan-header.featured{background:rgba(240,147,251,0.04);border-radius:12px 12px 0 0}
+.subscribe-btn{padding:10px 20px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:all 0.2s}
+.subscribe-btn.primary{background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff}
+.subscribe-btn.primary:hover{opacity:0.9}
+.subscribe-btn.outline{border:1px solid rgba(240,147,251,0.3);background:transparent;color:#f093fb}
+.subscribe-btn.outline:hover{background:rgba(240,147,251,0.08)}
+.subscribe-btn:disabled{opacity:0.5;cursor:not-allowed}
+.faq{max-width:640px;margin:48px auto 0}
+.faq h3{font-size:20px;font-weight:700;color:#fff;margin-bottom:16px;text-align:center}
+.faq-item{padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.faq-item dt{font-size:15px;font-weight:600;color:#eee;margin-bottom:4px}
+.faq-item dd{font-size:14px;color:#888;margin:0}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-brand" style="text-decoration:none">📖 AI Story Creator</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/auth/google" class="btn btn-primary" style="padding:8px 20px">Get Started</a>
+  </div>
+</nav>
+
+<div class="pricing-page">
+  <div class="section-heading">
+    <h2>Choose Your Plan</h2>
+    <p>Start free, upgrade anytime. Cancel anytime.</p>
+  </div>
+
+  <table class="pricing-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th class="plan-header">
+          <div class="name">Free</div>
+          <div class="price">$0<small>/mo</small></div>
+        </th>
+        <th class="plan-header featured">
+          <div class="name">Pro ⭐</div>
+          <div class="price">$9.99<small>/mo</small></div>
+        </th>
+        <th class="plan-header">
+          <div class="name">Unlimited</div>
+          <div class="price">$19.99<small>/mo</small></div>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Story Generations</td><td>3 / month</td><td>30 / month</td><td>Unlimited</td></tr>
+      <tr><td>AI Voice (TTS)</td><td class="dash">—</td><td>50 / month</td><td>Unlimited</td></tr>
+      <tr><td>Image Generations</td><td>5 / month</td><td>100 / month</td><td>Unlimited</td></tr>
+      <tr><td>Writing Styles</td><td class="check">25+ ✓</td><td class="check">25+ ✓</td><td class="check">25+ ✓</td></tr>
+      <tr><td>Multi-Language</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>EPUB Export</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>AI Scoring</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr><td>Story Bible</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr>
+      <tr>
+        <td></td>
+        <td><a href="/auth/google" class="subscribe-btn outline">Get Started</a></td>
+        <td><button class="subscribe-btn primary" onclick="subscribe('pro')">Subscribe to Pro</button></td>
+        <td><button class="subscribe-btn outline" onclick="subscribe('unlimited')">Go Unlimited</button></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="faq">
+    <h3>FAQ</h3>
+    <dl>
+      <div class="faq-item">
+        <dt>Can I cancel anytime?</dt>
+        <dd>Yes. Cancel from your account page. You keep access until the end of your billing period.</dd>
+      </div>
+      <div class="faq-item">
+        <dt>What happens when I hit my limit?</dt>
+        <dd>You'll see an upgrade prompt. Your existing stories are always accessible — you just can't generate new ones until next month or you upgrade.</dd>
+      </div>
+      <div class="faq-item">
+        <dt>Do unused credits roll over?</dt>
+        <dd>No. Quotas reset at the start of each calendar month.</dd>
+      </div>
+      <div class="faq-item">
+        <dt>What payment methods do you accept?</dt>
+        <dd>All major credit cards via Stripe. Secure, PCI-compliant processing.</dd>
+      </div>
+    </dl>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-links">
+    <a href="/">Home</a>
+    <a href="/legal/privacy.html">Privacy Policy</a>
+    <a href="/legal/terms.html">Terms of Service</a>
+  </div>
+  <div class="footer-copy">&copy; 2025 AI Story Creator. All rights reserved.</div>
+</footer>
+
+<script>
+async function subscribe(planId) {
+  var btns = document.querySelectorAll('.subscribe-btn');
+  btns.forEach(function(b) { b.disabled = true; });
+  try {
+    var resp = await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ planId: planId })
+    });
+    if (resp.status === 401) {
+      window.location.href = '/auth/google';
+      return;
+    }
+    if (!resp.ok) {
+      var err = await resp.json().catch(function() { return {}; });
+      throw new Error(err.error || 'Failed');
+    }
+    var data = await resp.json();
+    if (data.url) window.location.href = data.url;
+  } catch(e) {
+    alert('Error: ' + e.message);
+    btns.forEach(function(b) { b.disabled = false; });
+  }
+}
+</script>
+</body>
+</html>
