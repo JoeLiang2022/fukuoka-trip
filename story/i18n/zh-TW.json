@@ -65,7 +65,10 @@
     "cancel": "取消",
     "confirm": "確認",
     "close": "關閉",
-    "noStories": "尚無已發佈故事"
+    "noStories": "尚無已發佈故事",
+    "btnAccount": "👤 帳號",
+    "btnMyStories": "📚 我的故事",
+    "btnLogout": "🚪 登出"
   },
   "prompts": {
     "languageInstruction": "用繁體中文寫作",
