@@ -1,4 +1,4 @@
-// AI Story Creator — app.js
+// AI Story Creator â€” app.js
 // Data-driven: loads topics.json, styles.json, audiences.json
 // Stories stored in localStorage
 // API calls go through server proxy (no key in frontend)
@@ -7,27 +7,96 @@ const API_BASE = 'https://live-subtitle.onrender.com';
 const ACCESS_CODE = '0910164482';
 const STORIES_BASE = 'https://joeliang2022.github.io/fukuoka-trip/stories/';
 
-// === Auth Gate ===
-function checkAuth() {
-  var code = document.getElementById('authCode').value.trim();
-  if (code === ACCESS_CODE) {
-    try { sessionStorage.setItem('storyAuth', '1'); } catch(e) {}
-    document.getElementById('authGate').style.display = 'none';
-    document.getElementById('mainApp').style.display = '';
-    init();
-  } else {
-    document.getElementById('authError').style.display = '';
-    document.getElementById('authCode').value = '';
+// === Fetch helper with credentials and quota handling ===
+async function apiFetch(url, options) {
+  options = options || {};
+  options.credentials = 'include';
+  var resp = await fetch(url, options);
+  if (resp.status === 429) {
+    var data = {};
+    try { data = await resp.json(); } catch(_) {}
+    if (data.error === 'quota_exceeded') {
+      showQuotaExceeded(data);
+      throw new Error('quota_exceeded');
+    }
+  }
+  return resp;
+}
+
+function showQuotaExceeded(data) {
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = '<div style="background:#1a1a2e;border:1px solid rgba(240,147,251,0.3);border-radius:20px;padding:32px;max-width:360px;text-align:center">' +
+    '<div style="font-size:40px;margin-bottom:12px">âš¡</div>' +
+    '<div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:8px">ç”¨é‡å·²é”ä¸Šé™</div>' +
+    '<div style="font-size:14px;color:#aaa;margin-bottom:16px">å·²ä½¿ç”¨ ' + (data.used || 0) + ' / ' + (data.limit || 0) + 'ï¼ˆ' + (data.plan || 'free') + ' æ–¹æ¡ˆï¼‰</div>' +
+    '<a href="/pricing" style="display:inline-block;padding:12px 28px;border-radius:12px;background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;text-decoration:none;font-weight:600;font-size:15px">å‡ç´šæ–¹æ¡ˆ â†’</a>' +
+    '<div style="margin-top:12px"><button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;color:#888;cursor:pointer;font-size:13px">é—œé–‰</button></div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+}
+
+// === Auth Gate (Session-based with passcode fallback) ===
+async function checkAuth() {
+  // Try session-based auth first
+  try {
+    var resp = await fetch(API_BASE + '/api/account', { credentials: 'include' });
+    if (resp.ok) {
+      var account = await resp.json();
+      window._userAccount = account;
+      try { sessionStorage.setItem('storyAuth', '1'); } catch(e) {}
+      document.getElementById('authGate').style.display = 'none';
+      document.getElementById('mainApp').style.display = '';
+      init();
+      return;
+    }
+  } catch(e) { /* session auth failed, try passcode fallback */ }
+
+  // Fallback: passcode auth (legacy)
+  var codeInput = document.getElementById('authCode');
+  if (codeInput) {
+    var code = codeInput.value.trim();
+    if (code === ACCESS_CODE) {
+      try { sessionStorage.setItem('storyAuth', '1'); } catch(e) {}
+      document.getElementById('authGate').style.display = 'none';
+      document.getElementById('mainApp').style.display = '';
+      init();
+      return;
+    }
+    if (code) {
+      document.getElementById('authError').style.display = '';
+      codeInput.value = '';
+    }
   }
 }
-// Auto-login if already authed
-try {
-  if (sessionStorage.getItem('storyAuth') === '1') {
-    document.getElementById('authGate').style.display = 'none';
-    document.getElementById('mainApp').style.display = '';
-    init();
-  }
-} catch(e) { /* Safari private mode may block sessionStorage */ }
+
+function loginWithGoogle() {
+  window.location.href = '/auth/google';
+}
+
+// Auto-login: try session first, then passcode
+(async function() {
+  try {
+    var resp = await fetch(API_BASE + '/api/account', { credentials: 'include' });
+    if (resp.ok) {
+      var account = await resp.json();
+      window._userAccount = account;
+      try { sessionStorage.setItem('storyAuth', '1'); } catch(e) {}
+      document.getElementById('authGate').style.display = 'none';
+      document.getElementById('mainApp').style.display = '';
+      init();
+      return;
+    }
+  } catch(e) {}
+  // Fallback to passcode session
+  try {
+    if (sessionStorage.getItem('storyAuth') === '1') {
+      document.getElementById('authGate').style.display = 'none';
+      document.getElementById('mainApp').style.display = '';
+      init();
+    }
+  } catch(e) {}
+})();
 
 let _topics = {};
 let _styles = [];
@@ -99,13 +168,13 @@ function selectStyle(id) {
   if (topicGrid) topicGrid.style.display = isNews ? 'none' : '';
   if (customInput) customInput.style.display = isNews ? 'none' : '';
   topicEls.forEach(function(el) {
-    if (el.textContent.includes('熱門主題') || el.textContent.includes('選擇')) {
+    if (el.textContent.includes('ç†±é–€ä¸»é¡Œ') || el.textContent.includes('é¸æ“‡')) {
       el.style.display = isNews ? 'none' : '';
       if (!isNews) {
         var curStyle = _styles.find(function(s) { return s.id === id; });
         var curType = curStyle ? (curStyle.type || 'story') : 'story';
-        var sectionLabel = {'book':'📚 選擇書籍名稱','article':'📝 選擇文章標題','story':'📝 選擇故事名稱','copy':'📝 選擇文案標題'};
-        el.textContent = sectionLabel[curType] || '📝 選擇標題';
+        var sectionLabel = {'book':'ðŸ“š é¸æ“‡æ›¸ç±åç¨±','article':'ðŸ“ é¸æ“‡æ–‡ç« æ¨™é¡Œ','story':'ðŸ“ é¸æ“‡æ•…äº‹åç¨±','copy':'ðŸ“ é¸æ“‡æ–‡æ¡ˆæ¨™é¡Œ'};
+        el.textContent = sectionLabel[curType] || 'ðŸ“ é¸æ“‡æ¨™é¡Œ';
       }
     }
   });
@@ -114,10 +183,10 @@ function selectStyle(id) {
   if (countBtns) {
     if (isNews) {
       _chapters = 30;
-      countBtns.innerHTML = '<button onclick="setChapters(30)" id="ch30" class="active">30則</button><button onclick="setChapters(60)" id="ch60">60則</button><button onclick="setChapters(100)" id="ch100">100則</button>';
+      countBtns.innerHTML = '<button onclick="setChapters(30)" id="ch30" class="active">30å‰‡</button><button onclick="setChapters(60)" id="ch60">60å‰‡</button><button onclick="setChapters(100)" id="ch100">100å‰‡</button>';
     } else {
       _chapters = 3;
-      countBtns.innerHTML = '<button onclick="setChapters(3)" id="ch3" class="active">3篇</button><button onclick="setChapters(5)" id="ch5">5篇</button><button onclick="setChapters(7)" id="ch7">7篇</button><button onclick="setChapters(30)" id="ch30">30篇</button><button onclick="setChapters(60)" id="ch60">60篇</button><button onclick="promptCustomChapters()" id="chCustom">自訂</button>';
+      countBtns.innerHTML = '<button onclick="setChapters(3)" id="ch3" class="active">3ç¯‡</button><button onclick="setChapters(5)" id="ch5">5ç¯‡</button><button onclick="setChapters(7)" id="ch7">7ç¯‡</button><button onclick="setChapters(30)" id="ch30">30ç¯‡</button><button onclick="setChapters(60)" id="ch60">60ç¯‡</button><button onclick="promptCustomChapters()" id="chCustom">è‡ªè¨‚</button>';
     }
   }
   // For non-news styles: generate AI story title suggestions
@@ -125,31 +194,31 @@ function selectStyle(id) {
     var style = _styles.find(function(s) { return s.id === id; });
     var styleType = style ? (style.type || 'story') : 'story';
     var titleTypeMap = {
-      'news': '新聞標題', 'book': '書籍名稱', 'article': '文章標題',
-      'story': '故事名稱', 'copy': '文案標題'
+      'news': 'æ–°èžæ¨™é¡Œ', 'book': 'æ›¸ç±åç¨±', 'article': 'æ–‡ç« æ¨™é¡Œ',
+      'story': 'æ•…äº‹åç¨±', 'copy': 'æ–‡æ¡ˆæ¨™é¡Œ'
     };
-    var titleType = titleTypeMap[styleType] || '標題';
+    var titleType = titleTypeMap[styleType] || 'æ¨™é¡Œ';
     // Hide static topics, show loading
     var topicGrid = document.getElementById('topicGrid');
     var catRow = document.getElementById('catRow');
     if (catRow) catRow.style.display = 'none';
     if (topicGrid) {
       topicGrid.style.display = '';
-      topicGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#888"><div class="spinner" style="width:24px;height:24px;border:2px solid rgba(240,147,251,0.2);border-top-color:#f093fb;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 8px"></div>AI 正在構思' + titleType + '...</div>';
+      topicGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#888"><div class="spinner" style="width:24px;height:24px;border:2px solid rgba(240,147,251,0.2);border-top-color:#f093fb;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 8px"></div>AI æ­£åœ¨æ§‹æ€' + titleType + '...</div>';
     }
     _selectedTopic = '';
     // Call AI to generate titles
     try {
       var titleStyleMap = {
-        'book': '請生成像暢銷書一樣的書名，例如《原子習慣》《快思慢想》《刻意練習》風格。書名要專業、有深度、讓人想買來看。不要生成故事名稱。',
-        'article': '請生成像熱門專欄文章的標題，有觀點、有深度、讓人想點進去看。',
-        'story': '參考抖音、小紅書、IG 上最火的故事類型。名稱要有懸念感、讓人忍不住想點。',
-        'copy': '請生成像廣告金句或影片標題，簡短有力、一秒抓住眼球。',
-        'news': '請生成今日熱門新聞主題。'
+        'book': 'è«‹ç”Ÿæˆåƒæš¢éŠ·æ›¸ä¸€æ¨£çš„æ›¸åï¼Œä¾‹å¦‚ã€ŠåŽŸå­ç¿’æ…£ã€‹ã€Šå¿«æ€æ…¢æƒ³ã€‹ã€Šåˆ»æ„ç·´ç¿’ã€‹é¢¨æ ¼ã€‚æ›¸åè¦å°ˆæ¥­ã€æœ‰æ·±åº¦ã€è®“äººæƒ³è²·ä¾†çœ‹ã€‚ä¸è¦ç”Ÿæˆæ•…äº‹åç¨±ã€‚',
+        'article': 'è«‹ç”Ÿæˆåƒç†±é–€å°ˆæ¬„æ–‡ç« çš„æ¨™é¡Œï¼Œæœ‰è§€é»žã€æœ‰æ·±åº¦ã€è®“äººæƒ³é»žé€²åŽ»çœ‹ã€‚',
+        'story': 'åƒè€ƒæŠ–éŸ³ã€å°ç´…æ›¸ã€IG ä¸Šæœ€ç«çš„æ•…äº‹é¡žåž‹ã€‚åç¨±è¦æœ‰æ‡¸å¿µæ„Ÿã€è®“äººå¿ä¸ä½æƒ³é»žã€‚',
+        'copy': 'è«‹ç”Ÿæˆåƒå»£å‘Šé‡‘å¥æˆ–å½±ç‰‡æ¨™é¡Œï¼Œç°¡çŸ­æœ‰åŠ›ã€ä¸€ç§’æŠ“ä½çœ¼çƒã€‚',
+        'news': 'è«‹ç”Ÿæˆä»Šæ—¥ç†±é–€æ–°èžä¸»é¡Œã€‚'
       };
       var titleStyle = titleStyleMap[styleType] || titleStyleMap['story'];
-      var titlePrompt = '你是「' + (style ? style.name : id) + '」領域的專家。請生成 20 個目前最熱門的' + titleType + '。\n\n用 JSON 回覆（不要 markdown）：{"titles":["' + titleType + '1","' + titleType + '2",...]}\n\n要求：\n- ' + titleStyle + '\n- 要符合當下流行趨勢\n- 繁體中文\n- 20 個，從最熱門排到次熱門';
-      fetch(API_BASE + '/api/story-generate', {
+      var titlePrompt = 'ä½ æ˜¯ã€Œ' + (style ? style.name : id) + 'ã€é ˜åŸŸçš„å°ˆå®¶ã€‚è«‹ç”Ÿæˆ 20 å€‹ç›®å‰æœ€ç†±é–€çš„' + titleType + 'ã€‚\n\nç”¨ JSON å›žè¦†ï¼ˆä¸è¦ markdownï¼‰ï¼š{"titles":["' + titleType + '1","' + titleType + '2",...]}\n\nè¦æ±‚ï¼š\n- ' + titleStyle + '\n- è¦ç¬¦åˆç•¶ä¸‹æµè¡Œè¶¨å‹¢\n- ç¹é«”ä¸­æ–‡\n- 20 å€‹ï¼Œå¾žæœ€ç†±é–€æŽ’åˆ°æ¬¡ç†±é–€';
+      apiFetch(API_BASE + '/api/story-generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: titlePrompt, style: id })
@@ -163,13 +232,13 @@ function selectStyle(id) {
           if (topicGrid) {
             topicGrid.innerHTML = titles.map(function(t) {
               return '<div class="topic-card" onclick="selectTopic(this,\'' + t.replace(/'/g, "\\'") + '\')">' + t + '</div>';
-            }).join('') + '<div style="grid-column:1/-1;text-align:center;padding:8px"><button onclick="selectStyle(_selectedStyle)" style="padding:8px 20px;border-radius:10px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.08);color:#f093fb;font-size:13px;cursor:pointer">🔄 換一批</button></div>';
+            }).join('') + '<div style="grid-column:1/-1;text-align:center;padding:8px"><button onclick="selectStyle(_selectedStyle)" style="padding:8px 20px;border-radius:10px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.08);color:#f093fb;font-size:13px;cursor:pointer">ðŸ”„ æ›ä¸€æ‰¹</button></div>';
           }
         } catch(e) {
-          if (topicGrid) topicGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:12px;color:#888">生成失敗，請直接輸入主題</div>';
+          if (topicGrid) topicGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:12px;color:#888">ç”Ÿæˆå¤±æ•—ï¼Œè«‹ç›´æŽ¥è¼¸å…¥ä¸»é¡Œ</div>';
         }
       }).catch(function() {
-        if (topicGrid) topicGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:12px;color:#888">生成失敗，請直接輸入主題</div>';
+        if (topicGrid) topicGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:12px;color:#888">ç”Ÿæˆå¤±æ•—ï¼Œè«‹ç›´æŽ¥è¼¸å…¥ä¸»é¡Œ</div>';
       });
     } catch(e) {}
   }
@@ -212,12 +281,12 @@ function setChapters(n) {
   if (btn) btn.classList.add('active');
   else {
     var custom = document.getElementById('chCustom');
-    if (custom) { custom.classList.add('active'); custom.textContent = n + '篇'; }
+    if (custom) { custom.classList.add('active'); custom.textContent = n + 'ç¯‡'; }
   }
 }
 
 function promptCustomChapters() {
-  var n = prompt('請輸入篇章數（1-200）：');
+  var n = prompt('è«‹è¼¸å…¥ç¯‡ç« æ•¸ï¼ˆ1-200ï¼‰ï¼š');
   if (n && !isNaN(n) && parseInt(n) > 0 && parseInt(n) <= 200) {
     setChapters(parseInt(n));
   }
@@ -240,9 +309,9 @@ function setLength(len) {
 }
 
 function getLengthText() {
-  if (_chapterLength === 'short') return '約200字';
-  if (_chapterLength === 'long') return '500-800字';
-  return '約400字';
+  if (_chapterLength === 'short') return 'ç´„200å­—';
+  if (_chapterLength === 'long') return '500-800å­—';
+  return 'ç´„400å­—';
 }
 
 // quality setter (variable declared at top)
@@ -266,10 +335,10 @@ function readStoryBrowser() {
   var chapters = window._currentStory.chapters;
   var idx = 0;
   function readNext() {
-    if (idx >= chapters.length) { showToast('朗讀完畢'); return; }
+    if (idx >= chapters.length) { showToast('æœ—è®€å®Œç•¢'); return; }
     var ch = chapters[idx];
-    showToast('🔊 朗讀第 ' + ch.num + ' 篇...');
-    var u = new SpeechSynthesisUtterance(ch.title + '。' + ch.text);
+    showToast('ðŸ”Š æœ—è®€ç¬¬ ' + ch.num + ' ç¯‡...');
+    var u = new SpeechSynthesisUtterance(ch.title + 'ã€‚' + ch.text);
     u.lang = 'zh-TW'; u.rate = 1;
     u.onend = function() { idx++; readNext(); };
     speechSynthesis.speak(u);
@@ -283,50 +352,50 @@ async function readStoryGemini(voiceName) {
   var chapters = window._currentStory.chapters;
   for (var i = 0; i < chapters.length; i++) {
     var ch = chapters[i];
-    showToast('🤖 生成語音第 ' + ch.num + ' 篇...');
+    showToast('ðŸ¤– ç”ŸæˆèªžéŸ³ç¬¬ ' + ch.num + ' ç¯‡...');
     try {
-      var resp = await fetch(API_BASE + '/api/story/tts', {
+      var resp = await apiFetch(API_BASE + '/api/story/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
-        body: JSON.stringify({ text: ch.title + '。' + ch.text, voice: voiceName })
+        body: JSON.stringify({ text: ch.title + 'ã€‚' + ch.text, voice: voiceName })
       });
-      if (!resp.ok) { showToast('語音生成失敗'); continue; }
+      if (!resp.ok) { showToast('èªžéŸ³ç”Ÿæˆå¤±æ•—'); continue; }
       var data = await resp.json();
       if (data.audio) {
         var audio = new Audio('data:' + (data.mimeType || 'audio/mp3') + ';base64,' + data.audio);
         await new Promise(function(resolve) { audio.onended = resolve; audio.onerror = resolve; audio.play(); });
       }
-    } catch(e) { showToast('語音錯誤: ' + e.message); }
+    } catch(e) { showToast('èªžéŸ³éŒ¯èª¤: ' + e.message); }
   }
-  showToast('朗讀完畢');
+  showToast('æœ—è®€å®Œç•¢');
 }
 
 function getRandomRefs(styleId, count) {
   var refs = window._references && window._references[styleId] ? window._references[styleId] : [];
   if (refs.length === 0) return '';
   var shuffled = refs.slice().sort(function() { return Math.random() - 0.5; });
-  return shuffled.slice(0, count || 4).join('、');
+  return shuffled.slice(0, count || 4).join('ã€');
 }
 
 // === Story Hook Techniques (injected into prompt) ===
 const HOOK_TECHNIQUES = [
-  '開頭用一個震撼的事實或問題抓住注意力（前3秒法則）',
-  '每篇結尾留下懸念或cliffhanger，讓讀者想看下一篇',
-  '在故事中插入「你可能不知道」「更可怕的是」等轉折語',
-  '用具體數字和細節增加可信度（例如：距離地球4.2光年）',
-  '加入讀者能代入的情境（想像一下，如果你...）',
-  '使用對比和反差製造衝擊（表面上...但實際上...）',
-  '在關鍵處使用短句增加節奏感和緊張感',
-  '每篇都有一個「金句」適合截圖分享',
-  '用故事化的方式呈現知識，不要像教科書',
-  '結尾要有餘韻，讓讀者思考或產生情緒'
+  'é–‹é ­ç”¨ä¸€å€‹éœ‡æ’¼çš„äº‹å¯¦æˆ–å•é¡ŒæŠ“ä½æ³¨æ„åŠ›ï¼ˆå‰3ç§’æ³•å‰‡ï¼‰',
+  'æ¯ç¯‡çµå°¾ç•™ä¸‹æ‡¸å¿µæˆ–cliffhangerï¼Œè®“è®€è€…æƒ³çœ‹ä¸‹ä¸€ç¯‡',
+  'åœ¨æ•…äº‹ä¸­æ’å…¥ã€Œä½ å¯èƒ½ä¸çŸ¥é“ã€ã€Œæ›´å¯æ€•çš„æ˜¯ã€ç­‰è½‰æŠ˜èªž',
+  'ç”¨å…·é«”æ•¸å­—å’Œç´°ç¯€å¢žåŠ å¯ä¿¡åº¦ï¼ˆä¾‹å¦‚ï¼šè·é›¢åœ°çƒ4.2å…‰å¹´ï¼‰',
+  'åŠ å…¥è®€è€…èƒ½ä»£å…¥çš„æƒ…å¢ƒï¼ˆæƒ³åƒä¸€ä¸‹ï¼Œå¦‚æžœä½ ...ï¼‰',
+  'ä½¿ç”¨å°æ¯”å’Œåå·®è£½é€ è¡æ“Šï¼ˆè¡¨é¢ä¸Š...ä½†å¯¦éš›ä¸Š...ï¼‰',
+  'åœ¨é—œéµè™•ä½¿ç”¨çŸ­å¥å¢žåŠ ç¯€å¥æ„Ÿå’Œç·Šå¼µæ„Ÿ',
+  'æ¯ç¯‡éƒ½æœ‰ä¸€å€‹ã€Œé‡‘å¥ã€é©åˆæˆªåœ–åˆ†äº«',
+  'ç”¨æ•…äº‹åŒ–çš„æ–¹å¼å‘ˆç¾çŸ¥è­˜ï¼Œä¸è¦åƒæ•™ç§‘æ›¸',
+  'çµå°¾è¦æœ‰é¤˜éŸ»ï¼Œè®“è®€è€…æ€è€ƒæˆ–ç”¢ç”Ÿæƒ…ç·’'
 ];
 
 // === Generate Story ===
 async function generate() {
   var isNews = (_selectedStyle === 'news' || _selectedStyle === 'finance');
-  const topic = isNews ? '今天的最新' + (_selectedStyle === 'finance' ? '財經' : '') + '新聞' : (document.getElementById('customTopic').value.trim() || _selectedTopic);
-  if (!topic && !isNews) { showToast('請選擇或輸入一個主題'); return; }
+  const topic = isNews ? 'ä»Šå¤©çš„æœ€æ–°' + (_selectedStyle === 'finance' ? 'è²¡ç¶“' : '') + 'æ–°èž' : (document.getElementById('customTopic').value.trim() || _selectedTopic);
+  if (!topic && !isNews) { showToast('è«‹é¸æ“‡æˆ–è¼¸å…¥ä¸€å€‹ä¸»é¡Œ'); return; }
 
   const style = _styles.find(s => s.id === _selectedStyle) || _styles[0];
   const audience = _audiences.find(a => a.id === _selectedAudience) || _audiences[0];
@@ -334,12 +403,12 @@ async function generate() {
   const output = document.getElementById('output');
 
   btn.disabled = true;
-  btn.textContent = '⏳ 生成中...';
-  output.innerHTML = '<div class="loading"><div class="spinner"></div><p>' + (isNews ? '搜尋今日新聞中...' : 'AI 正在構思故事架構...') + '</p></div>';
+  btn.textContent = 'â³ ç”Ÿæˆä¸­...';
+  output.innerHTML = '<div class="loading"><div class="spinner"></div><p>' + (isNews ? 'æœå°‹ä»Šæ—¥æ–°èžä¸­...' : 'AI æ­£åœ¨æ§‹æ€æ•…äº‹æž¶æ§‹...') + '</p></div>';
 
   // News mode: batch API calls for 30/60/100 articles
   if (isNews) {
-    var newsType = _selectedStyle === 'finance' ? '財經' : '';
+    var newsType = _selectedStyle === 'finance' ? 'è²¡ç¶“' : '';
     var batchSize = 15;
     var totalBatches = Math.ceil(_chapters / batchSize);
     var allArticles = [];
@@ -351,16 +420,16 @@ async function generate() {
       for (var batch = 0; batch < totalBatches; batch++) {
         var remaining = _chapters - (batch * batchSize);
         var thisCount = Math.min(batchSize, remaining);
-        output.innerHTML = '<div class="loading"><div class="spinner"></div><p>搜尋新聞中... (' + allArticles.length + '/' + _chapters + ')</p></div>';
+        output.innerHTML = '<div class="loading"><div class="spinner"></div><p>æœå°‹æ–°èžä¸­... (' + allArticles.length + '/' + _chapters + ')</p></div>';
 
         var recentTitles = allArticles.slice(-5).map(function(a) { return a.title; }).join(', ');
-        var newsPrompt = '你是一位專業新聞記者。請搜尋今天（' + newsDate + '）最重要的' + newsType + '新聞。\n\n' +
+        var newsPrompt = 'ä½ æ˜¯ä¸€ä½å°ˆæ¥­æ–°èžè¨˜è€…ã€‚è«‹æœå°‹ä»Šå¤©ï¼ˆ' + newsDate + 'ï¼‰æœ€é‡è¦çš„' + newsType + 'æ–°èžã€‚\n\n' +
           (recentTitles ? 'Avoid these: ' + recentTitles + '\n\n' : '') +
-          '請用 JSON 格式回覆，不要加 markdown 標記：\n' +
-          '{"articles":[{"title":"新聞標題","summary":"2-3句記者播報風格摘要","source":"來源媒體","url":"新聞連結URL","category":"分類","time":"時間"}]}\n\n' +
-          '要求：列出 ' + thisCount + ' 則不同的重要新聞，每則必須有真實連結URL，用繁體中文，記者播報口吻';
+          'è«‹ç”¨ JSON æ ¼å¼å›žè¦†ï¼Œä¸è¦åŠ  markdown æ¨™è¨˜ï¼š\n' +
+          '{"articles":[{"title":"æ–°èžæ¨™é¡Œ","summary":"2-3å¥è¨˜è€…æ’­å ±é¢¨æ ¼æ‘˜è¦","source":"ä¾†æºåª’é«”","url":"æ–°èžé€£çµURL","category":"åˆ†é¡ž","time":"æ™‚é–“"}]}\n\n' +
+          'è¦æ±‚ï¼šåˆ—å‡º ' + thisCount + ' å‰‡ä¸åŒçš„é‡è¦æ–°èžï¼Œæ¯å‰‡å¿…é ˆæœ‰çœŸå¯¦é€£çµURLï¼Œç”¨ç¹é«”ä¸­æ–‡ï¼Œè¨˜è€…æ’­å ±å£å»';
 
-        var resp = await fetch(API_BASE + '/api/story-generate', {
+        var resp = await apiFetch(API_BASE + '/api/story-generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: newsPrompt, style: _selectedStyle })
@@ -381,13 +450,13 @@ async function generate() {
       var newsData = { date: newsDate, headline: headline, articles: allArticles };
       renderNews(newsData, '', allSources);
     } catch(e) {
-      output.innerHTML = '<div class="loading"><p>❌ ' + escHtml(e.message) + '</p></div>';
+      output.innerHTML = '<div class="loading"><p>âŒ ' + escHtml(e.message) + '</p></div>';
     }
-    btn.disabled = false; btn.textContent = '✨ 生成';
+    btn.disabled = false; btn.textContent = 'âœ¨ ç”Ÿæˆ';
     return;
   }
 
-  // Story mode — per-chapter generation with DNA + outline + memory
+  // Story mode â€” per-chapter generation with DNA + outline + memory
   var allChapters = [];
 
   try {
@@ -395,11 +464,11 @@ async function generate() {
     var tuningResult = await showTuningDialog(topic, style, audience);
 
     // Step 1: Load Style DNA
-    output.innerHTML = '<div class="loading"><div class="spinner"></div><p>載入風格設定...</p></div>';
+    output.innerHTML = '<div class="loading"><div class="spinner"></div><p>è¼‰å…¥é¢¨æ ¼è¨­å®š...</p></div>';
     var dna = await loadStyleDNA(_selectedStyle);
 
     // Step 2: Generate outline (pre-plan story arc)
-    output.innerHTML = '<div class="loading"><div class="spinner"></div><p>規劃故事大綱...</p></div>';
+    output.innerHTML = '<div class="loading"><div class="spinner"></div><p>è¦åŠƒæ•…äº‹å¤§ç¶±...</p></div>';
     var outline = await generateOutline(dna, topic, _chapters, audience);
 
     // Step 3: Initialize session memory
@@ -421,7 +490,7 @@ async function generate() {
     for (var chIdx = 0; chIdx < _chapters; chIdx += batchSize) {
       var batchEnd = Math.min(chIdx + batchSize, _chapters);
       var chapterNum = chIdx + 1;
-      output.innerHTML = '<div class="loading"><div class="spinner"></div><p>AI 正在創作第 ' + chapterNum + (batchSize > 1 ? '-' + batchEnd : '') + '/' + _chapters + ' 篇...</p></div>';
+      output.innerHTML = '<div class="loading"><div class="spinner"></div><p>AI æ­£åœ¨å‰µä½œç¬¬ ' + chapterNum + (batchSize > 1 ? '-' + batchEnd : '') + '/' + _chapters + ' ç¯‡...</p></div>';
 
       if (batchSize === 1) {
         // High quality: one chapter per API call
@@ -432,7 +501,7 @@ async function generate() {
           isFirstChapter: chapterNum === 1, isLastChapter: chapterNum === _chapters,
           bible: bibleContext, language: currentLang, tuning: tuningResult
         });
-        var resp = await fetch(API_BASE + '/api/story-generate', {
+        var resp = await apiFetch(API_BASE + '/api/story-generate', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: prompt, style: _selectedStyle })
         });
@@ -461,7 +530,7 @@ async function generate() {
           batchOutlines: batchOutlines, batchSize: batchEnd - chIdx,
           bible: bibleContext, language: currentLang, tuning: tuningResult
         });
-        var resp = await fetch(API_BASE + '/api/story-generate', {
+        var resp = await apiFetch(API_BASE + '/api/story-generate', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: batchPrompt, style: _selectedStyle })
         });
@@ -484,7 +553,7 @@ async function generate() {
           var got = batchChapters.length;
           if (got < (batchEnd - chIdx)) {
             for (var fi = chIdx + got; fi < batchEnd; fi++) {
-              output.innerHTML = '<div class="loading"><div class="spinner"></div><p>補生成第 ' + (fi+1) + '/' + _chapters + ' 篇...</p></div>';
+              output.innerHTML = '<div class="loading"><div class="spinner"></div><p>è£œç”Ÿæˆç¬¬ ' + (fi+1) + '/' + _chapters + ' ç¯‡...</p></div>';
               var fallbackPrompt = assemblePrompt({
                 dna: dna, chapterOutline: outline[fi], memory: memory,
                 chapterNum: fi + 1, totalChapters: _chapters, topic: topic,
@@ -492,7 +561,7 @@ async function generate() {
                 isFirstChapter: false, isLastChapter: (fi + 1) === _chapters,
                 bible: bibleContext, language: currentLang, tuning: tuningResult
               });
-              var fbResp = await fetch(API_BASE + '/api/story-generate', {
+              var fbResp = await apiFetch(API_BASE + '/api/story-generate', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: fallbackPrompt, style: _selectedStyle })
               });
@@ -513,7 +582,7 @@ async function generate() {
       }
     }
 
-    if (allChapters.length === 0) throw new Error('生成失敗');
+    if (allChapters.length === 0) throw new Error('ç”Ÿæˆå¤±æ•—');
     // Fill in missing chapters with placeholders
     var chapterMap = {};
     allChapters.forEach(function(ch) { chapterMap[ch.num] = ch; });
@@ -522,7 +591,7 @@ async function generate() {
       if (chapterMap[cn]) {
         filledChapters.push(chapterMap[cn]);
       } else {
-        filledChapters.push({ num: cn, title: '第 ' + cn + ' 篇（待生成）', text: '⚠️ 此章節生成失敗，請使用編輯功能選擇此章節重新生成。', hook: '', imagePrompt: '', _missing: true });
+        filledChapters.push({ num: cn, title: 'ç¬¬ ' + cn + ' ç¯‡ï¼ˆå¾…ç”Ÿæˆï¼‰', text: 'âš ï¸ æ­¤ç« ç¯€ç”Ÿæˆå¤±æ•—ï¼Œè«‹ä½¿ç”¨ç·¨è¼¯åŠŸèƒ½é¸æ“‡æ­¤ç« ç¯€é‡æ–°ç”Ÿæˆã€‚', hook: '', imagePrompt: '', _missing: true });
       }
     }
     var story = { title: memory.title || topic, characters: memory.characters, chapters: filledChapters };
@@ -551,19 +620,19 @@ async function generate() {
       // Use a consistent ID that will be reused during publish
       var storyId = Date.now().toString(36);
       window._preGeneratedStoryId = storyId;
-      showToast('🔊 語音生成中（' + vName + '），背景處理...', true);
-      fetch(API_BASE + '/api/story/gen-audio', {
+      showToast('ðŸ”Š èªžéŸ³ç”Ÿæˆä¸­ï¼ˆ' + vName + 'ï¼‰ï¼ŒèƒŒæ™¯è™•ç†...', true);
+      apiFetch(API_BASE + '/api/story/gen-audio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
-        body: JSON.stringify({ id: storyId, chapterTexts: filledChapters.filter(function(ch){return !ch._missing;}).map(function(ch) { return ch.title + '。' + ch.text; }), voice: vName, speed: window._voiceSpeed || 'normal', style: window._voiceStyle || 'podcast' })
+        body: JSON.stringify({ id: storyId, chapterTexts: filledChapters.filter(function(ch){return !ch._missing;}).map(function(ch) { return ch.title + 'ã€‚' + ch.text; }), voice: vName, speed: window._voiceSpeed || 'normal', style: window._voiceStyle || 'podcast' })
       }).then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
-        if (d && d.results) { var ok = d.results.filter(function(r){return r.ok;}).length; showToast('✅ 語音已生成（' + ok + '/' + filledChapters.length + '）'); }
+        if (d && d.results) { var ok = d.results.filter(function(r){return r.ok;}).length; showToast('âœ… èªžéŸ³å·²ç”Ÿæˆï¼ˆ' + ok + '/' + filledChapters.length + 'ï¼‰'); }
       }).catch(function() {});
     }
   } catch (e) {
-    output.innerHTML = '<div class="loading"><p>❌ ' + escHtml(e.message) + '</p></div>';
+    output.innerHTML = '<div class="loading"><p>âŒ ' + escHtml(e.message) + '</p></div>';
   }
-  btn.disabled = false; btn.textContent = '✨ 生成故事';
+  btn.disabled = false; btn.textContent = 'âœ¨ ç”Ÿæˆæ•…äº‹';
 }
 
 // === Render News (Google News style) ===
@@ -571,7 +640,7 @@ function renderNews(newsData, rawText, sources) {
   var output = document.getElementById('output');
   var html = '';
   if (newsData && newsData.articles) {
-    html += '<div style="margin:20px 0 8px;text-align:center"><div style="font-size:22px;font-weight:700;color:#fff">📰 ' + (_selectedStyle === 'finance' ? '財經' : '今日') + '新聞</div>';
+    html += '<div style="margin:20px 0 8px;text-align:center"><div style="font-size:22px;font-weight:700;color:#fff">ðŸ“° ' + (_selectedStyle === 'finance' ? 'è²¡ç¶“' : 'ä»Šæ—¥') + 'æ–°èž</div>';
     html += '<div style="font-size:12px;color:#666;margin-top:4px">' + (newsData.date || new Date().toISOString().split('T')[0]) + '</div>';
     if (newsData.headline) html += '<div style="font-size:14px;color:#f093fb;margin-top:8px;font-weight:600">' + escHtml(newsData.headline) + '</div>';
     html += '</div>';
@@ -597,8 +666,8 @@ function renderNews(newsData, rawText, sources) {
       html += '<div style="font-size:14px;color:#aaa;line-height:1.7">' + escHtml(article.summary) + '</div>';
       // Source + Link
       html += '<div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">';
-      if (article.source) html += '<span style="font-size:12px;color:#888;background:rgba(255,255,255,0.04);padding:3px 8px;border-radius:4px">📰 ' + escHtml(article.source) + '</span>';
-      if (url) html += '<a href="' + escHtml(url) + '" target="_blank" style="font-size:12px;color:#4ecdc4;text-decoration:none;font-weight:600">閱讀全文 →</a>';
+      if (article.source) html += '<span style="font-size:12px;color:#888;background:rgba(255,255,255,0.04);padding:3px 8px;border-radius:4px">ðŸ“° ' + escHtml(article.source) + '</span>';
+      if (url) html += '<a href="' + escHtml(url) + '" target="_blank" style="font-size:12px;color:#4ecdc4;text-decoration:none;font-weight:600">é–±è®€å…¨æ–‡ â†’</a>';
       html += '</div></div>';
     });
   } else {
@@ -609,13 +678,13 @@ function renderNews(newsData, rawText, sources) {
   // All sources
   if (sources && sources.length > 0) {
     html += '<div style="margin:12px 0;padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04)">';
-    html += '<div style="font-size:12px;color:#888;margin-bottom:6px">📎 所有來源</div>';
+    html += '<div style="font-size:12px;color:#888;margin-bottom:6px">ðŸ“Ž æ‰€æœ‰ä¾†æº</div>';
     sources.forEach(function(src) {
       if (src.url) html += '<div style="margin:3px 0"><a href="' + escHtml(src.url) + '" target="_blank" style="color:#4ecdc4;font-size:12px;text-decoration:none">' + escHtml(src.title || src.url) + '</a></div>';
     });
     html += '</div>';
   }
-  html += '<div class="export-bar"><button onclick="publishNews()">📤 發佈新聞</button><button onclick="copyAll()">📋 複製全部</button></div>';
+  html += '<div class="export-bar"><button onclick="publishNews()">ðŸ“¤ ç™¼ä½ˆæ–°èž</button><button onclick="copyAll()">ðŸ“‹ è¤‡è£½å…¨éƒ¨</button></div>';
   output.innerHTML = html;
   window._currentStory = newsData;
   window._currentNewsSources = sources;
@@ -624,31 +693,31 @@ function renderNews(newsData, rawText, sources) {
 // === Render Story ===
 function renderStory(story) {
   const output = document.getElementById('output');
-  let html = '<div class="story-header"><div class="story-title">' + escHtml(story.title) + '</div><div class="story-meta">' + _chapters + ' 篇章 · AI 生成</div></div>';
+  let html = '<div class="story-header"><div class="story-title">' + escHtml(story.title) + '</div><div class="story-meta">' + _chapters + ' ç¯‡ç«  Â· AI ç”Ÿæˆ</div></div>';
 
   // Show built-in scores if available
   if (story.scores) {
     var sc = story.scores;
-    var labels = {scene:'場景',character:'人物',depth:'深度',pacing:'節奏',foreshadow:'伏筆',tone:'語氣',memorable:'記憶點'};
+    var labels = {scene:'å ´æ™¯',character:'äººç‰©',depth:'æ·±åº¦',pacing:'ç¯€å¥',foreshadow:'ä¼ç­†',tone:'èªžæ°£',memorable:'è¨˜æ†¶é»ž'};
     html += '<div style="margin:0 0 12px;padding:12px;border-radius:10px;background:rgba(78,205,196,0.06);border:1px solid rgba(78,205,196,0.15);display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center">';
-    html += '<span style="font-size:12px;color:#888">AI 自評：</span>';
+    html += '<span style="font-size:12px;color:#888">AI è‡ªè©•ï¼š</span>';
     for (var k in labels) { if (sc[k]) html += '<span style="font-size:12px;color:' + (sc[k] >= 9 ? '#2ecc71' : sc[k] >= 7 ? '#f39c12' : '#e74c3c') + '">' + labels[k] + ' ' + sc[k] + '</span>'; }
-    if (sc.avg) html += '<span style="font-size:13px;font-weight:700;color:' + (sc.avg >= 9 ? '#2ecc71' : '#f39c12') + '">平均 ' + sc.avg + '</span>';
+    if (sc.avg) html += '<span style="font-size:13px;font-weight:700;color:' + (sc.avg >= 9 ? '#2ecc71' : '#f39c12') + '">å¹³å‡ ' + sc.avg + '</span>';
     html += '</div>';
   }
 
   story.chapters.forEach((ch, i) => {
     html += '<div class="chapter-card" id="chapter' + i + '">' +
-      '<div class="chapter-img" id="chImg' + i + '"><div class="img-loading"><div class="spinner"></div><span>生成配圖中...</span></div></div>' +
+      '<div class="chapter-img" id="chImg' + i + '"><div class="img-loading"><div class="spinner"></div><span>ç”Ÿæˆé…åœ–ä¸­...</span></div></div>' +
       '<div class="chapter-body">' +
-        '<div class="chapter-num">第 ' + ch.num + ' 篇</div>' +
+        '<div class="chapter-num">ç¬¬ ' + ch.num + ' ç¯‡</div>' +
         '<div class="chapter-title">' + escHtml(ch.title) + '</div>' +
         '<div class="chapter-text">' + mdToHtml(ch.text) + '</div>' +
-        (ch.hook ? '<div style="margin-top:12px;padding:10px 14px;border-radius:10px;background:rgba(240,147,251,0.08);border-left:3px solid #f093fb;font-size:14px;color:#f093fb;font-weight:600">💬 ' + escHtml(ch.hook) + '</div>' : '') +
+        (ch.hook ? '<div style="margin-top:12px;padding:10px 14px;border-radius:10px;background:rgba(240,147,251,0.08);border-left:3px solid #f093fb;font-size:14px;color:#f093fb;font-weight:600">ðŸ’¬ ' + escHtml(ch.hook) + '</div>' : '') +
       '</div>' +
       '<div class="chapter-actions">' +
-        '<button onclick="copyChapter(' + i + ')">📋 複製</button>' +
-        '<button onclick="regenImage(' + i + ')">🖼️ 重新生圖</button>' +
+        '<button onclick="copyChapter(' + i + ')">ðŸ“‹ è¤‡è£½</button>' +
+        '<button onclick="regenImage(' + i + ')">ðŸ–¼ï¸ é‡æ–°ç”Ÿåœ–</button>' +
       '</div>' +
     '</div>';
   });
@@ -656,7 +725,7 @@ function renderStory(story) {
   // Show news sources if available
   if (story._sources && story._sources.length > 0) {
     html += '<div style="margin:16px 0;padding:14px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)">';
-    html += '<div style="font-size:13px;color:#f093fb;font-weight:600;margin-bottom:8px">📰 新聞來源</div>';
+    html += '<div style="font-size:13px;color:#f093fb;font-weight:600;margin-bottom:8px">ðŸ“° æ–°èžä¾†æº</div>';
     story._sources.forEach(function(src) {
       if (src.url) html += '<div style="margin:4px 0"><a href="' + escHtml(src.url) + '" target="_blank" style="color:#4ecdc4;font-size:13px;text-decoration:none">' + escHtml(src.title || src.url) + '</a></div>';
     });
@@ -664,15 +733,15 @@ function renderStory(story) {
   }
 
   html += '<div class="export-bar">' +
-    '<button onclick="showEditUI(window._currentStory, window._editPublishedId || \'\')">✏️ 編輯章節</button>' +
-    '<button onclick="aiScoreStory()">📊 AI 評分</button>' +
-    '<button onclick="aiOptimizeStory()">✨ AI 優化</button>' +
-    '<button onclick="regenAllImages()">🖼️ 重新生圖</button>' +
-    '<button onclick="publishStory()">📤 發佈</button>' +
-    '<button onclick="exportEPUB()">📕 EPUB</button>' +
-    '<button onclick="exportPDF()">📄 PDF</button>' +
-    '<button onclick="copyAll()">📋 複製全部</button>' +
-    '<button onclick="downloadMD()">⬇️ 下載 MD</button>' +
+    '<button onclick="showEditUI(window._currentStory, window._editPublishedId || \'\')">âœï¸ ç·¨è¼¯ç« ç¯€</button>' +
+    '<button onclick="aiScoreStory()">ðŸ“Š AI è©•åˆ†</button>' +
+    '<button onclick="aiOptimizeStory()">âœ¨ AI å„ªåŒ–</button>' +
+    '<button onclick="regenAllImages()">ðŸ–¼ï¸ é‡æ–°ç”Ÿåœ–</button>' +
+    '<button onclick="publishStory()">ðŸ“¤ ç™¼ä½ˆ</button>' +
+    '<button onclick="exportEPUB()">ðŸ“• EPUB</button>' +
+    '<button onclick="exportPDF()">ðŸ“„ PDF</button>' +
+    '<button onclick="copyAll()">ðŸ“‹ è¤‡è£½å…¨éƒ¨</button>' +
+    '<button onclick="downloadMD()">â¬‡ï¸ ä¸‹è¼‰ MD</button>' +
   '</div>';
 
   output.innerHTML = html;
@@ -699,7 +768,7 @@ async function generateImage(prompt, chapterIdx) {
   const imgEl = document.getElementById('chImg' + chapterIdx);
   if (!imgEl) return;
   try {
-    const resp = await fetch(API_BASE + '/api/story-image', {
+    const resp = await apiFetch(API_BASE + '/api/story-image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: prompt })
@@ -724,7 +793,7 @@ function regenImage(idx) {
   const ch = window._currentStory.chapters[idx];
   if (!ch) return;
   var imgEl = document.getElementById('chImg' + idx);
-  if (imgEl) imgEl.innerHTML = '<div class="img-loading"><div class="spinner"></div><span>重新生成...</span></div>';
+  if (imgEl) imgEl.innerHTML = '<div class="img-loading"><div class="spinner"></div><span>é‡æ–°ç”Ÿæˆ...</span></div>';
   generateImage(ch.imagePrompt, idx);
 }
 
@@ -732,20 +801,20 @@ function regenImage(idx) {
 function copyChapter(idx) {
   if (!window._currentStory) return;
   const ch = window._currentStory.chapters[idx];
-  const text = '【第' + ch.num + '篇】' + ch.title + '\n\n' + ch.text + (ch.hook ? '\n\n💬 ' + ch.hook : '');
-  navigator.clipboard.writeText(text).then(() => showToast('已複製第' + ch.num + '篇'));
+  const text = 'ã€ç¬¬' + ch.num + 'ç¯‡ã€‘' + ch.title + '\n\n' + ch.text + (ch.hook ? '\n\nðŸ’¬ ' + ch.hook : '');
+  navigator.clipboard.writeText(text).then(() => showToast('å·²è¤‡è£½ç¬¬' + ch.num + 'ç¯‡'));
 }
 
 function copyAll() {
   if (!window._currentStory) return;
   const s = window._currentStory;
-  let text = '📖 ' + s.title + '\n\n';
+  let text = 'ðŸ“– ' + s.title + '\n\n';
   s.chapters.forEach(ch => {
-    text += '═══════════════════\n【第' + ch.num + '篇】' + ch.title + '\n═══════════════════\n\n' + ch.text + '\n';
-    if (ch.hook) text += '\n💬 ' + ch.hook + '\n';
+    text += 'â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\nã€ç¬¬' + ch.num + 'ç¯‡ã€‘' + ch.title + '\nâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•\n\n' + ch.text + '\n';
+    if (ch.hook) text += '\nðŸ’¬ ' + ch.hook + '\n';
     text += '\n';
   });
-  navigator.clipboard.writeText(text).then(() => showToast('已複製全部故事'));
+  navigator.clipboard.writeText(text).then(() => showToast('å·²è¤‡è£½å…¨éƒ¨æ•…äº‹'));
 }
 
 function downloadMD() {
@@ -753,8 +822,8 @@ function downloadMD() {
   const s = window._currentStory;
   let md = '# ' + s.title + '\n\n';
   s.chapters.forEach(ch => {
-    md += '## 第' + ch.num + '篇：' + ch.title + '\n\n' + ch.text + '\n\n';
-    if (ch.hook) md += '> 💬 ' + ch.hook + '\n\n';
+    md += '## ç¬¬' + ch.num + 'ç¯‡ï¼š' + ch.title + '\n\n' + ch.text + '\n\n';
+    if (ch.hook) md += '> ðŸ’¬ ' + ch.hook + '\n\n';
     md += '---\n\n';
   });
   const blob = new Blob([md], { type: 'text/markdown' });
@@ -794,25 +863,25 @@ function renderBiblePanel(bible) {
   if (!bible || (!bible.characters.length && !bible.world.length && !bible.relationships.length && !bible.plotThreads.length)) return;
 
   var html = '<div id="biblePanel" class="bible-panel">';
-  html += '<div class="bible-header" onclick="toggleBiblePanel()"><span>📖 Story Bible</span><span class="bible-toggle">▼</span></div>';
+  html += '<div class="bible-header" onclick="toggleBiblePanel()"><span>ðŸ“– Story Bible</span><span class="bible-toggle">â–¼</span></div>';
   html += '<div class="bible-content">';
 
   if (bible.characters.length) {
-    html += '<div class="bible-section"><div class="bible-section-title">👤 角色 (' + bible.characters.length + ')</div>';
+    html += '<div class="bible-section"><div class="bible-section-title">ðŸ‘¤ è§’è‰² (' + bible.characters.length + ')</div>';
     bible.characters.forEach(function(ch) {
       html += '<div class="bible-card"><div class="bible-card-name">' + escHtml(ch.name) + '</div>';
       if (ch.personality) html += '<div class="bible-card-detail">' + escHtml(ch.personality) + '</div>';
-      if (ch.arc) html += '<div class="bible-card-detail" style="color:#f093fb">弧線: ' + escHtml(ch.arc) + '</div>';
+      if (ch.arc) html += '<div class="bible-card-detail" style="color:#f093fb">å¼§ç·š: ' + escHtml(ch.arc) + '</div>';
       html += '</div>';
     });
     html += '</div>';
   }
 
   if (bible.relationships.length) {
-    html += '<div class="bible-section"><div class="bible-section-title">💕 關係 (' + bible.relationships.length + ')</div>';
+    html += '<div class="bible-section"><div class="bible-section-title">ðŸ’• é—œä¿‚ (' + bible.relationships.length + ')</div>';
     bible.relationships.forEach(function(r) {
       var c1 = r.char1 || r.char1Id || '?', c2 = r.char2 || r.char2Id || '?';
-      html += '<div class="bible-card"><div class="bible-card-name">' + escHtml(c1) + ' ↔ ' + escHtml(c2) + '</div>';
+      html += '<div class="bible-card"><div class="bible-card-name">' + escHtml(c1) + ' â†” ' + escHtml(c2) + '</div>';
       if (r.description) html += '<div class="bible-card-detail">' + escHtml(r.description) + '</div>';
       html += '</div>';
     });
@@ -820,7 +889,7 @@ function renderBiblePanel(bible) {
   }
 
   if (bible.world.length) {
-    html += '<div class="bible-section"><div class="bible-section-title">🌍 世界觀 (' + bible.world.length + ')</div>';
+    html += '<div class="bible-section"><div class="bible-section-title">ðŸŒ ä¸–ç•Œè§€ (' + bible.world.length + ')</div>';
     bible.world.forEach(function(w) {
       html += '<div class="bible-card"><div class="bible-card-name">' + escHtml(w.name) + '</div>';
       if (w.description) html += '<div class="bible-card-detail">' + escHtml(w.description) + '</div>';
@@ -830,9 +899,9 @@ function renderBiblePanel(bible) {
   }
 
   if (bible.plotThreads.length) {
-    html += '<div class="bible-section"><div class="bible-section-title">🧵 劇情線 (' + bible.plotThreads.length + ')</div>';
+    html += '<div class="bible-section"><div class="bible-section-title">ðŸ§µ åŠ‡æƒ…ç·š (' + bible.plotThreads.length + ')</div>';
     bible.plotThreads.forEach(function(pt) {
-      var statusIcon = pt.status === 'active' ? '🟢' : pt.status === 'resolved' ? '✅' : '💤';
+      var statusIcon = pt.status === 'active' ? 'ðŸŸ¢' : pt.status === 'resolved' ? 'âœ…' : 'ðŸ’¤';
       html += '<div class="bible-card"><div class="bible-card-name">' + statusIcon + ' ' + escHtml(pt.name) + '</div>';
       if (pt.description) html += '<div class="bible-card-detail">' + escHtml(pt.description) + '</div>';
       html += '</div>';
@@ -847,26 +916,26 @@ function renderBiblePanel(bible) {
 
 // === Export Handlers ===
 async function exportEPUB() {
-  if (!window._currentStory) { showToast('沒有故事可匯出'); return; }
-  if (typeof generateEPUB !== 'function') { showToast('EPUB 模組未載入'); return; }
-  showToast('📦 生成 EPUB 中...', true);
+  if (!window._currentStory) { showToast('æ²’æœ‰æ•…äº‹å¯åŒ¯å‡º'); return; }
+  if (typeof generateEPUB !== 'function') { showToast('EPUB æ¨¡çµ„æœªè¼‰å…¥'); return; }
+  showToast('ðŸ“¦ ç”Ÿæˆ EPUB ä¸­...', true);
   try {
     var lang = (typeof getLanguage === 'function') ? getLanguage() : 'zh-TW';
     var blob = await generateEPUB(window._currentStory, { format: 'epub', includeImages: true, language: lang, author: 'AI Story Creator' });
     if (typeof downloadBlob === 'function') {
       downloadBlob(blob, (window._currentStory.title || 'story') + '.epub');
     }
-    showToast('✅ EPUB 已下載');
-  } catch(e) { showToast('❌ EPUB 失敗: ' + e.message); }
+    showToast('âœ… EPUB å·²ä¸‹è¼‰');
+  } catch(e) { showToast('âŒ EPUB å¤±æ•—: ' + e.message); }
 }
 
 async function exportPDF() {
-  if (!window._currentStory) { showToast('沒有故事可匯出'); return; }
+  if (!window._currentStory) { showToast('æ²’æœ‰æ•…äº‹å¯åŒ¯å‡º'); return; }
   if (typeof exportPDFFromServer !== 'function' && typeof window.exportPDF !== 'function') {
     // Fallback: call server directly
-    showToast('📄 生成 PDF 中...', true);
+    showToast('ðŸ“„ ç”Ÿæˆ PDF ä¸­...', true);
     try {
-      var resp = await fetch(API_BASE + '/api/story/export-pdf', {
+      var resp = await apiFetch(API_BASE + '/api/story/export-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Passcode': ACCESS_CODE },
         body: JSON.stringify({ story: window._currentStory })
@@ -877,16 +946,16 @@ async function exportPDF() {
       a.href = URL.createObjectURL(blob);
       a.download = (window._currentStory.title || 'story') + '.pdf';
       a.click();
-      showToast('✅ PDF 已下載');
-    } catch(e) { showToast('❌ PDF 失敗: ' + e.message); }
+      showToast('âœ… PDF å·²ä¸‹è¼‰');
+    } catch(e) { showToast('âŒ PDF å¤±æ•—: ' + e.message); }
     return;
   }
-  showToast('📄 生成 PDF 中...', true);
+  showToast('ðŸ“„ ç”Ÿæˆ PDF ä¸­...', true);
   try {
     var fn = typeof exportPDFFromServer === 'function' ? exportPDFFromServer : window.exportPDF;
     await fn(window._currentStory, { format: 'pdf' });
-    showToast('✅ PDF 已下載');
-  } catch(e) { showToast('❌ PDF 失敗: ' + e.message); }
+    showToast('âœ… PDF å·²ä¸‹è¼‰');
+  } catch(e) { showToast('âŒ PDF å¤±æ•—: ' + e.message); }
 }
 
 // === Utils ===
@@ -906,18 +975,18 @@ async function showTuningDialog(topic, style, audience) {
     var overlay = document.createElement('div');
     overlay.className = 'tuning-overlay';
     overlay.innerHTML = '<div class="tuning-dialog">' +
-      '<div class="tuning-header">🎨 風格微調</div>' +
-      '<div class="tuning-topic">主題：' + escHtml(topic) + ' · 風格：' + escHtml(style.name) + '</div>' +
+      '<div class="tuning-header">ðŸŽ¨ é¢¨æ ¼å¾®èª¿</div>' +
+      '<div class="tuning-topic">ä¸»é¡Œï¼š' + escHtml(topic) + ' Â· é¢¨æ ¼ï¼š' + escHtml(style.name) + '</div>' +
       '<div class="tuning-chat" id="tuningChat"></div>' +
       '<div class="tuning-input-row">' +
         '<div class="tuning-options" id="tuningOptions"></div>' +
         '<div class="tuning-custom-row" style="display:flex;gap:8px;margin-top:8px">' +
-          '<input type="text" id="tuningInput" placeholder="或輸入自訂回答..." class="tuning-input" onkeydown="if(event.key===\'Enter\')submitTuning()">' +
-          '<button onclick="submitTuning()" class="tuning-send">→</button>' +
+          '<input type="text" id="tuningInput" placeholder="æˆ–è¼¸å…¥è‡ªè¨‚å›žç­”..." class="tuning-input" onkeydown="if(event.key===\'Enter\')submitTuning()">' +
+          '<button onclick="submitTuning()" class="tuning-send">â†’</button>' +
         '</div>' +
       '</div>' +
       '<div class="tuning-actions">' +
-        '<button onclick="skipTuning()" class="tuning-skip">跳過微調，直接生成</button>' +
+        '<button onclick="skipTuning()" class="tuning-skip">è·³éŽå¾®èª¿ï¼Œç›´æŽ¥ç”Ÿæˆ</button>' +
       '</div>' +
     '</div>';
     document.body.appendChild(overlay);
@@ -941,8 +1010,8 @@ async function showTuningDialog(topic, style, audience) {
       if (currentQ < questions.length) {
         setTimeout(function() { _showTuningQuestion(questions, currentQ); }, 300);
       } else {
-        // All questions answered — build tuning prompt
-        chat.innerHTML += '<div class="tuning-msg tuning-ai">✅ 了解！開始生成...</div>';
+        // All questions answered â€” build tuning prompt
+        chat.innerHTML += '<div class="tuning-msg tuning-ai">âœ… äº†è§£ï¼é–‹å§‹ç”Ÿæˆ...</div>';
         setTimeout(function() {
           overlay.remove();
           _styleTuning = _buildTuningPrompt(answers, topic, style);
@@ -979,18 +1048,18 @@ function _getTuningQuestions(style) {
   var base = [
     {
       key: 'tone',
-      question: '📝 你希望什麼語氣？',
-      options: ['輕鬆易讀', '專業嚴謹', '幽默風趣', '溫暖感性', '犀利直白']
+      question: 'ðŸ“ ä½ å¸Œæœ›ä»€éº¼èªžæ°£ï¼Ÿ',
+      options: ['è¼•é¬†æ˜“è®€', 'å°ˆæ¥­åš´è¬¹', 'å¹½é»˜é¢¨è¶£', 'æº«æš–æ„Ÿæ€§', 'çŠ€åˆ©ç›´ç™½']
     },
     {
       key: 'depth',
-      question: '📊 內容深度？',
-      options: ['入門科普', '中等深度', '專家級深入']
+      question: 'ðŸ“Š å…§å®¹æ·±åº¦ï¼Ÿ',
+      options: ['å…¥é–€ç§‘æ™®', 'ä¸­ç­‰æ·±åº¦', 'å°ˆå®¶ç´šæ·±å…¥']
     },
     {
       key: 'local',
-      question: '🌏 要加入在地元素嗎？',
-      options: ['台灣案例為主', '國際案例為主', '混合都要']
+      question: 'ðŸŒ è¦åŠ å…¥åœ¨åœ°å…ƒç´ å—Žï¼Ÿ',
+      options: ['å°ç£æ¡ˆä¾‹ç‚ºä¸»', 'åœ‹éš›æ¡ˆä¾‹ç‚ºä¸»', 'æ··åˆéƒ½è¦']
     }
   ];
 
@@ -998,15 +1067,15 @@ function _getTuningQuestions(style) {
   if (style.type === 'book' || style.type === 'article') {
     base.push({
       key: 'structure',
-      question: '🏗️ 偏好什麼結構？',
-      options: ['故事案例驅動', '理論框架驅動', '問題解決驅動']
+      question: 'ðŸ—ï¸ åå¥½ä»€éº¼çµæ§‹ï¼Ÿ',
+      options: ['æ•…äº‹æ¡ˆä¾‹é©…å‹•', 'ç†è«–æ¡†æž¶é©…å‹•', 'å•é¡Œè§£æ±ºé©…å‹•']
     });
   }
   if (style.type === 'story') {
     base = [
-      { key: 'mood', question: '🎭 故事氛圍？', options: ['輕鬆溫馨', '緊張刺激', '黑暗沉重', '浪漫甜蜜'] },
-      { key: 'pacing', question: '⚡ 節奏偏好？', options: ['快節奏', '慢慢鋪陳', '張弛有度'] },
-      { key: 'ending', question: '🎬 結局風格？', options: ['大團圓', '開放式', '反轉震撼', '餘韻悠長'] }
+      { key: 'mood', question: 'ðŸŽ­ æ•…äº‹æ°›åœï¼Ÿ', options: ['è¼•é¬†æº«é¦¨', 'ç·Šå¼µåˆºæ¿€', 'é»‘æš—æ²‰é‡', 'æµªæ¼«ç”œèœœ'] },
+      { key: 'pacing', question: 'âš¡ ç¯€å¥åå¥½ï¼Ÿ', options: ['å¿«ç¯€å¥', 'æ…¢æ…¢é‹ªé™³', 'å¼µå¼›æœ‰åº¦'] },
+      { key: 'ending', question: 'ðŸŽ¬ çµå±€é¢¨æ ¼ï¼Ÿ', options: ['å¤§åœ˜åœ“', 'é–‹æ”¾å¼', 'åè½‰éœ‡æ’¼', 'é¤˜éŸ»æ‚ é•·'] }
     ];
   }
 
@@ -1015,15 +1084,15 @@ function _getTuningQuestions(style) {
 
 function _buildTuningPrompt(answers, topic, style) {
   var parts = [];
-  if (answers.tone) parts.push('語氣風格：' + answers.tone);
-  if (answers.depth) parts.push('內容深度：' + answers.depth);
-  if (answers.local) parts.push('案例來源：' + answers.local);
-  if (answers.structure) parts.push('結構偏好：' + answers.structure);
-  if (answers.mood) parts.push('故事氛圍：' + answers.mood);
-  if (answers.pacing) parts.push('節奏偏好：' + answers.pacing);
-  if (answers.ending) parts.push('結局風格：' + answers.ending);
+  if (answers.tone) parts.push('èªžæ°£é¢¨æ ¼ï¼š' + answers.tone);
+  if (answers.depth) parts.push('å…§å®¹æ·±åº¦ï¼š' + answers.depth);
+  if (answers.local) parts.push('æ¡ˆä¾‹ä¾†æºï¼š' + answers.local);
+  if (answers.structure) parts.push('çµæ§‹åå¥½ï¼š' + answers.structure);
+  if (answers.mood) parts.push('æ•…äº‹æ°›åœï¼š' + answers.mood);
+  if (answers.pacing) parts.push('ç¯€å¥åå¥½ï¼š' + answers.pacing);
+  if (answers.ending) parts.push('çµå±€é¢¨æ ¼ï¼š' + answers.ending);
   if (parts.length === 0) return null;
-  return '【使用者風格微調】\n' + parts.join('\n');
+  return 'ã€ä½¿ç”¨è€…é¢¨æ ¼å¾®èª¿ã€‘\n' + parts.join('\n');
 }
 
 function mdToHtml(s) {
@@ -1035,7 +1104,7 @@ function mdToHtml(s) {
   h = h.replace(/^### (.+)$/gm, '<div style="font-size:15px;font-weight:600;color:#f093fb;margin:12px 0 4px">$1</div>');
   h = h.replace(/^## (.+)$/gm, '<div style="font-size:16px;font-weight:700;color:#fff;margin:14px 0 6px">$1</div>');
   h = h.replace(/^# (.+)$/gm, '<div style="font-size:18px;font-weight:700;color:#fff;margin:16px 0 8px">$1</div>');
-  h = h.replace(/^[-•] (.+)$/gm, '<div style="padding-left:16px">• $1</div>');
+  h = h.replace(/^[-â€¢] (.+)$/gm, '<div style="padding-left:16px">â€¢ $1</div>');
   h = h.replace(/^\d+\. (.+)$/gm, function(m, p1, offset, str) { return '<div style="padding-left:16px">' + m + '</div>'; });
   h = h.replace(/\n/g, '<br>');
   return h;
@@ -1050,14 +1119,14 @@ function showToast(msg, persistent) {
 
 // === Publish News to GitHub Pages ===
 async function publishNews() {
-  if (!window._currentStory || !window._currentStory.articles) { showToast('沒有新聞可發佈'); return; }
+  if (!window._currentStory || !window._currentStory.articles) { showToast('æ²’æœ‰æ–°èžå¯ç™¼ä½ˆ'); return; }
   var news = window._currentStory;
-  showToast('📤 發佈新聞中...');
+  showToast('ðŸ“¤ ç™¼ä½ˆæ–°èžä¸­...');
   var id = 'news-' + new Date().toISOString().split('T')[0];
   var filename = id + '.html';
   var html = '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">';
-  html += '<title>' + escHtml((news.date || '') + ' 今日新聞') + '</title><link rel="stylesheet" href="reader.css?v=1"></head><body>';
-  html += '<div class="stories-header"><h1>📰 今日新聞</h1><p>' + escHtml(news.date || '') + '</p>';
+  html += '<title>' + escHtml((news.date || '') + ' ä»Šæ—¥æ–°èž') + '</title><link rel="stylesheet" href="reader.css?v=1"></head><body>';
+  html += '<div class="stories-header"><h1>ðŸ“° ä»Šæ—¥æ–°èž</h1><p>' + escHtml(news.date || '') + '</p>';
   if (news.headline) html += '<p style="color:#f093fb;margin-top:8px;font-weight:600">' + escHtml(news.headline) + '</p>';
   html += '</div><div class="stories-list" style="max-width:700px">';
   news.articles.forEach(function(a) {
@@ -1068,28 +1137,28 @@ async function publishNews() {
     html += '<div style="margin-top:6px"><a href="' + escHtml(url) + '" target="_blank" style="font-size:17px;font-weight:600;color:#eee;text-decoration:none;line-height:1.4">' + escHtml(a.title) + '</a></div>';
     html += '<div style="font-size:14px;color:#aaa;line-height:1.7;margin-top:6px">' + escHtml(a.summary) + '</div>';
     html += '<div style="margin-top:8px">';
-    if (a.source) html += '<span style="font-size:12px;color:#888">📰 ' + escHtml(a.source) + '</span> ';
-    html += '<a href="' + escHtml(url) + '" target="_blank" style="font-size:12px;color:#4ecdc4;text-decoration:none;font-weight:600">閱讀全文 →</a>';
+    if (a.source) html += '<span style="font-size:12px;color:#888">ðŸ“° ' + escHtml(a.source) + '</span> ';
+    html += '<a href="' + escHtml(url) + '" target="_blank" style="font-size:12px;color:#4ecdc4;text-decoration:none;font-weight:600">é–±è®€å…¨æ–‡ â†’</a>';
     html += '</div></div>';
   });
-  html += '</div><div style="text-align:center;padding:20px"><a href="index.html" style="color:#f093fb;text-decoration:none">← 所有故事</a></div></body></html>';
+  html += '</div><div style="text-align:center;padding:20px"><a href="index.html" style="color:#f093fb;text-decoration:none">â† æ‰€æœ‰æ•…äº‹</a></div></body></html>';
   try {
-    var pubResp = await fetch(API_BASE + '/api/story-publish', {
+    var pubResp = await apiFetch(API_BASE + '/api/story-publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id, title: (news.date || '') + ' 今日新聞', chapters: news.articles.length, html: html })
+      body: JSON.stringify({ id: id, title: (news.date || '') + ' ä»Šæ—¥æ–°èž', chapters: news.articles.length, html: html })
     });
     if (!pubResp.ok) { var e = {}; try { e = await pubResp.json(); } catch(_){} throw new Error(e.error || 'Publish ' + pubResp.status); }
     var url = STORIES_BASE + filename;
-    showToast('✅ 新聞已發佈！');
+    showToast('âœ… æ–°èžå·²ç™¼ä½ˆï¼');
     var output = document.getElementById('output');
-    output.innerHTML += '<div style="margin:16px 0;padding:16px;border-radius:12px;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);text-align:center"><div style="font-size:15px;color:#2ecc71;font-weight:600;margin-bottom:8px">✅ 新聞已發佈</div><a href="' + url + '" target="_blank" style="color:#4ecdc4;word-break:break-all">' + url + '</a></div>';
-  } catch(e) { showToast('❌ 發佈失敗: ' + e.message); }
+    output.innerHTML += '<div style="margin:16px 0;padding:16px;border-radius:12px;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);text-align:center"><div style="font-size:15px;color:#2ecc71;font-weight:600;margin-bottom:8px">âœ… æ–°èžå·²ç™¼ä½ˆ</div><a href="' + url + '" target="_blank" style="color:#4ecdc4;word-break:break-all">' + url + '</a></div>';
+  } catch(e) { showToast('âŒ ç™¼ä½ˆå¤±æ•—: ' + e.message); }
 }
 
 // === Publish Story to GitHub Pages ===
 async function publishStory() {
-  if (!window._currentStory) { showToast('沒有故事可發佈'); return; }
+  if (!window._currentStory) { showToast('æ²’æœ‰æ•…äº‹å¯ç™¼ä½ˆ'); return; }
   var story = window._currentStory;
   var hasImages = story.chapters.some(function(ch) { return ch.imagePrompt; });
   // First publish: auto-include images if they exist, no questions asked
@@ -1098,9 +1167,9 @@ async function publishStory() {
 }
 
 async function publishStoryDirect(wantImages) {
-  if (!window._currentStory) { showToast('沒有故事可發佈'); return; }
+  if (!window._currentStory) { showToast('æ²’æœ‰æ•…äº‹å¯ç™¼ä½ˆ'); return; }
   const story = window._currentStory;
-  showToast('📤 發佈中...', true);
+  showToast('ðŸ“¤ ç™¼ä½ˆä¸­...', true);
 
   const id = window._editPublishedId || window._preGeneratedStoryId || Date.now().toString(36);
   window._editPublishedId = null;
@@ -1116,7 +1185,7 @@ async function publishStoryDirect(wantImages) {
   try {
     var pubBody = {
       id: id,
-      title: story.title || '故事',
+      title: story.title || 'æ•…äº‹',
       chapters: story.chapters.map(function(ch) {
         return { num: ch.num, title: ch.title, text: ch.text, hook: ch.hook || '', imagePrompt: ch.imagePrompt || '' };
       })
@@ -1125,7 +1194,7 @@ async function publishStoryDirect(wantImages) {
     // Password protection
     var pwInput = document.getElementById('storyPassword');
     if (pwInput && pwInput.value.trim()) pubBody.password = pwInput.value.trim();
-    var pubResp = await fetch(API_BASE + '/api/story-publish', {
+    var pubResp = await apiFetch(API_BASE + '/api/story-publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(pubBody)
@@ -1137,7 +1206,7 @@ async function publishStoryDirect(wantImages) {
     }
 
     var url = API_BASE + '/reader?id=' + id;
-    showToast('✅ 發佈成功');
+    showToast('âœ… ç™¼ä½ˆæˆåŠŸ');
     // Save to localStorage
     try {
       var list = JSON.parse(localStorage.getItem('storyHistory') || '[]');
@@ -1150,25 +1219,25 @@ async function publishStoryDirect(wantImages) {
     // Show persistent publish result panel
     var output = document.getElementById('output');
     var pubInfo = '<div style="margin:16px 0;padding:20px;border-radius:14px;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.25)">';
-    pubInfo += '<div style="text-align:center;margin-bottom:12px"><span style="font-size:32px">✅</span></div>';
-    pubInfo += '<div style="text-align:center;font-size:17px;font-weight:700;color:#2ecc71;margin-bottom:4px">發佈成功</div>';
-    pubInfo += '<div style="text-align:center;font-size:15px;color:#ddd;margin-bottom:4px">' + escHtml(story.title || '故事') + '</div>';
-    pubInfo += '<div style="text-align:center;font-size:13px;color:#888;margin-bottom:8px">' + story.chapters.length + ' 篇章</div>';
+    pubInfo += '<div style="text-align:center;margin-bottom:12px"><span style="font-size:32px">âœ…</span></div>';
+    pubInfo += '<div style="text-align:center;font-size:17px;font-weight:700;color:#2ecc71;margin-bottom:4px">ç™¼ä½ˆæˆåŠŸ</div>';
+    pubInfo += '<div style="text-align:center;font-size:15px;color:#ddd;margin-bottom:4px">' + escHtml(story.title || 'æ•…äº‹') + '</div>';
+    pubInfo += '<div style="text-align:center;font-size:13px;color:#888;margin-bottom:8px">' + story.chapters.length + ' ç¯‡ç« </div>';
     pubInfo += '<div style="text-align:center;margin-bottom:10px"><a href="' + url + '" target="_blank" style="color:#4ecdc4;font-size:14px;word-break:break-all">' + url + '</a></div>';
     pubInfo += '<div style="text-align:center;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
-    pubInfo += '<button onclick="navigator.clipboard.writeText(\'' + url + '\');showToast(\'已複製連結\')" style="padding:8px 16px;border-radius:10px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.1);color:#4ecdc4;cursor:pointer;font-size:13px">📋 複製連結</button>';
-    pubInfo += '<button onclick="window.open(\'' + url + '\',\'_blank\')" style="padding:8px 16px;border-radius:10px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.1);color:#f093fb;cursor:pointer;font-size:13px">🔗 開啟故事</button>';
+    pubInfo += '<button onclick="navigator.clipboard.writeText(\'' + url + '\');showToast(\'å·²è¤‡è£½é€£çµ\')" style="padding:8px 16px;border-radius:10px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.1);color:#4ecdc4;cursor:pointer;font-size:13px">ðŸ“‹ è¤‡è£½é€£çµ</button>';
+    pubInfo += '<button onclick="window.open(\'' + url + '\',\'_blank\')" style="padding:8px 16px;border-radius:10px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.1);color:#f093fb;cursor:pointer;font-size:13px">ðŸ”— é–‹å•Ÿæ•…äº‹</button>';
     pubInfo += '</div></div>';
     output.innerHTML += pubInfo;
   } catch (e) {
-    showToast('❌ 發佈失敗: ' + e.message);
+    showToast('âŒ ç™¼ä½ˆå¤±æ•—: ' + e.message);
   }
 }
 
 
 // === AI Score + Auto-Optimize Loop ===
 async function aiScoreStory() {
-  if (!window._currentStory) { showToast('沒有故事'); return; }
+  if (!window._currentStory) { showToast('æ²’æœ‰æ•…äº‹'); return; }
   var output = document.getElementById('output');
   var maxRounds = 5;
   var history = [];
@@ -1176,13 +1245,13 @@ async function aiScoreStory() {
 
   for (var round = 1; round <= maxRounds; round++) {
     // Step 1: Score
-    output.innerHTML += '<div id="scoreRound' + round + '" style="margin:12px 0;padding:14px;border-radius:12px;background:rgba(240,147,251,0.06);border:1px solid rgba(240,147,251,0.15)"><div style="font-size:14px;color:#f093fb;font-weight:600">📊 第 ' + round + ' 輪評分中...</div></div>';
-    var storyText = story.chapters.map(function(ch) { return '【第' + ch.num + '篇】' + ch.title + '\n' + ch.text; }).join('\n\n');
+    output.innerHTML += '<div id="scoreRound' + round + '" style="margin:12px 0;padding:14px;border-radius:12px;background:rgba(240,147,251,0.06);border:1px solid rgba(240,147,251,0.15)"><div style="font-size:14px;color:#f093fb;font-weight:600">ðŸ“Š ç¬¬ ' + round + ' è¼ªè©•åˆ†ä¸­...</div></div>';
+    var storyText = story.chapters.map(function(ch) { return 'ã€ç¬¬' + ch.num + 'ç¯‡ã€‘' + ch.title + '\n' + ch.text; }).join('\n\n');
     // Limit total length to avoid API issues
-    if (storyText.length > 8000) storyText = storyText.substring(0, 8000) + '\n\n...（後續篇章省略）';
-    var scorePrompt = '評分以下文章（滿分10），用JSON回覆：{"scores":{"scene":0,"character":0,"depth":0,"pacing":0,"foreshadow":0,"tone":0,"memorable":0},"feedback":"改善建議","lowAreas":"最需改善的具體問題"}\n\n評分標準：scene=場景具體度 character=人物真實感 depth=概念深度 pacing=結構節奏 foreshadow=伏筆收尾 tone=語氣一致性 memorable=讀者記憶點\n\n' + storyText;
+    if (storyText.length > 8000) storyText = storyText.substring(0, 8000) + '\n\n...ï¼ˆå¾ŒçºŒç¯‡ç« çœç•¥ï¼‰';
+    var scorePrompt = 'è©•åˆ†ä»¥ä¸‹æ–‡ç« ï¼ˆæ»¿åˆ†10ï¼‰ï¼Œç”¨JSONå›žè¦†ï¼š{"scores":{"scene":0,"character":0,"depth":0,"pacing":0,"foreshadow":0,"tone":0,"memorable":0},"feedback":"æ”¹å–„å»ºè­°","lowAreas":"æœ€éœ€æ”¹å–„çš„å…·é«”å•é¡Œ"}\n\nè©•åˆ†æ¨™æº–ï¼šscene=å ´æ™¯å…·é«”åº¦ character=äººç‰©çœŸå¯¦æ„Ÿ depth=æ¦‚å¿µæ·±åº¦ pacing=çµæ§‹ç¯€å¥ foreshadow=ä¼ç­†æ”¶å°¾ tone=èªžæ°£ä¸€è‡´æ€§ memorable=è®€è€…è¨˜æ†¶é»ž\n\n' + storyText;
     try {
-      var resp = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: scorePrompt }) });
+      var resp = await apiFetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: scorePrompt }) });
       if (!resp.ok) break;
       var data = await resp.json();
       var raw = data.text || '';
@@ -1190,7 +1259,7 @@ async function aiScoreStory() {
       var cleaned = raw.replace(new RegExp(tick3 + 'json\\s*', 'g'), '').replace(new RegExp(tick3 + '\\s*', 'g'), '').trim();
       var score; try { score = JSON.parse(cleaned); } catch(pe) { var jsonMatch = cleaned.match(/\{[\s\S]*\}/); if (jsonMatch) score = JSON.parse(jsonMatch[0]); else throw pe; }
       var s = score.scores || {};
-      var labels = {scene:'場景',character:'人物',depth:'深度',pacing:'節奏',foreshadow:'伏筆',tone:'語氣',memorable:'記憶點'};
+      var labels = {scene:'å ´æ™¯',character:'äººç‰©',depth:'æ·±åº¦',pacing:'ç¯€å¥',foreshadow:'ä¼ç­†',tone:'èªžæ°£',memorable:'è¨˜æ†¶é»ž'};
       var allAbove9 = true;
       var lowItems = [];
       var scoreHtml = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">';
@@ -1209,12 +1278,12 @@ async function aiScoreStory() {
         for (var ck in labels) {
           if (s[ck] !== undefined && prev[ck] !== undefined) {
             var diff = s[ck] - prev[ck];
-            if (diff !== 0) changes.push(labels[ck] + (diff > 0 ? '↑' : '↓') + Math.abs(diff));
+            if (diff !== 0) changes.push(labels[ck] + (diff > 0 ? 'â†‘' : 'â†“') + Math.abs(diff));
           }
         }
         if (changes.length > 0) {
           var changeEl = document.getElementById('scoreRound' + round);
-          if (changeEl) changeEl.innerHTML += '<div style="font-size:12px;color:#888;margin-top:4px">變化：' + changes.join(' ') + '</div>';
+          if (changeEl) changeEl.innerHTML += '<div style="font-size:12px;color:#888;margin-top:4px">è®ŠåŒ–ï¼š' + changes.join(' ') + '</div>';
         }
         // Rollback if overall got worse
         var prevAvg = 0, curAvg = 0, cnt = 0;
@@ -1223,32 +1292,32 @@ async function aiScoreStory() {
           story.chapters = window._prevChapters;
           window._currentStory = story;
           var rbEl = document.getElementById('scoreRound' + round);
-          if (rbEl) rbEl.innerHTML += '<div style="font-size:12px;color:#f5576c;margin-top:4px">⚠️ 分數下降，已回滾到上一版</div>';
+          if (rbEl) rbEl.innerHTML += '<div style="font-size:12px;color:#f5576c;margin-top:4px">âš ï¸ åˆ†æ•¸ä¸‹é™ï¼Œå·²å›žæ»¾åˆ°ä¸Šä¸€ç‰ˆ</div>';
           break;
         }
       }
-      history.push({ round: round, scores: s, low: lowItems.join('、') });
+      history.push({ round: round, scores: s, low: lowItems.join('ã€') });
 
       var el = document.getElementById('scoreRound' + round);
-      if (el) el.innerHTML = '<div style="font-size:14px;color:#f093fb;font-weight:600">📊 第 ' + round + ' 輪</div>' + scoreHtml + (lowItems.length > 0 ? '<div style="font-size:12px;color:#f5576c;margin-top:4px">低分：' + lowItems.join('、') + '</div>' : '<div style="font-size:13px;color:#2ecc71;font-weight:600;margin-top:4px">✅ 全部 9 分以上！</div>');
+      if (el) el.innerHTML = '<div style="font-size:14px;color:#f093fb;font-weight:600">ðŸ“Š ç¬¬ ' + round + ' è¼ª</div>' + scoreHtml + (lowItems.length > 0 ? '<div style="font-size:12px;color:#f5576c;margin-top:4px">ä½Žåˆ†ï¼š' + lowItems.join('ã€') + '</div>' : '<div style="font-size:13px;color:#2ecc71;font-weight:600;margin-top:4px">âœ… å…¨éƒ¨ 9 åˆ†ä»¥ä¸Šï¼</div>');
 
       if (allAbove9) {
-        showToast('✅ 全部達標！共 ' + round + ' 輪');
+        showToast('âœ… å…¨éƒ¨é”æ¨™ï¼å…± ' + round + ' è¼ª');
         break;
       }
       if (round >= maxRounds) {
-        showToast('⚠️ 已達最大輪數 ' + maxRounds);
+        showToast('âš ï¸ å·²é”æœ€å¤§è¼ªæ•¸ ' + maxRounds);
         break;
       }
 
       // Step 2: Optimize low scores
-      el.innerHTML += '<div style="font-size:12px;color:#888;margin-top:6px">🔧 優化中...</div>';
+      el.innerHTML += '<div style="font-size:12px;color:#888;margin-top:6px">ðŸ”§ å„ªåŒ–ä¸­...</div>';
       // Find the worst chapter based on feedback
       var worstIdx = Math.floor(Math.random() * story.chapters.length);
       var worstCh = story.chapters[worstIdx];
       var storyJson = JSON.stringify({ num: worstCh.num, title: worstCh.title, text: worstCh.text, hook: worstCh.hook });
-      var optPrompt = '優化以下篇章（只改低分部分）。低分項目：' + lowItems.join('、') + '\n改善建議：' + (score.feedback || '') + '\n' + (score.lowAreas || '') + '\n\n規則：禁止指令用語、禁止TED演講結尾\n回覆優化後JSON（同格式）：\n' + storyJson;
-      var resp2 = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: optPrompt }) });
+      var optPrompt = 'å„ªåŒ–ä»¥ä¸‹ç¯‡ç« ï¼ˆåªæ”¹ä½Žåˆ†éƒ¨åˆ†ï¼‰ã€‚ä½Žåˆ†é …ç›®ï¼š' + lowItems.join('ã€') + '\næ”¹å–„å»ºè­°ï¼š' + (score.feedback || '') + '\n' + (score.lowAreas || '') + '\n\nè¦å‰‡ï¼šç¦æ­¢æŒ‡ä»¤ç”¨èªžã€ç¦æ­¢TEDæ¼”è¬›çµå°¾\nå›žè¦†å„ªåŒ–å¾ŒJSONï¼ˆåŒæ ¼å¼ï¼‰ï¼š\n' + storyJson;
+      var resp2 = await apiFetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: optPrompt }) });
       if (!resp2.ok) break;
       var data2 = await resp2.json();
       var raw2 = data2.text || '';
@@ -1263,7 +1332,7 @@ async function aiScoreStory() {
       }
     } catch(e) { 
       var el2 = document.getElementById('scoreRound' + round);
-      if (el2) el2.innerHTML += '<div style="font-size:12px;color:#f5576c;margin-top:4px">❌ 失敗: ' + escHtml(e.message) + '</div>';
+      if (el2) el2.innerHTML += '<div style="font-size:12px;color:#f5576c;margin-top:4px">âŒ å¤±æ•—: ' + escHtml(e.message) + '</div>';
       break;
     }
     // Delay between rounds to avoid rate limit
@@ -1274,8 +1343,8 @@ async function aiScoreStory() {
   renderStory(window._currentStory);
   if (history.length > 0) {
     var histHtml = '<div style="margin:12px 0;padding:12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)">';
-    histHtml += '<div style="font-size:13px;color:#f093fb;font-weight:600;margin-bottom:6px">📈 評分歷程（共 ' + history.length + ' 輪）</div>';
-    history.forEach(function(h) { histHtml += '<div style="font-size:12px;color:#aaa">第' + h.round + '輪：' + (h.low || '✅ 全部達標') + '</div>'; });
+    histHtml += '<div style="font-size:13px;color:#f093fb;font-weight:600;margin-bottom:6px">ðŸ“ˆ è©•åˆ†æ­·ç¨‹ï¼ˆå…± ' + history.length + ' è¼ªï¼‰</div>';
+    history.forEach(function(h) { histHtml += '<div style="font-size:12px;color:#aaa">ç¬¬' + h.round + 'è¼ªï¼š' + (h.low || 'âœ… å…¨éƒ¨é”æ¨™') + '</div>'; });
     histHtml += '</div>';
     output.innerHTML += histHtml;
   }
@@ -1283,28 +1352,28 @@ async function aiScoreStory() {
 
 // === AI Optimize Low Scores (targeted) ===
 async function aiOptimizeLowScores() {
-  if (!window._currentStory || !window._lastScores) { showToast('請先評分'); return; }
+  if (!window._currentStory || !window._lastScores) { showToast('è«‹å…ˆè©•åˆ†'); return; }
   var scores = window._lastScores.scores || {};
   var weaknesses = window._lastScores.weaknesses || '';
   var feedback = window._lastScores.feedback || '';
   // Find which areas need improvement
   var improvements = [];
-  if (scores.plot < 9) improvements.push('劇情邏輯（目前' + scores.plot + '分）：加強因果關係、減少巧合');
-  if (scores.characters < 9) improvements.push('角色深度（目前' + scores.characters + '分）：用行為和對話展現性格，增加內心掙扎');
-  if (scores.pacing < 9) improvements.push('節奏感（目前' + scores.pacing + '分）：調整快慢節奏，關鍵處用短句');
-  if (scores.hook < 9) improvements.push('吸引力（目前' + scores.hook + '分）：加強開頭懸念和結尾 cliffhanger');
+  if (scores.plot < 9) improvements.push('åŠ‡æƒ…é‚è¼¯ï¼ˆç›®å‰' + scores.plot + 'åˆ†ï¼‰ï¼šåŠ å¼·å› æžœé—œä¿‚ã€æ¸›å°‘å·§åˆ');
+  if (scores.characters < 9) improvements.push('è§’è‰²æ·±åº¦ï¼ˆç›®å‰' + scores.characters + 'åˆ†ï¼‰ï¼šç”¨è¡Œç‚ºå’Œå°è©±å±•ç¾æ€§æ ¼ï¼Œå¢žåŠ å…§å¿ƒæŽ™æ‰Ž');
+  if (scores.pacing < 9) improvements.push('ç¯€å¥æ„Ÿï¼ˆç›®å‰' + scores.pacing + 'åˆ†ï¼‰ï¼šèª¿æ•´å¿«æ…¢ç¯€å¥ï¼Œé—œéµè™•ç”¨çŸ­å¥');
+  if (scores.hook < 9) improvements.push('å¸å¼•åŠ›ï¼ˆç›®å‰' + scores.hook + 'åˆ†ï¼‰ï¼šåŠ å¼·é–‹é ­æ‡¸å¿µå’Œçµå°¾ cliffhanger');
 
-  showToast('🔧 優化中（只改低分部分）...');
+  showToast('ðŸ”§ å„ªåŒ–ä¸­ï¼ˆåªæ”¹ä½Žåˆ†éƒ¨åˆ†ï¼‰...');
   var story = window._currentStory;
   var storyJson = JSON.stringify({ title: story.title, chapters: story.chapters.map(function(ch) { return { num: ch.num, title: ch.title, text: ch.text, hook: ch.hook }; }) });
 
-  var prompt = '以下故事需要局部優化（不要整篇重寫，只改善弱項）。\n\n' +
-    '需要改善的項目：\n' + improvements.join('\n') + '\n\n' +
-    '評審意見：' + weaknesses + '\n' + feedback + '\n\n' +
-    '規則：\n- 只修改需要改善的部分，保留好的內容\n- 禁止出現指令用語（自我矛盾、付出代價等）\n- 禁止結尾變 TED 演講\n- 回覆完整的優化後 JSON（同格式）\n\n' + storyJson;
+  var prompt = 'ä»¥ä¸‹æ•…äº‹éœ€è¦å±€éƒ¨å„ªåŒ–ï¼ˆä¸è¦æ•´ç¯‡é‡å¯«ï¼Œåªæ”¹å–„å¼±é …ï¼‰ã€‚\n\n' +
+    'éœ€è¦æ”¹å–„çš„é …ç›®ï¼š\n' + improvements.join('\n') + '\n\n' +
+    'è©•å¯©æ„è¦‹ï¼š' + weaknesses + '\n' + feedback + '\n\n' +
+    'è¦å‰‡ï¼š\n- åªä¿®æ”¹éœ€è¦æ”¹å–„çš„éƒ¨åˆ†ï¼Œä¿ç•™å¥½çš„å…§å®¹\n- ç¦æ­¢å‡ºç¾æŒ‡ä»¤ç”¨èªžï¼ˆè‡ªæˆ‘çŸ›ç›¾ã€ä»˜å‡ºä»£åƒ¹ç­‰ï¼‰\n- ç¦æ­¢çµå°¾è®Š TED æ¼”è¬›\n- å›žè¦†å®Œæ•´çš„å„ªåŒ–å¾Œ JSONï¼ˆåŒæ ¼å¼ï¼‰\n\n' + storyJson;
 
   try {
-    var resp = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: prompt }) });
+    var resp = await apiFetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: prompt }) });
     if (!resp.ok) throw new Error('API ' + resp.status);
     var data = await resp.json();
     var raw = data.text || '';
@@ -1315,27 +1384,27 @@ async function aiOptimizeLowScores() {
       window._currentStory.chapters = optimized.chapters;
       if (optimized.title) window._currentStory.title = optimized.title;
       renderStory(window._currentStory);
-      showToast('✅ 低分項目已優化，請重新評分確認');
+      showToast('âœ… ä½Žåˆ†é …ç›®å·²å„ªåŒ–ï¼Œè«‹é‡æ–°è©•åˆ†ç¢ºèª');
     }
-  } catch(e) { showToast('優化失敗: ' + e.message); }
+  } catch(e) { showToast('å„ªåŒ–å¤±æ•—: ' + e.message); }
 }
 
 // === AI Optimize Story ===
 async function aiOptimizeStory() {
-  if (!window._currentStory) { showToast('沒有故事'); return; }
-  if (!confirm('AI 將逐篇優化故事。繼續嗎？')) return;
+  if (!window._currentStory) { showToast('æ²’æœ‰æ•…äº‹'); return; }
+  if (!confirm('AI å°‡é€ç¯‡å„ªåŒ–æ•…äº‹ã€‚ç¹¼çºŒå—Žï¼Ÿ')) return;
   var story = window._currentStory;
   var output = document.getElementById('output');
   
   for (var i = 0; i < story.chapters.length; i++) {
     var ch = story.chapters[i];
-    showToast('✨ 優化第 ' + ch.num + ' 篇...');
-    var prompt = '優化以下篇章（保留好的部分，改善弱項）。禁止指令用語、禁止說教結尾。\n\n' +
-      '故事標題：' + story.title + '\n' +
-      '第 ' + ch.num + ' 篇「' + ch.title + '」：\n' + ch.text + '\n\n' +
-      '回覆優化後的 JSON（不要 markdown）：{"title":"篇章標題","text":"優化後內容","hook":"金句"}';
+    showToast('âœ¨ å„ªåŒ–ç¬¬ ' + ch.num + ' ç¯‡...');
+    var prompt = 'å„ªåŒ–ä»¥ä¸‹ç¯‡ç« ï¼ˆä¿ç•™å¥½çš„éƒ¨åˆ†ï¼Œæ”¹å–„å¼±é …ï¼‰ã€‚ç¦æ­¢æŒ‡ä»¤ç”¨èªžã€ç¦æ­¢èªªæ•™çµå°¾ã€‚\n\n' +
+      'æ•…äº‹æ¨™é¡Œï¼š' + story.title + '\n' +
+      'ç¬¬ ' + ch.num + ' ç¯‡ã€Œ' + ch.title + 'ã€ï¼š\n' + ch.text + '\n\n' +
+      'å›žè¦†å„ªåŒ–å¾Œçš„ JSONï¼ˆä¸è¦ markdownï¼‰ï¼š{"title":"ç¯‡ç« æ¨™é¡Œ","text":"å„ªåŒ–å¾Œå…§å®¹","hook":"é‡‘å¥"}';
     try {
-      var resp = await fetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: prompt }) });
+      var resp = await apiFetch(API_BASE + '/api/story-generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: prompt }) });
       if (!resp.ok) continue;
       var data = await resp.json();
       var raw = data.text || '';
@@ -1351,26 +1420,26 @@ async function aiOptimizeStory() {
   
   window._currentStory = story;
   renderStory(story);
-  showToast('✅ 逐篇優化完成');
+  showToast('âœ… é€ç¯‡å„ªåŒ–å®Œæˆ');
 }
 
 // === Regenerate All Images ===
 function startReading() {
-  if (_voiceMode === 'off') { showToast('請先選擇語音模式'); return; }
+  if (_voiceMode === 'off') { showToast('è«‹å…ˆé¸æ“‡èªžéŸ³æ¨¡å¼'); return; }
   if (_voiceMode === 'browser') { readStoryBrowser(); return; }
   // Gemini TTS voices
   var voiceMap = {'kore':'Kore','zephyr':'Zephyr','aoede':'Aoede','leda':'Leda','puck':'Puck','orus':'Orus','charon':'Charon','fenrir':'Fenrir'};
   var voiceName = voiceMap[_voiceMode];
   if (voiceName) { readStoryGemini(voiceName); return; }
-  showToast('未知的語音模式');
+  showToast('æœªçŸ¥çš„èªžéŸ³æ¨¡å¼');
 }
 
 function regenAllImages() {
-  if (!window._currentStory) { showToast('沒有故事'); return; }
-  showToast('🖼️ 重新生成所有圖片...');
+  if (!window._currentStory) { showToast('æ²’æœ‰æ•…äº‹'); return; }
+  showToast('ðŸ–¼ï¸ é‡æ–°ç”Ÿæˆæ‰€æœ‰åœ–ç‰‡...');
   window._currentStory.chapters.forEach(function(ch, i) {
     var imgEl = document.getElementById('chImg' + i);
-    if (imgEl) imgEl.innerHTML = '<div class="img-loading"><div class="spinner"></div><span>重新生成...</span></div>';
+    if (imgEl) imgEl.innerHTML = '<div class="img-loading"><div class="spinner"></div><span>é‡æ–°ç”Ÿæˆ...</span></div>';
     generateImage(ch.imagePrompt, i);
   });
 }
@@ -1378,9 +1447,9 @@ function regenAllImages() {
 // === Published Stories Management ===
 async function showPublished() {
   var output = document.getElementById('output');
-  output.innerHTML = '<div class="loading"><div class="spinner"></div><p>載入已發佈故事...</p></div>';
+  output.innerHTML = '<div class="loading"><div class="spinner"></div><p>è¼‰å…¥å·²ç™¼ä½ˆæ•…äº‹...</p></div>';
   try {
-    var resp = await fetch(API_BASE + '/api/story-list');
+    var resp = await apiFetch(API_BASE + '/api/story-list');
     if (!resp.ok) throw new Error('API ' + resp.status);
     var data = await resp.json();
     var stories = data.stories || [];
@@ -1388,54 +1457,54 @@ async function showPublished() {
     var localList = [];
     try { localList = JSON.parse(localStorage.getItem('storyHistory') || '[]'); } catch(_) {}
     if (stories.length === 0 && localList.length === 0) {
-      output.innerHTML = '<div style="text-align:center;padding:40px;color:#888">還沒有發佈的故事</div>';
+      output.innerHTML = '<div style="text-align:center;padding:40px;color:#888">é‚„æ²’æœ‰ç™¼ä½ˆçš„æ•…äº‹</div>';
       return;
     }
-    var html = '<div style="margin:20px 0 12px"><div style="font-size:18px;font-weight:700;color:#fff">📂 已發佈故事（' + stories.length + '）</div></div>';
+    var html = '<div style="margin:20px 0 12px"><div style="font-size:18px;font-weight:700;color:#fff">ðŸ“‚ å·²ç™¼ä½ˆæ•…äº‹ï¼ˆ' + stories.length + 'ï¼‰</div></div>';
     stories.forEach(function(s, i) {
       // Check if we have a local backup for this story
       var hasBackup = localList.some(function(l) { return l.publishedId === s.id; });
       html += '<div style="margin:8px 0;padding:14px 16px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between">';
       html += '<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:600;color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(s.title) + '</div>';
-      html += '<div style="font-size:12px;color:#666;margin-top:2px">' + (s.chapters || 0) + ' 篇 · ' + (s.date || '') + (hasBackup ? ' · 📝 有備份' : '') + '</div></div>';
+      html += '<div style="font-size:12px;color:#666;margin-top:2px">' + (s.chapters || 0) + ' ç¯‡ Â· ' + (s.date || '') + (hasBackup ? ' Â· ðŸ“ æœ‰å‚™ä»½' : '') + '</div></div>';
       html += '<div style="display:flex;gap:6px;flex-shrink:0;margin-left:12px">';
-      html += '<button onclick="editPublished(\'' + escHtml(s.id) + '\',\'' + escHtml(s.file) + '\')" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.08);color:#f093fb;font-size:12px;cursor:pointer">✏️ 編輯</button>';
-      html += '<a href="https://joeliang2022.github.io/fukuoka-trip/stories/' + escHtml(s.file) + '" target="_blank" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.08);color:#4ecdc4;font-size:12px;text-decoration:none">查看</a>';
-      html += '<button onclick="deletePublished(\'' + escHtml(s.id) + '\',\'' + escHtml(s.file) + '\')" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(245,87,108,0.3);background:rgba(245,87,108,0.08);color:#f5576c;font-size:12px;cursor:pointer">刪除</button>';
+      html += '<button onclick="editPublished(\'' + escHtml(s.id) + '\',\'' + escHtml(s.file) + '\')" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.08);color:#f093fb;font-size:12px;cursor:pointer">âœï¸ ç·¨è¼¯</button>';
+      html += '<a href="https://joeliang2022.github.io/fukuoka-trip/stories/' + escHtml(s.file) + '" target="_blank" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.08);color:#4ecdc4;font-size:12px;text-decoration:none">æŸ¥çœ‹</a>';
+      html += '<button onclick="deletePublished(\'' + escHtml(s.id) + '\',\'' + escHtml(s.file) + '\')" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(245,87,108,0.3);background:rgba(245,87,108,0.08);color:#f5576c;font-size:12px;cursor:pointer">åˆªé™¤</button>';
       html += '</div></div>';
     });
     // Show local-only stories (not yet published or backup without remote)
     var localOnly = localList.filter(function(l) { return l.story && l.story.title; });
     if (localOnly.length > 0) {
-      html += '<div style="margin:20px 0 8px;font-size:14px;color:#888">📝 本機備份（' + localOnly.length + '）</div>';
+      html += '<div style="margin:20px 0 8px;font-size:14px;color:#888">ðŸ“ æœ¬æ©Ÿå‚™ä»½ï¼ˆ' + localOnly.length + 'ï¼‰</div>';
       localOnly.slice(0, 10).forEach(function(l, i) {
         html += '<div style="margin:6px 0;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:space-between">';
         html += '<div style="flex:1;min-width:0"><div style="font-size:14px;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(l.story.title) + '</div>';
-        html += '<div style="font-size:11px;color:#555">' + (l.story.chapters ? l.story.chapters.length : 0) + ' 篇 · ' + (l.date || '').split('T')[0] + '</div></div>';
-        html += '<button onclick="loadLocalStory(' + i + ')" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.08);color:#f093fb;font-size:11px;cursor:pointer;flex-shrink:0;margin-left:8px">開啟</button>';
+        html += '<div style="font-size:11px;color:#555">' + (l.story.chapters ? l.story.chapters.length : 0) + ' ç¯‡ Â· ' + (l.date || '').split('T')[0] + '</div></div>';
+        html += '<button onclick="loadLocalStory(' + i + ')" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(240,147,251,0.3);background:rgba(240,147,251,0.08);color:#f093fb;font-size:11px;cursor:pointer;flex-shrink:0;margin-left:8px">é–‹å•Ÿ</button>';
         html += '</div>';
       });
     }
     output.innerHTML = html;
   } catch(e) {
-    output.innerHTML = '<div style="text-align:center;padding:40px;color:#888">載入失敗: ' + escHtml(e.message) + '</div>';
+    output.innerHTML = '<div style="text-align:center;padding:40px;color:#888">è¼‰å…¥å¤±æ•—: ' + escHtml(e.message) + '</div>';
   }
 }
 
 async function deletePublished(id, file) {
-  if (!confirm('確定要刪除「' + id + '」嗎？')) return;
-  showToast('🗑 刪除中...');
+  if (!confirm('ç¢ºå®šè¦åˆªé™¤ã€Œ' + id + 'ã€å—Žï¼Ÿ')) return;
+  showToast('ðŸ—‘ åˆªé™¤ä¸­...');
   try {
-    var resp = await fetch(API_BASE + '/api/story-delete', {
+    var resp = await apiFetch(API_BASE + '/api/story-delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: id, file: file })
     });
     if (!resp.ok) throw new Error('API ' + resp.status);
-    showToast('✅ 已刪除');
+    showToast('âœ… å·²åˆªé™¤');
     showPublished();
   } catch(e) {
-    showToast('❌ 刪除失敗: ' + e.message);
+    showToast('âŒ åˆªé™¤å¤±æ•—: ' + e.message);
   }
 }
 
@@ -1452,12 +1521,12 @@ function loadLocalStory(index) {
   try {
     var list = JSON.parse(localStorage.getItem('storyHistory') || '[]');
     var item = list[index];
-    if (!item || !item.story) { showToast('找不到備份'); return; }
+    if (!item || !item.story) { showToast('æ‰¾ä¸åˆ°å‚™ä»½'); return; }
     window._currentStory = item.story;
     window._editPublishedId = item.publishedId || null;
     renderStory(item.story);
-    showToast('已載入：' + (item.story.title || ''));
-  } catch(e) { showToast('載入失敗'); }
+    showToast('å·²è¼‰å…¥ï¼š' + (item.story.title || ''));
+  } catch(e) { showToast('è¼‰å…¥å¤±æ•—'); }
 }
 
 // === Edit Published Story ===
@@ -1474,13 +1543,13 @@ async function editPublished(publishedId, file) {
     }
   } catch(_) {}
 
-  // No local backup — fetch from GitHub Pages and parse HTML
+  // No local backup â€” fetch from GitHub Pages and parse HTML
   var output = document.getElementById('output');
-  output.innerHTML = '<div class="loading"><div class="spinner"></div><p>載入故事內容...</p></div>';
+  output.innerHTML = '<div class="loading"><div class="spinner"></div><p>è¼‰å…¥æ•…äº‹å…§å®¹...</p></div>';
   try {
     var url = 'https://joeliang2022.github.io/fukuoka-trip/stories/' + (file || publishedId + '.html');
     var resp = await fetch(url);
-    if (!resp.ok) throw new Error('無法載入故事');
+    if (!resp.ok) throw new Error('ç„¡æ³•è¼‰å…¥æ•…äº‹');
     var html = await resp.text();
 
     // Parse HTML back to story object
@@ -1500,11 +1569,11 @@ async function editPublished(publishedId, file) {
           title: h2.textContent || '',
           text: content.textContent || '',
           imagePrompt: '',
-          hook: hook ? hook.textContent.replace(/^💬\s*/, '') : ''
+          hook: hook ? hook.textContent.replace(/^ðŸ’¬\s*/, '') : ''
         });
       }
     }
-    if (chapters.length === 0) throw new Error('無法解析故事章節');
+    if (chapters.length === 0) throw new Error('ç„¡æ³•è§£æžæ•…äº‹ç« ç¯€');
 
     var story = { title: title, characters: [], chapters: chapters };
     window._currentStory = story;
@@ -1519,7 +1588,7 @@ async function editPublished(publishedId, file) {
 
     showEditUI(story, publishedId);
   } catch(e) {
-    output.innerHTML = '<div style="text-align:center;padding:40px;color:#f5576c">載入失敗: ' + escHtml(e.message) + '</div>';
+    output.innerHTML = '<div style="text-align:center;padding:40px;color:#f5576c">è¼‰å…¥å¤±æ•—: ' + escHtml(e.message) + '</div>';
   }
 }
 
@@ -1536,7 +1605,7 @@ function showEditUI(story, publishedId) {
       if (chapterMap[cn]) {
         filled.push(chapterMap[cn]);
       } else {
-        filled.push({ num: cn, title: '第 ' + cn + ' 篇（待生成）', text: '⚠️ 此章節生成失敗，請選擇此章節並輸入修改指令重新生成。', hook: '', imagePrompt: '', _missing: true });
+        filled.push({ num: cn, title: 'ç¬¬ ' + cn + ' ç¯‡ï¼ˆå¾…ç”Ÿæˆï¼‰', text: 'âš ï¸ æ­¤ç« ç¯€ç”Ÿæˆå¤±æ•—ï¼Œè«‹é¸æ“‡æ­¤ç« ç¯€ä¸¦è¼¸å…¥ä¿®æ”¹æŒ‡ä»¤é‡æ–°ç”Ÿæˆã€‚', hook: '', imagePrompt: '', _missing: true });
       }
     }
     story.chapters = filled;
@@ -1544,23 +1613,23 @@ function showEditUI(story, publishedId) {
   }
   var output = document.getElementById('output');
   var html = '<div style="margin:16px 0">';
-  html += '<div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:8px">✏️ 編輯故事</div>';
+  html += '<div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:8px">âœï¸ ç·¨è¼¯æ•…äº‹</div>';
   html += '<div style="font-size:15px;color:#ddd;margin-bottom:12px">' + escHtml(story.title) + '</div>';
 
   // Chapter selection
   html += '<div style="margin-bottom:12px">';
   html += '<div style="display:flex;gap:8px;margin-bottom:8px">';
-  html += '<button onclick="toggleAllChapters(true)" style="padding:5px 12px;border-radius:8px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.08);color:#4ecdc4;font-size:12px;cursor:pointer">全選</button>';
-  html += '<button onclick="toggleAllChapters(false)" style="padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#888;font-size:12px;cursor:pointer">取消全選</button>';
+  html += '<button onclick="toggleAllChapters(true)" style="padding:5px 12px;border-radius:8px;border:1px solid rgba(78,205,196,0.3);background:rgba(78,205,196,0.08);color:#4ecdc4;font-size:12px;cursor:pointer">å…¨é¸</button>';
+  html += '<button onclick="toggleAllChapters(false)" style="padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#888;font-size:12px;cursor:pointer">å–æ¶ˆå…¨é¸</button>';
   html += '</div>';
 
   story.chapters.forEach(function(ch, i) {
-    var isMissing = ch._missing || (ch.text && ch.text.indexOf('⚠️') === 0);
+    var isMissing = ch._missing || (ch.text && ch.text.indexOf('âš ï¸') === 0);
     var bgColor = isMissing ? 'rgba(245,87,108,0.08)' : 'rgba(255,255,255,0.02)';
     var borderColor = isMissing ? 'rgba(245,87,108,0.25)' : 'rgba(255,255,255,0.05)';
     html += '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin:4px 0;border-radius:10px;background:' + bgColor + ';border:1px solid ' + borderColor + ';cursor:pointer">';
     html += '<input type="checkbox" class="ch-select" value="' + i + '" style="margin-top:3px;flex-shrink:0"' + (isMissing ? ' checked' : '') + '>';
-    html += '<div style="flex:1;min-width:0"><div style="font-size:13px;color:' + (isMissing ? '#f5576c' : '#f093fb') + ';font-weight:600">第 ' + ch.num + ' 篇' + (isMissing ? ' ⚠️ 待生成' : '') + '</div>';
+    html += '<div style="flex:1;min-width:0"><div style="font-size:13px;color:' + (isMissing ? '#f5576c' : '#f093fb') + ';font-weight:600">ç¬¬ ' + ch.num + ' ç¯‡' + (isMissing ? ' âš ï¸ å¾…ç”Ÿæˆ' : '') + '</div>';
     html += '<div style="font-size:14px;color:#ddd;margin-top:2px">' + escHtml(ch.title) + '</div>';
     html += '<div style="font-size:12px;color:#777;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + escHtml((ch.text || '').substring(0, 100)) + '...</div>';
     html += '</div></label>';
@@ -1569,16 +1638,16 @@ function showEditUI(story, publishedId) {
 
   // Edit prompt
   html += '<div style="margin-bottom:12px">';
-  html += '<div style="font-size:13px;color:#888;margin-bottom:6px">修改指令（告訴 AI 要怎麼改）</div>';
-  html += '<textarea id="editPrompt" rows="4" placeholder="例如：把第3篇的結尾改成更有懸念的、加強角色之間的衝突、把說教的部分改成用場景展現..." style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#fff;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box"></textarea>';
+  html += '<div style="font-size:13px;color:#888;margin-bottom:6px">ä¿®æ”¹æŒ‡ä»¤ï¼ˆå‘Šè¨´ AI è¦æ€Žéº¼æ”¹ï¼‰</div>';
+  html += '<textarea id="editPrompt" rows="4" placeholder="ä¾‹å¦‚ï¼šæŠŠç¬¬3ç¯‡çš„çµå°¾æ”¹æˆæ›´æœ‰æ‡¸å¿µçš„ã€åŠ å¼·è§’è‰²ä¹‹é–“çš„è¡çªã€æŠŠèªªæ•™çš„éƒ¨åˆ†æ”¹æˆç”¨å ´æ™¯å±•ç¾..." style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#fff;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box"></textarea>';
   html += '</div>';
 
   // Action buttons
   html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
-  html += '<button onclick="executeEdit(\'' + escHtml(publishedId) + '\')" style="padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;font-size:14px;font-weight:600;cursor:pointer">✨ 修改選中章節</button>';
-  html += '<button onclick="renderStory(window._currentStory)" style="padding:10px 20px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#ccc;font-size:14px;cursor:pointer">👁 預覽全文</button>';
-  html += '<button onclick="publishStory()" style="padding:10px 20px;border-radius:10px;border:1px solid rgba(46,204,113,0.3);background:rgba(46,204,113,0.08);color:#2ecc71;font-size:14px;cursor:pointer">📤 發佈</button>';
-  html += '<button onclick="showPublished()" style="padding:10px 20px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#888;font-size:14px;cursor:pointer">← 返回</button>';
+  html += '<button onclick="executeEdit(\'' + escHtml(publishedId) + '\')" style="padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;font-size:14px;font-weight:600;cursor:pointer">âœ¨ ä¿®æ”¹é¸ä¸­ç« ç¯€</button>';
+  html += '<button onclick="renderStory(window._currentStory)" style="padding:10px 20px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#ccc;font-size:14px;cursor:pointer">ðŸ‘ é è¦½å…¨æ–‡</button>';
+  html += '<button onclick="publishStory()" style="padding:10px 20px;border-radius:10px;border:1px solid rgba(46,204,113,0.3);background:rgba(46,204,113,0.08);color:#2ecc71;font-size:14px;cursor:pointer">ðŸ“¤ ç™¼ä½ˆ</button>';
+  html += '<button onclick="showPublished()" style="padding:10px 20px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#888;font-size:14px;cursor:pointer">â† è¿”å›ž</button>';
   html += '</div></div>';
 
   output.innerHTML = html;
@@ -1591,34 +1660,34 @@ function toggleAllChapters(checked) {
 // === Execute Edit: regenerate selected chapters with prompt ===
 async function executeEdit(publishedId) {
   var story = window._currentStory;
-  if (!story) { showToast('沒有故事'); return; }
+  if (!story) { showToast('æ²’æœ‰æ•…äº‹'); return; }
 
   var editPrompt = document.getElementById('editPrompt').value.trim();
-  if (!editPrompt) { showToast('請輸入修改指令'); return; }
+  if (!editPrompt) { showToast('è«‹è¼¸å…¥ä¿®æ”¹æŒ‡ä»¤'); return; }
 
   var selected = [];
   document.querySelectorAll('.ch-select:checked').forEach(function(cb) {
     selected.push(parseInt(cb.value));
   });
-  if (selected.length === 0) { showToast('請選擇要修改的章節'); return; }
+  if (selected.length === 0) { showToast('è«‹é¸æ“‡è¦ä¿®æ”¹çš„ç« ç¯€'); return; }
 
   var output = document.getElementById('output');
-  showToast('✨ 修改中...');
+  showToast('âœ¨ ä¿®æ”¹ä¸­...');
 
   for (var si = 0; si < selected.length; si++) {
     var idx = selected[si];
     var ch = story.chapters[idx];
     if (!ch) continue;
 
-    output.innerHTML = '<div class="loading"><div class="spinner"></div><p>修改第 ' + ch.num + ' 篇... (' + (si + 1) + '/' + selected.length + ')</p></div>';
+    output.innerHTML = '<div class="loading"><div class="spinner"></div><p>ä¿®æ”¹ç¬¬ ' + ch.num + ' ç¯‡... (' + (si + 1) + '/' + selected.length + ')</p></div>';
 
-    var prompt = '你是一位資深編輯。請根據以下指令修改這篇文章。\n\n' +
-      '【修改指令】' + editPrompt + '\n\n' +
-      '【原文】\n標題：' + ch.title + '\n內容：' + ch.text + '\n金句：' + (ch.hook || '') + '\n\n' +
-      '【規則】\n- 保留原文好的部分，只改需要改的\n- 修改後的篇幅要和原文相近\n- 用 JSON 回覆（不要 markdown）：{"num":' + ch.num + ',"title":"修改後標題","text":"修改後內容","imagePrompt":"英文配圖描述","hook":"金句"}';
+    var prompt = 'ä½ æ˜¯ä¸€ä½è³‡æ·±ç·¨è¼¯ã€‚è«‹æ ¹æ“šä»¥ä¸‹æŒ‡ä»¤ä¿®æ”¹é€™ç¯‡æ–‡ç« ã€‚\n\n' +
+      'ã€ä¿®æ”¹æŒ‡ä»¤ã€‘' + editPrompt + '\n\n' +
+      'ã€åŽŸæ–‡ã€‘\næ¨™é¡Œï¼š' + ch.title + '\nå…§å®¹ï¼š' + ch.text + '\né‡‘å¥ï¼š' + (ch.hook || '') + '\n\n' +
+      'ã€è¦å‰‡ã€‘\n- ä¿ç•™åŽŸæ–‡å¥½çš„éƒ¨åˆ†ï¼Œåªæ”¹éœ€è¦æ”¹çš„\n- ä¿®æ”¹å¾Œçš„ç¯‡å¹…è¦å’ŒåŽŸæ–‡ç›¸è¿‘\n- ç”¨ JSON å›žè¦†ï¼ˆä¸è¦ markdownï¼‰ï¼š{"num":' + ch.num + ',"title":"ä¿®æ”¹å¾Œæ¨™é¡Œ","text":"ä¿®æ”¹å¾Œå…§å®¹","imagePrompt":"è‹±æ–‡é…åœ–æè¿°","hook":"é‡‘å¥"}';
 
     try {
-      var resp = await fetch(API_BASE + '/api/story-generate', {
+      var resp = await apiFetch(API_BASE + '/api/story-generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: prompt, style: _selectedStyle })
@@ -1632,7 +1701,7 @@ async function executeEdit(publishedId) {
       if (edited.text) {
         story.chapters[idx] = { num: ch.num, title: edited.title || ch.title, text: edited.text, imagePrompt: edited.imagePrompt || ch.imagePrompt, hook: edited.hook || ch.hook };
       }
-    } catch(e) { showToast('第 ' + ch.num + ' 篇修改失敗'); }
+    } catch(e) { showToast('ç¬¬ ' + ch.num + ' ç¯‡ä¿®æ”¹å¤±æ•—'); }
   }
 
   // Update local backup
@@ -1644,6 +1713,6 @@ async function executeEdit(publishedId) {
     localStorage.setItem('storyHistory', JSON.stringify(list));
   } catch(_) {}
 
-  showToast('✅ 修改完成');
+  showToast('âœ… ä¿®æ”¹å®Œæˆ');
   renderStory(story);
 }
