@@ -108,7 +108,7 @@ let _voiceMode = 'off'; // off, browser, gemini-f, gemini-m
 async function init() {
   // Initialize i18n
   if (typeof initI18n === 'function') {
-    try { await initI18n(); var sel = document.getElementById('langSelect'); if (sel && typeof getLanguage === 'function') sel.value = getLanguage(); } catch(e) { console.warn('i18n init:', e); }
+    try { await initI18n(); var sel = document.getElementById('langSelect'); if (sel && typeof getLanguage === 'function') sel.value = getLanguage(); _updateHardcodedLabels(); } catch(e) { console.warn('i18n init:', e); }
   }
   var dataBase = window.location.hostname.includes('render.com') ? 'https://cdn.jsdelivr.net/gh/JoeLiang2022/fukuoka-trip@main/story/' : '';
   var cacheBust = '?t=' + Date.now();
@@ -839,7 +839,67 @@ function saveStory(topic, style, audience, story, publishedId) {
 // === Language Switcher ===
 function switchLanguage(langCode) {
   if (typeof setLanguage === 'function') {
-    setLanguage(langCode);
+    setLanguage(langCode).then(function() { _updateHardcodedLabels(); });
+  }
+}
+
+// Update hardcoded labels that don't have data-i18n attributes
+function _updateHardcodedLabels() {
+  var _t = (typeof t === 'function') ? t : function(k) { return k; };
+  // Buttons
+  var btnMap = {
+    'ch3': 'ch3', 'ch5': 'ch5', 'ch7': 'ch7',
+    'imgOff': 'off', 'imgOn': 'on',
+    'lenShort': 'short', 'lenMedium': 'medium', 'lenLong': 'long',
+    'qualNormal': 'normalQuality', 'qualHigh': 'highQuality'
+  };
+  for (var id in btnMap) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = _t(btnMap[id]);
+  }
+  // Section labels (spans inside .chapter-count)
+  var sections = document.querySelectorAll('.chapter-count > span');
+  var sectionKeys = ['chapters', 'images', 'length', 'quality', 'password', 'voice'];
+  for (var i = 0; i < sections.length && i < sectionKeys.length; i++) {
+    sections[i].textContent = _t(sectionKeys[i]);
+  }
+  // Password placeholder
+  var pwEl = document.getElementById('storyPassword');
+  if (pwEl) pwEl.placeholder = _t('passwordPlaceholder');
+  // Custom topic placeholder
+  var topicEl = document.getElementById('customTopic');
+  if (topicEl) topicEl.placeholder = _t('customTopic');
+  // Header buttons
+  var headerBtns = document.querySelectorAll('.header button');
+  var headerKeys = ['btnAccount', 'btnMyStories', 'btnLogout'];
+  var headerDefaults = ['👤 帳號', '📚 我的故事', '🚪 登出'];
+  for (var j = 0; j < headerBtns.length && j < headerKeys.length; j++) {
+    var val = _t(headerKeys[j]);
+    if (val !== headerKeys[j]) headerBtns[j].textContent = val;
+  }
+  // Voice speed options
+  var speedEl = document.getElementById('voiceSpeed');
+  if (speedEl) {
+    var speedKeys = { 'slow': 'voiceSlow', 'normal': 'voiceNormal', 'fast': 'voiceFast' };
+    for (var si = 0; si < speedEl.options.length; si++) {
+      var sk = speedKeys[speedEl.options[si].value];
+      if (sk) speedEl.options[si].textContent = _t(sk);
+    }
+  }
+  // Voice style options
+  var styleEl = document.getElementById('voiceStyle');
+  if (styleEl) {
+    var styleKeys = { 'natural': 'voiceNatural', 'warm': 'voiceWarm', 'energetic': 'voiceEnergetic', 'calm': 'voiceCalm', 'podcast': 'voicePodcast', 'storytelling': 'voiceStorytelling' };
+    for (var sti = 0; sti < styleEl.options.length; sti++) {
+      var stk = styleKeys[styleEl.options[sti].value];
+      if (stk) styleEl.options[sti].textContent = _t(stk);
+    }
+  }
+  // Voice select first two options
+  var voiceEl = document.getElementById('voiceSelect');
+  if (voiceEl) {
+    if (voiceEl.options[0]) voiceEl.options[0].textContent = _t('voiceOff');
+    if (voiceEl.options[1]) voiceEl.options[1].textContent = _t('voiceBrowser');
   }
 }
 
