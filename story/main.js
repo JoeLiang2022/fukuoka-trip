@@ -88,14 +88,7 @@ function loginWithGoogle() {
       return;
     }
   } catch(e) {}
-  // Fallback to passcode session
-  try {
-    if (sessionStorage.getItem('storyAuth') === '1') {
-      document.getElementById('authGate').style.display = 'none';
-      document.getElementById('mainApp').style.display = '';
-      init();
-    }
-  } catch(e) {}
+  // No valid session — show auth gate (don't auto-skip with sessionStorage)
 })();
 
 let _topics = {};
