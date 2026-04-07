@@ -65,7 +65,10 @@
     "cancel": "Cancel",
     "confirm": "Confirm",
     "close": "Close",
-    "noStories": "No published stories yet"
+    "noStories": "No published stories yet",
+    "btnAccount": "👤 Account",
+    "btnMyStories": "📚 My Stories",
+    "btnLogout": "🚪 Logout"
   },
   "prompts": {
     "languageInstruction": "Write in English",
