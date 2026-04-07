@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Story Creator — Turn Ideas into Captivating Stories</title>
+<meta name="description" content="Create stunning multi-chapter stories with AI. 25+ writing styles, AI voice narration, multi-language support, and EPUB export.">
+<link rel="stylesheet" href="/landing/style.css">
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <div class="nav-brand">📖 AI Story Creator</div>
+  <div class="nav-links">
+    <a href="/pricing">Pricing</a>
+    <a href="/auth/google" class="btn btn-primary" style="padding:8px 20px">Get Started</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">✨ Powered by Gemini AI</div>
+    <h1>Turn Any Idea into a Captivating Story</h1>
+    <p>Create multi-chapter stories, articles, and books with AI. Choose from 25+ writing styles, add AI voice narration, and export to EPUB — all in minutes.</p>
+    <div class="hero-cta">
+      <a href="/auth/google" class="btn btn-primary" style="padding:14px 32px;font-size:16px">Start Creating — Free</a>
+      <a href="#showcase" class="btn btn-outline" style="padding:14px 32px;font-size:16px">See Examples</a>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features">
+  <div class="section-heading">
+    <h2>Everything You Need to Create</h2>
+    <p>Professional storytelling tools, powered by AI</p>
+  </div>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🎨</div>
+      <h3>25+ Writing Styles</h3>
+      <p>Suspense, romance, sci-fi, business books, news articles, and more. Each style has its own DNA for authentic voice.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔊</div>
+      <h3>AI Voice Narration</h3>
+      <p>Turn your stories into audio with natural-sounding AI voices. 8 voice options with adjustable speed and style.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🌍</div>
+      <h3>Multi-Language</h3>
+      <p>Create stories in Traditional Chinese, English, Japanese, and Korean. Switch languages anytime.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📚</div>
+      <h3>EPUB Export</h3>
+      <p>Export your stories as professional EPUB files. Ready for Kindle, Apple Books, or any e-reader.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🖼️</div>
+      <h3>AI Illustrations</h3>
+      <p>Generate chapter illustrations automatically. Each image matches your story's mood and setting.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>AI Scoring & Optimization</h3>
+      <p>Get your story scored on 7 dimensions. AI automatically optimizes weak areas until every chapter shines.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Showcase -->
+<section class="showcase" id="showcase">
+  <div class="section-heading">
+    <h2>Featured Stories</h2>
+    <p>Created by our community</p>
+  </div>
+  <div class="showcase-grid" id="showcaseGrid">
+    <div style="text-align:center;padding:40px;color:#666;grid-column:1/-1">Loading stories...</div>
+  </div>
+</section>
+
+<!-- Pricing Preview -->
+<section class="pricing-preview">
+  <div class="section-heading">
+    <h2>Simple, Transparent Pricing</h2>
+    <p>Start free, upgrade when you need more</p>
+  </div>
+  <div class="plans">
+    <div class="plan-card">
+      <div class="plan-name">Free</div>
+      <div class="plan-price">$0<span>/mo</span></div>
+      <ul class="plan-features">
+        <li>3 story generations / month</li>
+        <li>5 image generations / month</li>
+        <li>All 25+ writing styles</li>
+        <li>EPUB export</li>
+      </ul>
+      <a href="/auth/google" class="btn btn-outline" style="width:100%">Get Started</a>
+    </div>
+    <div class="plan-card featured">
+      <div class="plan-name">Pro</div>
+      <div class="plan-price">$9.99<span>/mo</span></div>
+      <ul class="plan-features">
+        <li>30 story generations / month</li>
+        <li>50 TTS narrations / month</li>
+        <li>100 image generations / month</li>
+        <li>Everything in Free</li>
+      </ul>
+      <a href="/pricing" class="btn btn-primary" style="width:100%">Upgrade to Pro</a>
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Unlimited</div>
+      <div class="plan-price">$19.99<span>/mo</span></div>
+      <ul class="plan-features">
+        <li>Unlimited story generations</li>
+        <li>Unlimited TTS narrations</li>
+        <li>Unlimited image generations</li>
+        <li>Everything in Pro</li>
+      </ul>
+      <a href="/pricing" class="btn btn-outline" style="width:100%">Go Unlimited</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-links">
+    <a href="/pricing">Pricing</a>
+    <a href="/legal/privacy.html">Privacy Policy</a>
+    <a href="/legal/terms.html">Terms of Service</a>
+    <a href="/creator">Creator</a>
+  </div>
+  <div class="footer-copy">&copy; 2025 AI Story Creator. All rights reserved.</div>
+</footer>
+
+<script>
+// Load showcase stories
+(async function() {
+  try {
+    var resp = await fetch('/api/showcase');
+    if (!resp.ok) return;
+    var stories = await resp.json();
+    var grid = document.getElementById('showcaseGrid');
+    if (!stories.length) { grid.innerHTML = '<div style="text-align:center;padding:40px;color:#666;grid-column:1/-1">No stories yet. Be the first to publish!</div>'; return; }
+    grid.innerHTML = stories.map(function(s) {
+      return '<a href="/reader?id=' + esc(s.id) + '" class="showcase-card" target="_blank">' +
+        '<h4>' + esc(s.title) + '</h4>' +
+        '<div class="showcase-meta"><span>📄 ' + (s.chaptersCount || 0) + ' chapters</span>' +
+        (s.style ? '<span>🎨 ' + esc(s.style) + '</span>' : '') +
+        '</div></a>';
+    }).join('');
+  } catch(e) { /* silent */ }
+})();
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>
