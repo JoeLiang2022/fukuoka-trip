@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🚂 福岡 5 日交通總表</title>
+<title>🚂 九州 5 日交通總表</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Noto Sans TC','Helvetica Neue',sans-serif;background:#0a0e1a;color:#e0e0e0;line-height:1.6;padding:16px}
@@ -14,7 +14,6 @@ h1{text-align:center;font-size:1.6em;margin:16px 0 8px;color:#ffd700}
 .back-link a:hover{text-decoration:underline}
 .section{margin-bottom:28px}
 .section h2{font-size:1.15em;color:#64b5f6;border-bottom:1px solid #333;padding-bottom:6px;margin-bottom:12px}
-.section h3{font-size:.95em;color:#ffd700;margin:12px 0 8px}
 table{width:100%;border-collapse:collapse;font-size:.82em;margin-bottom:12px}
 th{background:#1a2040;color:#ffd700;padding:8px 6px;text-align:left;font-weight:600;border-bottom:2px solid #333;white-space:nowrap}
 td{padding:7px 6px;border-bottom:1px solid #222;vertical-align:top}
@@ -25,14 +24,16 @@ tr:hover{background:#151a30}
 .tag-jrpass{background:#1565c0;color:#fff}
 .tag-nishitetsu{background:#e65100;color:#fff}
 .tag-subway{background:#6a1b9a;color:#fff}
-.tag-bus{background:#00695c;color:#fff}
 .tag-walk{background:#555;color:#fff}
+.tag-ferry{background:#00838f;color:#fff}
 .note{background:#1a1a2e;border-left:3px solid #ffd700;padding:8px 12px;margin:8px 0;font-size:.82em;color:#ccc;border-radius:0 4px 4px 0}
 .note b{color:#ffd700}
 .pass-box{background:#0d1b3e;border:1px solid #1565c0;border-radius:6px;padding:12px;margin:12px 0}
 .pass-box h3{color:#64b5f6;margin:0 0 6px}
 .pass-box .price{color:#ffd700;font-size:1.1em;font-weight:700}
 .day-label{display:inline-block;background:#ffd700;color:#0a0e1a;padding:2px 8px;border-radius:3px;font-weight:700;font-size:.8em;margin-right:6px}
+.hotel-box{background:#1a1a2e;border:1px solid #e65100;border-radius:6px;padding:10px 12px;margin:8px 0}
+.hotel-box b{color:#e65100}
 footer{text-align:center;color:#666;font-size:.75em;margin-top:24px;padding-top:12px;border-top:1px solid #222}
 @media(max-width:600px){table{font-size:.75em}th,td{padding:5px 4px}}
 </style>
@@ -41,17 +42,16 @@ footer{text-align:center;color:#666;font-size:.75em;margin-top:24px;padding-top:
 
 <div class="back-link"><a href="https://joeliang2022.github.io/fukuoka-trip/">← 返回行程總覽</a></div>
 
-<h1>🚂 福岡 5 日交通總表</h1>
-<div class="subtitle">2026/5/1（五）— 5/5（二）· 全九州 JR 周遊券</div>
+<h1>🚂 九州 5 日交通總表</h1>
+<div class="subtitle">2026/5/1（五）— 5/5（二）· 全九州 JR 周遊券 · 博多→由布院→鹿兒島→豪斯登堡</div>
 
-<!-- JR Pass Info -->
 <div class="pass-box">
-<h3>🎫 全九州 JR 周遊券（All Kyushu Rail Pass）</h3>
-<div class="price">5 日券 ¥18,500／人</div>
+<h3>🎫 全九州 JR 周遊券 + 豪斯登堡套餐</h3>
+<div class="price">NT$4,908／人（約 ¥22,000）</div>
 <p style="font-size:.82em;color:#ccc;margin-top:6px">
-涵蓋範圍：九州全區 JR 列車（含新幹線自由席、特急列車指定席）<br>
-指定席預約：可免費預約指定席，建議提前至 <b>JR 九州線上預約系統</b> 或車站 <b>みどりの窓口</b> 劃位<br>
-注意：由布院之森為<b>全車指定席</b>，黃金週期間務必提前預約
+涵蓋：九州全區 JR 列車（新幹線自由席、特急指定席）+ 豪斯登堡一日券<br>
+指定席：可免費預約，建議提前至 JR 九州線上預約或車站みどりの窓口劃位<br>
+<b>由布院之森為全車指定席，黃金週務必提前預約！</b>
 </p>
 </div>
 
@@ -59,272 +59,111 @@ footer{text-align:center;color:#666;font-size:.75em;margin-top:24px;padding-top:
 <div class="section">
 <h2><span class="day-label">DAY 1</span> 5/1（五）抵達福岡</h2>
 <table>
-<tr><th>區間</th><th>交通方式</th><th>班次 / 路線</th><th>時間</th><th>費用</th><th>備註</th></tr>
-<tr>
-  <td>桃園 → 福岡</td>
-  <td>✈️ 飛機</td>
-  <td>CI116 華航</td>
-  <td>16:25 → 19:35（約 2.5h）</td>
-  <td>機票另計</td>
-  <td>—</td>
-</tr>
-<tr>
-  <td>福岡空港 → 博多站</td>
-  <td><span class="tag tag-subway">地下鉄</span></td>
-  <td>福岡市地下鉄空港線</td>
-  <td>約 5 分鐘（2 站）</td>
-  <td>¥260</td>
-  <td>班距約 5-8 分鐘，不需 JR Pass</td>
-</tr>
-<tr>
-  <td>博多站 → 飯店</td>
-  <td><span class="tag tag-walk">步行</span></td>
-  <td>—</td>
-  <td>約 5-10 分鐘</td>
-  <td>免費</td>
-  <td>Four Points Flex by Sheraton Fukuoka Hakata</td>
-</tr>
-<tr>
-  <td>博多站 → 中洲屋台</td>
-  <td><span class="tag tag-walk">步行</span></td>
-  <td>—</td>
-  <td>約 15 分鐘</td>
-  <td>免費</td>
-  <td>沿那珂川河畔步行</td>
-</tr>
+<tr><th>區間</th><th>交通</th><th>班次</th><th>時間</th><th>費用</th><th>備註</th></tr>
+<tr><td>桃園 → 福岡</td><td>✈️</td><td>CI116 華航</td><td>16:25→19:35（2.5h）</td><td>機票另計</td><td></td></tr>
+<tr><td>福岡空港 → 博多站</td><td><span class="tag tag-subway">地下鉄</span></td><td>空港線</td><td>約 5 分鐘</td><td>¥260</td><td>班距 5-8 分鐘</td></tr>
+<tr><td>博多站 → 飯店</td><td><span class="tag tag-walk">步行</span></td><td>—</td><td>5-10 分鐘</td><td>免費</td><td></td></tr>
+<tr><td>博多站 → 中洲屋台</td><td><span class="tag tag-walk">步行</span></td><td>—</td><td>15 分鐘</td><td>免費</td><td>沿那珂川河畔</td></tr>
 </table>
+<div class="hotel-box">🏨 <b>Four Points Flex by Sheraton Fukuoka Hakata</b>（已訂）</div>
 </div>
 
 <!-- DAY 2 -->
 <div class="section">
-<h2><span class="day-label">DAY 2</span> 5/2（六）由布院</h2>
+<h2><span class="day-label">DAY 2</span> 5/2（六）由布院溫泉</h2>
 <table>
-<tr><th>區間</th><th>交通方式</th><th>班次 / 路線</th><th>時間</th><th>費用</th><th>備註</th></tr>
-<tr>
-  <td>博多 → 由布院</td>
-  <td><span class="tag tag-jrpass">JR 特急</span></td>
-  <td>由布院之森 1 號<br>（ゆふいんの森 1 号）</td>
-  <td>09:17 → 11:31（約 2h14m）</td>
-  <td><span class="tag tag-free">JR Pass 免費</span></td>
-  <td><span class="tag tag-reserved">全車指定席</span><br>務必提前預約！黃金週超熱門</td>
-</tr>
-<tr>
-  <td>由布院站 → 金鱗湖</td>
-  <td><span class="tag tag-walk">步行</span></td>
-  <td>湯之坪街道</td>
-  <td>約 25 分鐘</td>
-  <td>免費</td>
-  <td>沿途有商店街可逛</td>
-</tr>
-<tr>
-  <td>由布院 → 博多</td>
-  <td><span class="tag tag-jrpass">JR 特急</span></td>
-  <td>由布院之森 4 號<br>（ゆふいんの森 4 号）</td>
-  <td>16:09 → 18:18（約 2h09m）</td>
-  <td><span class="tag tag-free">JR Pass 免費</span></td>
-  <td><span class="tag tag-reserved">全車指定席</span><br>或搭 由布 6 號 17:07→19:22</td>
-</tr>
+<tr><th>區間</th><th>交通</th><th>班次</th><th>時間</th><th>費用</th><th>備註</th></tr>
+<tr><td>博多 → 由布院</td><td><span class="tag tag-jrpass">JR 特急</span></td><td>由布院之森 1 號</td><td>09:17→11:31（2h14m）</td><td><span class="tag tag-free">Pass 免費</span></td><td><span class="tag tag-reserved">全車指定席</span> 務必預約</td></tr>
+<tr><td>由布院站 → 金鱗湖</td><td><span class="tag tag-walk">步行</span></td><td>湯之坪街道</td><td>25 分鐘</td><td>免費</td><td>沿途商店街</td></tr>
 </table>
-<div class="note">
-<b>⚠️ 由布院之森替代方案：</b>若由布院之森客滿，可改搭 JR 特急「由布」（ゆふ），同路線、同時間，有自由席可坐。
+<div class="note"><b>⚠️ 替代方案：</b>若由布院之森客滿，可改搭 JR 特急「由布」（ゆふ），同路線同時間，有自由席。</div>
+<div class="hotel-box">🏨 <b>由布院溫泉旅館（建議）</b><br>
+• 由布院山水館 — 由布岳絕景露天風呂，含晚餐早餐（¥15,000-20,000/人）<br>
+• 日の春旅館 — 車站步行 5 分鐘，私人溫泉（¥12,000-15,000/人）<br>
+• 由布院 Floral Village 周邊民宿 — 平價選擇（¥8,000-12,000/人）
 </div>
 </div>
 
 <!-- DAY 3 -->
 <div class="section">
-<h2><span class="day-label">DAY 3</span> 5/3（日）太宰府 + 柳川</h2>
-
-<h3>上午：太宰府</h3>
+<h2><span class="day-label">DAY 3</span> 5/3（日）由布院 → 鹿兒島</h2>
 <table>
-<tr><th>區間</th><th>交通方式</th><th>班次 / 路線</th><th>時間</th><th>費用</th><th>備註</th></tr>
-<tr>
-  <td>博多站 → 天神</td>
-  <td><span class="tag tag-subway">地下鉄</span></td>
-  <td>福岡市地下鉄空港線</td>
-  <td>約 5 分鐘</td>
-  <td>¥210</td>
-  <td>不適用 JR Pass</td>
-</tr>
-<tr>
-  <td>西鉄福岡（天神）→ 西鉄二日市</td>
-  <td><span class="tag tag-nishitetsu">西鉄電車</span></td>
-  <td>西鉄天神大牟田線（特急/急行）</td>
-  <td>約 15 分鐘</td>
-  <td rowspan="2">¥410（天神→太宰府）</td>
-  <td>在二日市轉乘太宰府線</td>
-</tr>
-<tr>
-  <td>西鉄二日市 → 太宰府</td>
-  <td><span class="tag tag-nishitetsu">西鉄電車</span></td>
-  <td>西鉄太宰府線</td>
-  <td>約 5 分鐘</td>
-  <td>全程約 25-35 分鐘</td>
-</tr>
+<tr><th>區間</th><th>交通</th><th>班次</th><th>時間</th><th>費用</th><th>備註</th></tr>
+<tr><td>由布院 → 博多</td><td><span class="tag tag-jrpass">JR 特急</span></td><td>由布 2 號（ゆふ）</td><td>10:07→12:16（2h09m）</td><td><span class="tag tag-free">Pass 免費</span></td><td>指定席+自由席皆有</td></tr>
+<tr><td>博多 → 鹿兒島中央</td><td><span class="tag tag-jrpass">新幹線</span></td><td>さくら / みずほ</td><td>約 1h17m（班距 10-20 分鐘）</td><td><span class="tag tag-free">Pass 免費</span></td><td>みずほ最快 1h16m</td></tr>
+<tr><td>鹿兒島中央 → 仙巖園</td><td><span class="tag tag-walk">巴士</span></td><td>City View 觀光巴士</td><td>約 30 分鐘</td><td>¥230</td><td>或搭一般巴士</td></tr>
+<tr><td>鹿兒島港 → 櫻島</td><td><span class="tag tag-ferry">渡輪</span></td><td>櫻島フェリー</td><td>15 分鐘（24h 運行）</td><td>¥200</td><td>可選擇去或不去</td></tr>
 </table>
-<div class="note">
-<b>💡 西鉄不適用 JR Pass。</b>太宰府沒有 JR 車站，必須搭西鉄。也可從博多巴士總站搭直達巴士（約 40 分鐘，¥620）。
+<div class="note"><b>💡 鹿兒島半日路線：</b>仙巖園（島津家庭園，世界遺產）→ 天文館通（鹿兒島最大商店街，吃白熊冰）→ 回飯店</div>
+<div class="hotel-box">🏨 <b>鹿兒島中央站周邊（建議）</b><br>
+• JR 九州 Hotel 鹿兒島 — 車站直結，最方便（¥9,000-13,000）<br>
+• Solaria Nishitetsu Hotel 鹿兒島 — 天文館通旁（¥8,000-12,000）<br>
+• Richmond Hotel 鹿兒島中央 — CP 值高（¥7,000-10,000）
 </div>
-
-<h3>下午：門司港（JR Pass）</h3>
-<table>
-<tr><th>區間</th><th>交通方式</th><th>班次 / 路線</th><th>時間</th><th>費用</th><th>備註</th></tr>
-<tr>
-  <td>太宰府 → 西鉄二日市 → 天神</td>
-  <td><span class="tag tag-nishitetsu">西鉄電車</span></td>
-  <td>太宰府線 → 天神大牟田線</td>
-  <td>約 25-35 分鐘</td>
-  <td>¥410</td>
-  <td>原路返回天神</td>
-</tr>
-<tr>
-  <td>天神 → 博多站</td>
-  <td><span class="tag tag-subway">地下鉄</span></td>
-  <td>福岡市地下鉄空港線</td>
-  <td>約 5 分鐘</td>
-  <td>¥210</td>
-  <td>—</td>
-</tr>
-<tr>
-  <td>博多 → 小倉</td>
-  <td><span class="tag tag-jrpass">新幹線</span></td>
-  <td>こだま / さくら / のぞみ</td>
-  <td>約 15 分鐘</td>
-  <td><span class="tag tag-free">JR Pass 免費</span></td>
-  <td>班距約 10-15 分鐘，非常密集</td>
-</tr>
-<tr>
-  <td>小倉 → 門司港</td>
-  <td><span class="tag tag-jrpass">JR 在來線</span></td>
-  <td>JR 鹿兒島本線</td>
-  <td>約 13 分鐘</td>
-  <td><span class="tag tag-free">JR Pass 免費</span></td>
-  <td>班距約 10-20 分鐘</td>
-</tr>
-<tr>
-  <td>門司港 → 小倉 → 博多</td>
-  <td><span class="tag tag-jrpass">JR + 新幹線</span></td>
-  <td>JR 在來線 → 新幹線</td>
-  <td>約 30 分鐘</td>
-  <td><span class="tag tag-free">JR Pass 免費</span></td>
-  <td>門司港→小倉 13 分鐘 + 小倉→博多 15 分鐘</td>
-</tr>
-</table>
 </div>
 
 <!-- DAY 4 -->
 <div class="section">
-<h2><span class="day-label">DAY 4</span> 5/4（一）豪斯登堡</h2>
+<h2><span class="day-label">DAY 4</span> 5/4（一）鹿兒島 → 豪斯登堡</h2>
 <table>
-<tr><th>區間</th><th>交通方式</th><th>班次 / 路線</th><th>時間</th><th>費用</th><th>備註</th></tr>
-<tr>
-  <td>博多 → 豪斯登堡</td>
-  <td><span class="tag tag-jrpass">JR 特急</span></td>
-  <td>特急「豪斯登堡」號<br>（ハウステンボス号）</td>
-  <td>08:06 → 09:48（約 1h42m）<br>或 09:14 → 11:01（約 1h47m）</td>
-  <td><span class="tag tag-free">JR Pass 免費</span></td>
-  <td>指定席 + 自由席皆有<br>建議劃指定席（黃金週）</td>
-</tr>
-<tr>
-  <td>豪斯登堡站 → 園區入口</td>
-  <td><span class="tag tag-walk">步行</span></td>
-  <td>—</td>
-  <td>約 5 分鐘</td>
-  <td>免費</td>
-  <td>出站即到</td>
-</tr>
-<tr>
-  <td>豪斯登堡 → 博多</td>
-  <td><span class="tag tag-jrpass">JR 特急</span></td>
-  <td>特急「豪斯登堡」號<br>（ハウステンボス号）</td>
-  <td>19:22 → 21:09（約 1h47m）<br>或 20:22 → 22:09（約 1h47m）</td>
-  <td><span class="tag tag-free">JR Pass 免費</span></td>
-  <td>末班約 21:22 發車<br>建議提前確認回程時刻</td>
-</tr>
+<tr><th>區間</th><th>交通</th><th>班次</th><th>時間</th><th>費用</th><th>備註</th></tr>
+<tr><td>鹿兒島中央 → 博多</td><td><span class="tag tag-jrpass">新幹線</span></td><td>さくら（早班 06:35→07:51）</td><td>1h16m</td><td><span class="tag tag-free">Pass 免費</span></td><td>早起！趕 08:06 豪斯登堡號</td></tr>
+<tr><td>博多 → 豪斯登堡</td><td><span class="tag tag-jrpass">JR 特急</span></td><td>豪斯登堡號 08:06 發</td><td>08:06→09:48（1h42m）</td><td><span class="tag tag-free">Pass 免費</span></td><td>建議劃指定席</td></tr>
+<tr><td>豪斯登堡站 → 園區</td><td><span class="tag tag-walk">步行</span></td><td>—</td><td>5 分鐘</td><td>免費</td><td>出站即到</td></tr>
+<tr><td>豪斯登堡 → 博多</td><td><span class="tag tag-jrpass">JR 特急</span></td><td>豪斯登堡號 19:22 發</td><td>19:22→21:09（1h47m）</td><td><span class="tag tag-free">Pass 免費</span></td><td>末班約 21:22</td></tr>
 </table>
-<div class="note">
-<b>⚠️ 路線說明：</b>博多→豪斯登堡的特急列車經由鳥栖、佐賀、早岐，途中在早岐站會與特急「綠」號（みどり）分離/連結。上車時注意車廂標示。
-</div>
+<div class="note"><b>⚠️ 早岐站注意：</b>豪斯登堡號在早岐站與特急「綠」號分離/連結，上車注意車廂標示。</div>
+<div class="hotel-box">🏨 <b>Four Points Flex by Sheraton Fukuoka Hakata</b>（已訂）</div>
 </div>
 
 <!-- DAY 5 -->
 <div class="section">
-<h2><span class="day-label">DAY 5</span> 5/5（二）小倉半日遊 + 回程</h2>
+<h2><span class="day-label">DAY 5</span> 5/5（二）太宰府 + 回程</h2>
 <table>
-<tr><th>區間</th><th>交通方式</th><th>班次 / 路線</th><th>時間</th><th>費用</th><th>備註</th></tr>
-<tr>
-  <td>飯店 → 博多站</td>
-  <td><span class="tag tag-walk">步行</span></td>
-  <td>—</td>
-  <td>約 5-10 分鐘</td>
-  <td>免費</td>
-  <td>行李寄放飯店或博多站置物櫃（¥700）</td>
-</tr>
-<tr>
-  <td>博多 → 小倉</td>
-  <td><span class="tag tag-jrpass">新幹線</span></td>
-  <td>こだま / さくら</td>
-  <td>約 15 分鐘</td>
-  <td><span class="tag tag-free">JR Pass 免費</span></td>
-  <td>早上出發，逛旦過市場、小倉城</td>
-</tr>
-<tr>
-  <td>小倉 → 博多</td>
-  <td><span class="tag tag-jrpass">新幹線</span></td>
-  <td>こだま / さくら</td>
-  <td>約 15 分鐘</td>
-  <td><span class="tag tag-free">JR Pass 免費</span></td>
-  <td>中午前回博多</td>
-</tr>
-<tr>
-  <td>博多站周邊</td>
-  <td><span class="tag tag-walk">步行</span></td>
-  <td>—</td>
-  <td>—</td>
-  <td>免費</td>
-  <td>伴手禮採購</td>
-</tr>
-<tr>
-  <td>博多站 → 福岡空港</td>
-  <td><span class="tag tag-subway">地下鉄</span></td>
-  <td>福岡市地下鉄空港線</td>
-  <td>約 5 分鐘</td>
-  <td>¥260</td>
-  <td>建議起飛前 2 小時到機場</td>
-</tr>
-<tr>
-  <td>福岡 → 桃園</td>
-  <td>✈️ 飛機</td>
-  <td>CI117 華航</td>
-  <td>20:35 → 22:25（約 2.5h）</td>
-  <td>機票另計</td>
-  <td>—</td>
-</tr>
+<tr><th>區間</th><th>交通</th><th>班次</th><th>時間</th><th>費用</th><th>備註</th></tr>
+<tr><td>博多站 → 天神</td><td><span class="tag tag-subway">地下鉄</span></td><td>空港線</td><td>5 分鐘</td><td>¥210</td><td></td></tr>
+<tr><td>西鉄福岡（天神）→ 太宰府</td><td><span class="tag tag-nishitetsu">西鉄</span></td><td>天神大牟田線→太宰府線</td><td>25-35 分鐘（二日市轉乘）</td><td>¥410</td><td>JR Pass 不適用</td></tr>
+<tr><td>太宰府 → 天神 → 博多</td><td><span class="tag tag-nishitetsu">西鉄</span>+<span class="tag tag-subway">地下鉄</span></td><td>原路返回</td><td>35 分鐘</td><td>¥620</td><td></td></tr>
+<tr><td>博多站 → 福岡空港</td><td><span class="tag tag-subway">地下鉄</span></td><td>空港線</td><td>5 分鐘</td><td>¥260</td><td>起飛前 2h 到機場</td></tr>
+<tr><td>福岡 → 桃園</td><td>✈️</td><td>CI117 華航</td><td>20:35→22:25（2.5h）</td><td>機票另計</td><td></td></tr>
 </table>
 </div>
 
-<!-- Summary -->
+<!-- Cost Summary -->
 <div class="section">
-<h2>💰 交通費用總覽</h2>
+<h2>💰 交通費用 vs JR Pass 回本計算</h2>
 <table>
-<tr><th>項目</th><th>費用（每人）</th><th>備註</th></tr>
-<tr><td>全九州 JR 周遊券 + 豪斯登堡套餐</td><td style="color:#ffd700;font-weight:700">NT$4,908（約 ¥22,000）</td><td>涵蓋 Day 2 由布院 + Day 3 門司港 + Day 4 豪斯登堡 + Day 5 小倉</td></tr>
-<tr><td>福岡地下鉄（4 趟）</td><td>~¥940</td><td>空港↔博多 ×2 + 博多↔天神 ×2</td></tr>
-<tr><td>西鉄電車（Day 3 太宰府）</td><td>~¥820</td><td>天神↔太宰府 來回</td></tr>
-<tr style="border-top:2px solid #ffd700"><td style="font-weight:700">交通合計（每人）</td><td style="color:#ffd700;font-weight:700">NT$4,908 + ¥1,760</td><td>JR 原價約 ¥28,000，省 ¥6,000+</td></tr>
+<tr><th>日</th><th>區間</th><th>JR 原價（指定席）</th></tr>
+<tr><td>Day 2</td><td>博多→由布院（由布院之森）</td><td>¥4,560</td></tr>
+<tr><td>Day 3</td><td>由布院→博多（特急由布）</td><td>¥4,560</td></tr>
+<tr><td>Day 3</td><td>博多→鹿兒島中央（新幹線）</td><td>¥10,740</td></tr>
+<tr><td>Day 4</td><td>鹿兒島中央→博多（新幹線）</td><td>¥10,740</td></tr>
+<tr><td>Day 4</td><td>博多→豪斯登堡（特急）</td><td>¥4,700</td></tr>
+<tr><td>Day 4</td><td>豪斯登堡→博多（特急）</td><td>¥4,700</td></tr>
+<tr style="border-top:2px solid #ffd700;font-weight:700"><td colspan="2">JR 使用合計</td><td style="color:#ffd700">¥40,000</td></tr>
+<tr><td colspan="2">JR Pass + 豪斯登堡套餐</td><td>NT$4,908（≈¥22,000）</td></tr>
+<tr style="color:#2e7d32;font-weight:700"><td colspan="2">💰 省下</td><td>¥18,000+（近兩倍回本）🔥</td></tr>
+</table>
+
+<h3 style="color:#64b5f6;margin:16px 0 8px">JR Pass 以外的交通費</h3>
+<table>
+<tr><th>項目</th><th>費用</th></tr>
+<tr><td>福岡地下鉄（空港↔博多 ×2 + 博多↔天神 ×2）</td><td>¥940</td></tr>
+<tr><td>西鉄電車（天神↔太宰府 來回）</td><td>¥820</td></tr>
+<tr><td>鹿兒島市內巴士/渡輪</td><td>~¥500</td></tr>
+<tr style="border-top:2px solid #ffd700;font-weight:700"><td>非 JR 交通合計</td><td style="color:#ffd700">~¥2,260</td></tr>
 </table>
 </div>
 
+<!-- Notes -->
 <div class="section">
 <h2>📝 注意事項</h2>
-<div class="note"><b>1. 指定席預約：</b>全九州 JR Pass 可免費預約指定席。由布院之森為全車指定席，必須預約。豪斯登堡號有自由席但黃金週建議劃位。可透過 JR 九州線上預約或車站みどりの窓口辦理。</div>
-<div class="note"><b>2. 黃金週注意：</b>5/1-5/5 為日本黃金週，列車和景點都會非常擁擠。建議所有 JR 特急都提前預約指定席。</div>
-<div class="note"><b>3. IC 卡：</b>福岡地下鉄和西鉄電車可使用 SUGOCA / ICOCA / Suica 等 IC 卡，方便快速。</div>
-<div class="note"><b>4. JR Pass 使用範圍：</b>JR Pass 不適用於西鉄電車、福岡市地下鉄、巴士。僅適用於 JR 九州營運的列車。</div>
+<div class="note"><b>1. 指定席預約：</b>由布院之森全車指定席必須預約。新幹線和豪斯登堡號有自由席但黃金週建議劃位。JR 九州線上預約或車站みどりの窓口。</div>
+<div class="note"><b>2. Day 4 早起：</b>鹿兒島 06:35 新幹線→博多 07:51，轉 08:06 豪斯登堡號。中間只有 15 分鐘轉車，建議提前到月台。</div>
+<div class="note"><b>3. 行李：</b>Day 2-3 移動住宿，建議用小行李箱或背包。大行李可寄放博多站置物櫃（¥700/大型）或飯店。</div>
+<div class="note"><b>4. IC 卡：</b>地下鉄、西鉄、巴士可用 SUGOCA/ICOCA/Suica。JR Pass 不適用於西鉄和地下鉄。</div>
 </div>
 
-<footer>
-由波堤 😸 精心製作 · 2026/5/1 — 5/5 · 2 人
-</footer>
-
+<footer>由波堤 😸 精心製作 · 2026/5/1 — 5/5 · 2 人</footer>
 </body>
 </html>
